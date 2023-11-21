@@ -37,6 +37,9 @@ jobs:
         uses: jetli/wasm-pack-action@v0.4.0
         with:
           version: 'latest'
+      - name: Build
+        run: |
+          ./build.sh
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
