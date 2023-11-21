@@ -1,4 +1,4 @@
-use std::iter;
+use std::{iter, sync::Mutex, collections::VecDeque};
 
 use winit::{
     event::*,
@@ -21,6 +21,7 @@ struct State {
     window: Window,
 
     _clear_color: wgpu::Color,
+
 }
 
 impl State {
@@ -146,7 +147,17 @@ impl State {
         return false;
     }
 
-    fn update(&mut self) {}
+    fn update(&mut self) {
+        let mut commands = COMMANDS.lock().unwrap();
+        while let Some(command) = commands.pop_front() {
+            log::info!("Command: {:?}", command);
+            match command {
+                Command::Greet(name) => {
+                    log::info!("Hello, {}!", name);
+                }
+            }
+        }
+    }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
@@ -182,6 +193,21 @@ impl State {
 
         Ok(())
     }
+}
+
+
+#[derive(Debug)]
+enum Command {
+    Greet(String),
+}
+
+lazy_static::lazy_static! {
+    static ref COMMANDS : Mutex<VecDeque<Command>> = Mutex::new(VecDeque::new());
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn greet(name: &str) {
+    COMMANDS.lock().unwrap().push_back(Command::Greet(name.to_string()));
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]

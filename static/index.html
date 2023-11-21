@@ -15,9 +15,10 @@
 
 <body>
     <script type="module">
-        import init from "./stereo_glitch.js";
+        import init, { greet } from "./stereo_glitch.js";
         init().then(() => {
             console.log("WASM Loaded");
+            window.greet = greet; // Attach greet to the window object
         });
     </script>
     <div id="game-container"></div>
