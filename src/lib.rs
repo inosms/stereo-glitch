@@ -19,6 +19,8 @@ struct State {
     // it gets dropped after it as the surface contains
     // unsafe references to the window's resources.
     window: Window,
+
+    _clear_color: wgpu::Color,
 }
 
 impl State {
@@ -94,6 +96,12 @@ impl State {
             config,
             size,
             window,
+            _clear_color: wgpu::Color {
+                r: 0.1,
+                g: 0.2,
+                b: 0.3,
+                a: 1.0,
+            },
         }
     }
 
@@ -112,7 +120,30 @@ impl State {
 
     #[allow(unused_variables)]
     fn input(&mut self, event: &WindowEvent) -> bool {
-        false
+        if let WindowEvent::CursorMoved { device_id, position, modifiers } = event {
+            self._clear_color = wgpu::Color {
+                r: position.x as f64 / self.size.width as f64,
+                g: position.y as f64 / self.size.height as f64,
+                b: 0.3,
+                a: 1.0,
+            };
+        } else if let WindowEvent::Touch(Touch {
+            device_id,
+            phase,
+            location,
+            force,
+            id,
+            ..
+        }) = event
+        {
+            self._clear_color = wgpu::Color {
+                r: location.x as f64 / self.size.width as f64,
+                g: location.y as f64 / self.size.height as f64,
+                b: 0.3,
+                a: 1.0,
+            };
+        }
+        return false;
     }
 
     fn update(&mut self) {}
@@ -136,12 +167,7 @@ impl State {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
+                        load: wgpu::LoadOp::Clear(self._clear_color),
                         store: wgpu::StoreOp::Store,
                     },
                 })],
@@ -220,7 +246,9 @@ pub async fn run() {
                             // new_inner_size is &&mut so w have to dereference it twice
                             state.resize(**new_inner_size);
                         }
-                        _ => {}
+                        event => {
+                            state.input(event);
+                        }
                     }
                 }
             }
