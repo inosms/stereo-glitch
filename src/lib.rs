@@ -1,3 +1,4 @@
+use cgmath::InnerSpace;
 use std::{collections::VecDeque, iter, sync::Mutex};
 use wgpu::util::DeviceExt;
 
@@ -40,30 +41,46 @@ impl Vertex {
     }
 }
 
+// cube vertices
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-0.0868241, 0.49240386, 0.0],
-        color: [0.5, 0.0, 0.5],
-    }, // A
+        position: [1.0, 1.0, 0.0],
+        color: [1.0, 1.0, 0.0],
+    },
     Vertex {
-        position: [-0.49513406, 0.06958647, 0.0],
-        color: [0.1, 0.0, 0.3],
-    }, // B
+        position: [1.0, -1.0, 0.0],
+        color: [1.0, 0.0, 0.0],
+    },
     Vertex {
-        position: [-0.21918549, -0.44939706, 0.0],
-        color: [0.5, 0.4, 0.5],
-    }, // C
+        position: [-1.0, -1.0, 0.0],
+        color: [1.0, 1.0, 1.0],
+    },
     Vertex {
-        position: [0.35966998, -0.3473291, 0.0],
-        color: [0.8, 0.0, 0.5],
-    }, // D
+        position: [-1.0, 1.0, 0.0],
+        color: [0.0, 1.0, 0.0],
+    },
     Vertex {
-        position: [0.44147372, 0.2347359, 0.0],
-        color: [0.5, 0.5, 0.1],
-    }, // E
+        position: [1.0, 1.0, 1.0],
+        color: [1.0, 0.0, 0.0],
+    },
+    Vertex {
+        position: [1.0, -1.0, 1.0],
+        color: [0.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [-1.0, -1.0, 1.0],
+        color: [0.0, 0.0, 0.0],
+    },
+    Vertex {
+        position: [-1.0, 1.0, 1.0],
+        color: [0.0, 0.0, 1.0],
+    },
 ];
 
-const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4, /* padding */ 0];
+const INDICES: &[u16] = &[
+    0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 2, 3, 7, 2, 7, 6, 0, 3, 7, 0, 7, 4, 1, 2,
+    5, 1, 6, 5,
+];
 
 struct Camera {
     eye: cgmath::Point3<f32>,
@@ -95,13 +112,21 @@ struct CameraUniform {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
     view_proj: [[f32; 4]; 4],
+    left: i32,
+    _pad1: u32,
+    _pad2: u32,
+    _pad3: u32,
 }
 
 impl CameraUniform {
-    fn new() -> Self {
+    fn new(left: bool) -> Self {
         use cgmath::SquareMatrix;
         Self {
             view_proj: cgmath::Matrix4::identity().into(),
+            left: if left { -1 } else { 1 },
+            _pad1: 0,
+            _pad2: 0,
+            _pad3: 0,
         }
     }
 
@@ -136,10 +161,13 @@ struct State {
 
     camera: Camera,
     camera_uniform: CameraUniform,
-    camera_buffer: wgpu::Buffer,
-    camera_bind_group: wgpu::BindGroup,
+    camera_buffer_right: wgpu::Buffer,
+    camera_buffer_left: wgpu::Buffer,
+    camera_bind_group_left: wgpu::BindGroup,
+    camera_bind_group_right: wgpu::BindGroup,
 
     _clear_color: wgpu::Color,
+    _eye_distance: f32,
 }
 
 impl State {
@@ -220,16 +248,23 @@ impl State {
             target: (0.0, 0.0, 0.0).into(),
             // which way is "up"
             up: cgmath::Vector3::unit_y(),
-            aspect: config.width as f32 / config.height as f32,
+            aspect: (config.width as f32 / 2.0) / config.height as f32,
             fovy: 45.0,
             znear: 0.1,
             zfar: 100.0,
         };
 
-        let mut camera_uniform = CameraUniform::new();
+        let mut camera_uniform = CameraUniform::new(true);
         camera_uniform.update_view_proj(&camera);
 
-        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let camera_buffer_left = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Buffer"),
+            contents: bytemuck::cast_slice(&[camera_uniform]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+        let mut camera_uniform = CameraUniform::new(false);
+        camera_uniform.update_view_proj(&camera);
+        let camera_buffer_right = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
             contents: bytemuck::cast_slice(&[camera_uniform]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
@@ -250,11 +285,20 @@ impl State {
                 label: Some("camera_bind_group_layout"),
             });
 
-        let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let camera_bind_group_left = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &camera_bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
-                resource: camera_buffer.as_entire_binding(),
+                resource: camera_buffer_left.as_entire_binding(),
+            }],
+            label: Some("camera_bind_group"),
+        });
+
+        let camera_bind_group_right = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &camera_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: camera_buffer_right.as_entire_binding(),
             }],
             label: Some("camera_bind_group"),
         });
@@ -335,14 +379,17 @@ impl State {
             num_indices,
             camera,
             camera_uniform,
-            camera_buffer,
-            camera_bind_group,
+            camera_buffer_left,
+            camera_buffer_right,
+            camera_bind_group_left: camera_bind_group_left,
+            camera_bind_group_right: camera_bind_group_right,
             _clear_color: wgpu::Color {
                 r: 0.1,
                 g: 0.2,
                 b: 0.3,
                 a: 1.0,
             },
+            _eye_distance: 1.5,
         }
     }
 
@@ -399,17 +446,38 @@ impl State {
                 command::Command::LoadLevel(name) => {
                     log::info!("Hello, {}!", name);
                 }
+                command::Command::SetEyeDistance(distance) => {
+                    self._eye_distance = distance;
+                }
             }
         }
 
         let time = instant::now() / 1000.0;
-        let radius = 2.0;
-        self.camera.eye.x = (time.cos() * radius) as f32;
-        self.camera.eye.y = 1.0;
-        self.camera.eye.z = (time.sin() * radius) as f32;
+        let radius = 5.0;
+        let mut eye = cgmath::Point3::new(0.0, 0.0, 0.0);
+        eye.x = (time.cos() * radius) as f32;
+        eye.y = 1.0;
+        eye.z = (time.sin() * radius) as f32;
         self.camera.target = cgmath::Point3::new(0.0, 0.0, 0.0);
+        let looking_vec = (self.camera.target - eye).normalize();
+        let right_vec = looking_vec.cross(cgmath::Vector3::unit_y());
+        self.camera.eye = eye + right_vec * self._eye_distance * 0.5;
         self.camera_uniform.update_view_proj(&self.camera);
-        self.queue.write_buffer(&self.camera_buffer, 0, bytemuck::cast_slice(&[self.camera_uniform]));
+        self.camera_uniform.left = -1;
+        self.queue.write_buffer(
+            &self.camera_buffer_left,
+            0,
+            bytemuck::cast_slice(&[self.camera_uniform]),
+        );
+
+        self.camera.eye = eye - right_vec * self._eye_distance * 0.5;
+        self.camera_uniform.update_view_proj(&self.camera);
+        self.camera_uniform.left = 1;
+        self.queue.write_buffer(
+            &self.camera_buffer_right,
+            0,
+            bytemuck::cast_slice(&[self.camera_uniform]),
+        );
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -426,7 +494,7 @@ impl State {
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
+                label: Some("Render Pass Left"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
                     resolve_target: None,
@@ -441,7 +509,29 @@ impl State {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
+            render_pass.set_bind_group(0, &self.camera_bind_group_left, &[]);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+        }
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass Right"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Load,
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
+            });
+
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_bind_group(0, &self.camera_bind_group_right, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
@@ -473,7 +563,7 @@ pub async fn run() {
         // Winit prevents sizing with CSS, so we have to set
         // the size manually when on web.
         use winit::dpi::PhysicalSize;
-        window.set_inner_size(PhysicalSize::new(450, 400));
+        window.set_inner_size(PhysicalSize::new(900, 400));
 
         use winit::platform::web::WindowExtWebSys;
         web_sys::window()

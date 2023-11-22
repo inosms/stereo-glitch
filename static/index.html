@@ -15,10 +15,12 @@
 
 <body>
     <script type="module">
-        import init, { load_level } from "./stereo_glitch.js";
+        import init, { load_level, set_eye_distance } from "./stereo_glitch.js";
         init().then(() => {
             console.log("WASM Loaded");
             window.load_level = load_level; // Attach load_level to the window object
+            window.set_eye_distance = set_eye_distance; // Attach set_eye_distance to the window object
+
         });
     </script>
     <div id="game-container"></div>

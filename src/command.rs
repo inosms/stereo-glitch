@@ -5,6 +5,7 @@ use wasm_bindgen::prelude::*;
 #[derive(Debug)]
 pub enum Command {
     LoadLevel(String),
+    SetEyeDistance(f32),
 }
 
 pub struct CommandQueue {
@@ -37,4 +38,9 @@ pub fn load_level(level: &str) -> Result<(), String>{
 
     // TODO: add channel and send result back to JS
     Ok(()) 
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn set_eye_distance(distance: f32) {
+    COMMANDS.push(Command::SetEyeDistance(distance));
 }
