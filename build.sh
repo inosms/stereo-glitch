@@ -1,7 +1,8 @@
 #!/bin/bash
 
 echo "Building..."
-wasm-pack build --target web
+# supply all command line arguments to the build command
+wasm-pack build --target web $@                                                     
 
 echo "Copying..."
 mkdir -p site
