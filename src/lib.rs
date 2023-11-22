@@ -6,6 +6,8 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
+mod command;
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
@@ -208,11 +210,10 @@ impl State {
     }
 
     fn update(&mut self) {
-        let mut commands = COMMANDS.lock().unwrap();
-        while let Some(command) = commands.pop_front() {
+        while let Some(command) = command::COMMANDS.pop() {
             log::info!("Command: {:?}", command);
             match command {
-                Command::Greet(name) => {
+                command::Command::LoadLevel(name) => {
                     log::info!("Hello, {}!", name);
                 }
             }
@@ -258,20 +259,6 @@ impl State {
     }
 }
 
-
-#[derive(Debug)]
-enum Command {
-    Greet(String),
-}
-
-lazy_static::lazy_static! {
-    static ref COMMANDS : Mutex<VecDeque<Command>> = Mutex::new(VecDeque::new());
-}
-
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn greet(name: &str) {
-    COMMANDS.lock().unwrap().push_back(Command::Greet(name.to_string()));
-}
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
