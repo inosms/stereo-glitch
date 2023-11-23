@@ -451,7 +451,7 @@ impl State {
                 b: 0.3,
                 a: 1.0,
             },
-            _eye_distance: 0.7,
+            _eye_distance: -0.7,
         }
     }
 

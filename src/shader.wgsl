@@ -24,6 +24,9 @@ struct InstanceInput {
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) color: vec3<f32>,
+    @location(1) clip_space_pos: vec3<f32>,
+    // -1 for left eye, 1 for right eye
+    @location(2) camera_left: f32,
 };
 
 @vertex
@@ -47,13 +50,18 @@ fn vs_main(
     out.clip_position.w = 1.0;
 
     out.clip_position.x /= 2.0;
-   out.clip_position.x -= 0.5 * f32(camera.left);
+    out.clip_position.x += 0.5 * f32(camera.left);
+    out.camera_left = f32(camera.left);
+    out.clip_space_pos = vec3<f32>(out.clip_position.x, out.clip_position.y, out.clip_position.z);
     return out;
 }
 
 // Fragment shader
-
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    // if out of bounds for each eye discard
+    if ((in.clip_space_pos.x * in.camera_left) < 0.0 || (in.clip_space_pos.x * in.camera_left) > 1.0) {
+        discard;
+    }
     return vec4<f32>(in.color, 1.0);
 }
