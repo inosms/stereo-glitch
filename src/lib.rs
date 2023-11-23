@@ -79,8 +79,18 @@ const VERTICES: &[Vertex] = &[
 ];
 
 const INDICES: &[u16] = &[
-    0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 2, 3, 7, 2, 7, 6, 0, 3, 7, 0, 7, 4, 1, 2,
-    5, 1, 6, 5,
+    0, 1, 2,
+    0, 2, 3, 
+    4, 5, 6, 
+    4, 6, 7, 
+    0, 1, 5, 
+    0, 5, 4, 
+    3, 2, 6, 
+    3, 6, 7, 
+    0, 3, 7, 
+    0, 7, 4, 
+    1, 2, 6, 
+    1, 6, 5,
 ];
 
 struct Camera {
@@ -467,10 +477,10 @@ impl State {
         }
 
         let time = instant::now() / 1000.0;
-        let radius = 5.0;
+        let radius = 4.0;
         let mut eye = cgmath::Point3::new(0.0, 0.0, 0.0);
         eye.x = (time.cos() * radius) as f32;
-        eye.y = 1.0;
+        eye.y = 1.0 + (time.sin() * radius) as f32;
         eye.z = (time.sin() * radius) as f32;
         self.camera.target = cgmath::Point3::new(0.0, 0.0, 0.0);
         let looking_vec = (self.camera.target - eye).normalize();
