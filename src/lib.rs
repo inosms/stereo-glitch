@@ -10,6 +10,7 @@ use winit::{
 
 mod command;
 mod texture;
+mod level_loader;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -468,7 +469,7 @@ impl State {
             log::info!("Command: {:?}", command);
             match command {
                 command::Command::LoadLevel(name) => {
-                    log::info!("Hello, {}!", name);
+                    // TODO
                 }
                 command::Command::SetEyeDistance(distance) => {
                     self._eye_distance = distance;

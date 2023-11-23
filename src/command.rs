@@ -2,9 +2,11 @@ use std::{sync::Mutex, collections::VecDeque};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
+use crate::level_loader;
+
 #[derive(Debug)]
 pub enum Command {
-    LoadLevel(String),
+    LoadLevel(level_loader::ParsedLevel),
     SetEyeDistance(f32),
 }
 
@@ -34,10 +36,20 @@ lazy_static::lazy_static! {
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn load_level(level: &str) -> Result<(), String>{
-    COMMANDS.push(Command::LoadLevel(level.to_string()));
+    match level_loader::parse_level(level) {
+        Ok((rest, parsed)) => {
+            for ((x,y), cell) in parsed.iter_cells() {
+                log::info!("Cell at ({},{}): {:?}", x, y, cell);
+            }
 
-    // TODO: add channel and send result back to JS
-    Ok(()) 
+            COMMANDS.push(Command::LoadLevel(parsed));
+            return Ok(());
+        },
+        Err(e) => {
+            log::info!("Error: {:?}", e);
+            return Err(e.to_string());
+        }
+    }
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
