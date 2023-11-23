@@ -530,12 +530,12 @@ impl State {
         }
 
         let time = instant::now() / 1000.0;
-        let radius = 4.0;
+        let radius = 2.0;
         let mut eye = cgmath::Point3::new(0.0, 0.0, 0.0);
         eye.x = (time.cos() * radius) as f32;
-        eye.z = 9.0;
+        eye.z = 5.0;
         eye.y = -5.0;
-        self.camera.target = cgmath::Point3::new(0.0, 0.0, 0.0);
+        self.camera.target = cgmath::Point3::new(eye.x, 0.0, 0.0);
         let looking_vec = (self.camera.target - eye).normalize();
         let right_vec = looking_vec.cross(cgmath::Vector3::unit_y());
         self.camera.eye = eye + right_vec * self._eye_distance * 0.5;
