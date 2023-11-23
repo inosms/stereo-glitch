@@ -508,6 +508,7 @@ impl State {
             log::info!("Command: {:?}", command);
             match command {
                 command::Command::LoadLevel(name) => {
+                    self.game_world.clear();
                     for ((x, y), cell) in name.iter_cells() {
                         log::info!("Add cell at ({},{}): {:?}", x, y, cell);
                         self.game_world.add_cell(x, y, cell);
@@ -523,11 +524,9 @@ impl State {
 
         for mesh_handle in self.mesh_store.iter_handles() {
             let instances = self.game_world.iter_instances(mesh_handle);
-            if instances.len() > 0 {
-                self.mesh_store.get_mut(mesh_handle).map(|mesh| {
-                    mesh.update_instance_buffer(&self.device, &self.queue, &instances);
-                });
-            }
+            self.mesh_store.get_mut(mesh_handle).map(|mesh| {
+                mesh.update_instance_buffer(&self.device, &self.queue, &instances);
+            });
         }
 
         let time = instant::now() / 1000.0;
@@ -535,7 +534,7 @@ impl State {
         let mut eye = cgmath::Point3::new(0.0, 0.0, 0.0);
         eye.x = (time.cos() * radius) as f32;
         eye.z = 9.0;
-        eye.y = (time.sin() * radius) as f32;
+        eye.y = -5.0;
         self.camera.target = cgmath::Point3::new(0.0, 0.0, 0.0);
         let looking_vec = (self.camera.target - eye).normalize();
         let right_vec = looking_vec.cross(cgmath::Vector3::unit_y());

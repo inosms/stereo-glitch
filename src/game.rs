@@ -77,10 +77,9 @@ impl GameWorld {
         self.schedule.run(&mut self.world);
     }
 
-    //    pub fn iter_renderable<'a>(&'a mut self) -> impl Iterator<Item = (&'a Renderable, &'a Position)> {
-    //         let mut query = self.world.query::<(&Renderable, &Position)>()
-    //         return query.iter(&self.world);
-    //    }
+    pub fn clear(&mut self) {
+        self.world.clear_all();
+    }
 
     pub fn add_cell(&mut self, x: i32, y: i32, cell: &Cell) {
         let mut z = 0;
