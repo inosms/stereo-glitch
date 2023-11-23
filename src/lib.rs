@@ -1,5 +1,11 @@
 use cgmath::InnerSpace;
-use std::{collections::VecDeque, iter, sync::Mutex};
+use level_loader::BlockType;
+use mesh::InstanceRaw;
+use std::{
+    collections::{HashMap, VecDeque},
+    iter,
+    sync::Mutex,
+};
 use wgpu::util::DeviceExt;
 
 use winit::{
@@ -9,8 +15,10 @@ use winit::{
 };
 
 mod command;
-mod texture;
+mod game;
 mod level_loader;
+mod mesh;
+mod texture;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -80,18 +88,8 @@ const VERTICES: &[Vertex] = &[
 ];
 
 const INDICES: &[u16] = &[
-    0, 1, 2,
-    0, 2, 3, 
-    4, 5, 6, 
-    4, 6, 7, 
-    0, 1, 5, 
-    0, 5, 4, 
-    3, 2, 6, 
-    3, 6, 7, 
-    0, 3, 7, 
-    0, 7, 4, 
-    1, 2, 6, 
-    1, 6, 5,
+    0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 3, 2, 6, 3, 6, 7, 0, 3, 7, 0, 7, 4, 1, 2,
+    6, 1, 6, 5,
 ];
 
 struct Camera {
@@ -178,6 +176,9 @@ struct State {
     camera_bind_group_left: wgpu::BindGroup,
     camera_bind_group_right: wgpu::BindGroup,
     depth_texture: texture::Texture,
+
+    game_world: game::GameWorld,
+    mesh_store: mesh::MeshStore,
 
     _clear_color: wgpu::Color,
     _eye_distance: f32,
@@ -329,7 +330,7 @@ impl State {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Vertex::desc()],
+                buffers: &[Vertex::desc(), InstanceRaw::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -388,6 +389,42 @@ impl State {
         let depth_texture =
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
+        let mut mesh_store = mesh::MeshStore::new();
+        let initial_instance_buffer_size: i32 = 1;
+        let wall_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [1.0, 0.0, 0.0],
+            initial_instance_buffer_size as usize,
+        ));
+        let floor_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [0.0, 1.0, 0.0],
+            initial_instance_buffer_size as usize,
+        ));
+        let player_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [0.0, 0.0, 1.0],
+            initial_instance_buffer_size as usize,
+        ));
+        let goal_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [1.0, 1.0, 0.0],
+            initial_instance_buffer_size as usize,
+        ));
+        let door_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [1.0, 0.0, 1.0],
+            initial_instance_buffer_size as usize,
+        ));
+
+        let handle_store = HashMap::from_iter(vec![
+            (BlockType::Wall, wall_mesh),
+            (BlockType::FloorNormal, floor_mesh),
+            (BlockType::Player, player_mesh),
+            (BlockType::Goal, goal_mesh),
+            (BlockType::Door, door_mesh),
+        ]);
+
         Self {
             surface,
             device,
@@ -406,6 +443,8 @@ impl State {
             camera_bind_group_left: camera_bind_group_left,
             camera_bind_group_right: camera_bind_group_right,
             depth_texture,
+            mesh_store,
+            game_world: game::GameWorld::new(handle_store),
             _clear_color: wgpu::Color {
                 r: 0.1,
                 g: 0.2,
@@ -469,7 +508,10 @@ impl State {
             log::info!("Command: {:?}", command);
             match command {
                 command::Command::LoadLevel(name) => {
-                    // TODO
+                    for ((x, y), cell) in name.iter_cells() {
+                        log::info!("Add cell at ({},{}): {:?}", x, y, cell);
+                        self.game_world.add_cell(x, y, cell);
+                    }
                 }
                 command::Command::SetEyeDistance(distance) => {
                     self._eye_distance = distance;
@@ -477,12 +519,23 @@ impl State {
             }
         }
 
+        self.game_world.update();
+
+        for mesh_handle in self.mesh_store.iter_handles() {
+            let instances = self.game_world.iter_instances(mesh_handle);
+            if instances.len() > 0 {
+                self.mesh_store.get_mut(mesh_handle).map(|mesh| {
+                    mesh.update_instance_buffer(&self.device, &self.queue, &instances);
+                });
+            }
+        }
+
         let time = instant::now() / 1000.0;
         let radius = 4.0;
         let mut eye = cgmath::Point3::new(0.0, 0.0, 0.0);
         eye.x = (time.cos() * radius) as f32;
-        eye.y = 1.0 + (time.sin() * radius) as f32;
-        eye.z = (time.sin() * radius) as f32;
+        eye.z = 9.0;
+        eye.y = (time.sin() * radius) as f32;
         self.camera.target = cgmath::Point3::new(0.0, 0.0, 0.0);
         let looking_vec = (self.camera.target - eye).normalize();
         let right_vec = looking_vec.cross(cgmath::Vector3::unit_y());
@@ -541,13 +594,15 @@ impl State {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(0, &self.camera_bind_group_left, &[]);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
-
-            render_pass.set_bind_group(0, &self.camera_bind_group_right, &[]);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+            for camera in vec![&self.camera_bind_group_left, &self.camera_bind_group_right] {
+                render_pass.set_bind_group(0, camera, &[]);
+                for mesh_handle in self.mesh_store.iter_handles() {
+                    // let instances = self.game_world.iter_instances(mesh_handle);
+                    self.mesh_store.get(mesh_handle).map(|mesh| {
+                        mesh.render_instances(&mut render_pass);
+                    });
+                }
+            }
         }
         self.queue.submit(iter::once(encoder.finish()));
         output.present();

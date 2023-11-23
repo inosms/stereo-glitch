@@ -34,8 +34,8 @@ impl TryFrom<&str> for Id {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-enum BlockType {
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+pub enum BlockType {
     FloorNormal,
     Player,
     Door,
@@ -44,10 +44,29 @@ enum BlockType {
     Wall,
 }
 
+impl BlockType {
+    pub fn block_height(&self) -> i32 {
+        match self {
+            BlockType::FloorNormal => 1,
+            BlockType::Player => 2,
+            BlockType::Door => 2,
+            BlockType::Empty => 1,
+            BlockType::Goal => 1,
+            BlockType::Wall => 2,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Cell {
     is_glitch_area: bool,
     block_stack: Vec<(BlockType, Option<Id>)>,
+}
+
+impl Cell {
+    pub fn block_stack_iter(&self) -> impl Iterator<Item = &(BlockType, Option<Id>)> {
+        self.block_stack.iter()
+    }
 }
 
 pub struct ParsedLevel {
