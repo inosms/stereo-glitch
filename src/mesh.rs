@@ -36,19 +36,19 @@ impl Vertex {
 // 1x1 cube that is centered around (0, 0, 0.5)
 const CUBE_VERTICES: &[Vertex] = &[
     Vertex {
-        position: [0.5, 0.5, 0.0],
+        position: [0.5, 0.5, -0.5],
         color: [0.0, 0.0, 0.0],
     },
     Vertex {
-        position: [0.5, -0.5, 0.0],
+        position: [0.5, -0.5, -0.5],
         color: [0.0, 0.0, 0.0],
     },
     Vertex {
-        position: [-0.5, -0.5, 0.0],
+        position: [-0.5, -0.5,-0.5],
         color: [0.0, 0.0, 0.0],
     },
     Vertex {
-        position: [-0.5, 0.5, 0.0],
+        position: [-0.5, 0.5, -0.5],
         color: [0.0, 0.0, 0.0],
     },
     Vertex {

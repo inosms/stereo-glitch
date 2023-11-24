@@ -123,7 +123,7 @@ impl GameWorld {
                         z as f32 + block_type.block_height() as f32 / 2.0,
                         0.5,
                         0.5,
-                        block_type.block_height() as f32,
+                        block_type.block_height() as f32 / 2.0,
                     )
                 } else {
                     self.world.resource_mut::<PhysicsSystem>().add_movable(
@@ -132,7 +132,7 @@ impl GameWorld {
                         z as f32 + block_type.block_height() as f32 / 2.0,
                         0.5,
                         0.5,
-                        block_type.block_height() as f32,
+                        block_type.block_height() as f32 / 2.0,
                     )
                 };
 

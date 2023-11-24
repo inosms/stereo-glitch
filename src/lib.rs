@@ -18,8 +18,8 @@ mod command;
 mod game;
 mod level_loader;
 mod mesh;
-mod texture;
 mod physics;
+mod texture;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -452,7 +452,7 @@ impl State {
                 b: 0.3,
                 a: 1.0,
             },
-            _eye_distance: -0.7,
+            _eye_distance: -0.5,
         }
     }
 
@@ -533,7 +533,7 @@ impl State {
         let time = instant::now() / 1000.0;
         let radius = 2.0;
         let mut eye = cgmath::Point3::new(0.0, 0.0, 0.0);
-        eye.x = (time.cos() * radius) as f32;
+        eye.x = 3.0 + (time.cos() * radius) as f32;
         eye.z = 5.0;
         eye.y = -5.0;
         self.camera.target = cgmath::Point3::new(eye.x, 0.0, 0.0);

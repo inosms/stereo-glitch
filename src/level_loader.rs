@@ -48,7 +48,7 @@ impl BlockType {
     pub fn block_height(&self) -> i32 {
         match self {
             BlockType::FloorNormal => 1,
-            BlockType::Player => 2,
+            BlockType::Player => 1,
             BlockType::Door => 2,
             BlockType::Empty => 1,
             BlockType::Goal => 1,
@@ -112,7 +112,7 @@ impl Debug for ParsedLevel {
 // Ids are always of the form of #<id> where <id> is a string of length 1-10
 // and is alphanumeric.
 fn parse_id(input: &str) -> IResult<&str, Id> {
-    let (rest, id) = opt(tag("#"))(input)?;
+    let (rest, _) = tag("#")(input)?;
     let (rest, id) = take_while_m_n(1, 10, |c: char| c.is_ascii_alphanumeric())(rest)?;
     Ok((rest, Id::try_from(id).unwrap()))
 }
@@ -155,5 +155,6 @@ fn parse_level_line(input: &str) -> IResult<&str, Vec<Cell>> {
 
 pub fn parse_level(input: &str) -> IResult<&str, ParsedLevel> {
     let (_rest, parsed) = separated_list0(newline, parse_level_line)(input)?;
+    log::info!("Rest: {:?}", _rest);
     Ok((_rest, ParsedLevel::new(parsed)))
 }
