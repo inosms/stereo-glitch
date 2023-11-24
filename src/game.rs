@@ -6,6 +6,7 @@ use cgmath::Rotation3;
 use crate::{
     level_loader::{BlockType, Cell},
     mesh::{Handle, Mesh},
+    physics::PhysicsSystem,
 };
 
 #[derive(Component, Clone, Copy, Debug)]
@@ -46,6 +47,11 @@ pub struct Renderable {
     mesh: Handle,
 }
 
+#[derive(Component)]
+struct PhysicsBody {
+    body: rapier3d::dynamics::RigidBodyHandle,
+}
+
 pub struct GameWorld {
     world: World,
     schedule: Schedule,
@@ -60,17 +66,33 @@ fn logger(query: Query<(&Position, &Player)>) {
     // }
 }
 
+fn physics_system(
+    mut physics_system: ResMut<PhysicsSystem>,
+    mut query: Query<(&mut Position, &PhysicsBody)>,
+) {
+    physics_system.step();
+    for (mut position, physics_body) in &mut query {
+        let pos = physics_system.get_position(physics_body.body);
+        position.position = pos.position;
+        position.rotation = pos.rotation;
+    }
+}
+
 impl GameWorld {
     pub fn new(handle_store: HashMap<BlockType, Handle>) -> Self {
-        let world = World::default();
-        let mut schedule = Schedule::default();
-        schedule.add_systems(logger);
-
-        Self {
-            world,
-            schedule,
+        let mut game_world = Self {
+            world: World::default(),
+            schedule: Schedule::default(),
             handle_store,
-        }
+        };
+        game_world.init();
+        game_world
+    }
+
+    fn init(&mut self) {
+        self.world.insert_resource(PhysicsSystem::new());
+        self.schedule.add_systems(logger);
+        self.schedule.add_systems(physics_system);
     }
 
     pub fn update(&mut self) {
@@ -79,26 +101,44 @@ impl GameWorld {
 
     pub fn clear(&mut self) {
         self.world.clear_all();
+        self.init();
     }
 
     pub fn add_cell(&mut self, x: i32, y: i32, cell: &Cell) {
         let mut z = 0;
         for (block_type, _) in cell.block_stack_iter() {
             if block_type != &BlockType::Empty {
-                let mut entity = self.world.spawn((
-                    // position the object in the middle of the cell
-                    Position {
-                        position: cgmath::Vector3::new(
-                            x as f32 + 0.5,
-                            -y as f32 + 0.5,
-                            z as f32,
-                        ),
-                        rotation: cgmath::Quaternion::from_axis_angle(
-                            cgmath::Vector3::unit_z(),
-                            cgmath::Deg(0.0),
-                        ),
-                    },
-                ));
+                let position = Position {
+                    position: cgmath::Vector3::new(x as f32 + 0.5, -y as f32 + 0.5, z as f32),
+                    rotation: cgmath::Quaternion::from_axis_angle(
+                        cgmath::Vector3::unit_z(),
+                        cgmath::Deg(0.0),
+                    ),
+                };
+
+                let body_handle = if block_type.is_static() {
+                    self.world.resource_mut::<PhysicsSystem>().add_immovable(
+                        x as f32 + 0.5,
+                        -y as f32 + 0.5,
+                        z as f32 + block_type.block_height() as f32 / 2.0,
+                        0.5,
+                        0.5,
+                        block_type.block_height() as f32,
+                    )
+                } else {
+                    self.world.resource_mut::<PhysicsSystem>().add_movable(
+                        x as f32 + 0.5,
+                        -y as f32 + 0.5,
+                        z as f32 + block_type.block_height() as f32 / 2.0,
+                        0.5,
+                        0.5,
+                        block_type.block_height() as f32,
+                    )
+                };
+
+                let mut entity = self
+                    .world
+                    .spawn((position, PhysicsBody { body: body_handle }));
 
                 match block_type {
                     BlockType::Player => {

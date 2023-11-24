@@ -55,6 +55,17 @@ impl BlockType {
             BlockType::Wall => 2,
         }
     }
+
+    pub fn is_static(&self) -> bool {
+        match self {
+            BlockType::FloorNormal => true,
+            BlockType::Player => false,
+            BlockType::Door => false,
+            BlockType::Empty => true,
+            BlockType::Goal => true,
+            BlockType::Wall => true,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]

@@ -19,6 +19,7 @@ mod game;
 mod level_loader;
 mod mesh;
 mod texture;
+mod physics;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
