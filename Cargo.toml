@@ -39,5 +39,5 @@ crate-type = ["cdylib", "rlib"]
 
 [profile.release]
 lto = true
-opt-level = 's'
+opt-level = 'z'
 codegen-units = 1
