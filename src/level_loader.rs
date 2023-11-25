@@ -55,7 +55,7 @@ impl BlockType {
         match self {
             BlockType::FloorNormal => 1,
             BlockType::Player => 1,
-            BlockType::Door => 2,
+            BlockType::Door => 1,
             BlockType::Empty => 1,
             BlockType::Goal => 1,
             BlockType::Wall => 2,

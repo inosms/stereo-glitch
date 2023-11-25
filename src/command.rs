@@ -38,10 +38,6 @@ lazy_static::lazy_static! {
 pub fn load_level(level: &str) -> Result<(), String>{
     match level_loader::parse_level(level) {
         Ok((rest, parsed)) => {
-            for ((x,y), cell) in parsed.iter_cells() {
-                log::info!("Cell at ({},{}): {:?}", x, y, cell);
-            }
-
             COMMANDS.push(Command::LoadLevel(parsed));
             return Ok(());
         },

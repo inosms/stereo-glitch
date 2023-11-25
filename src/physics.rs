@@ -119,8 +119,6 @@ impl PhysicsSystem {
     }
 
     pub fn move_body(&mut self, body_handle: RigidBodyHandle, direction: cgmath::Vector3<f32>) {
-        // https://github.com/dimforge/rapier/blob/master/src_testbed/testbed.rs#L769
-
         let body = self.rigid_body_set.get(body_handle).unwrap();
         let collider_handle = body.colliders().first().unwrap().clone();
         let collider = self.collider_set.get(collider_handle).unwrap();
@@ -128,11 +126,9 @@ impl PhysicsSystem {
         let pos = body.position();
         let mass = body.mass();
 
-        let speed = 0.01;
-        let desired_translation = vector![direction.x, direction.y, direction.z] * speed;
+        let desired_translation = vector![direction.x, direction.y, direction.z];
         let mut character_controller = KinematicCharacterController::default();
         character_controller.up = Vector::z_axis();
-        character_controller.autostep = None;
 
         let mut collisions = vec![];
         let corrected_movement = character_controller.move_shape(
@@ -143,7 +139,7 @@ impl PhysicsSystem {
             shape,
             pos,
             desired_translation,
-            QueryFilter::default().exclude_rigid_body(body_handle),
+            QueryFilter::default().exclude_rigid_body(body_handle), // .exclude_collider(collider_handle),
             |c| collisions.push(c),
         );
 
@@ -156,7 +152,7 @@ impl PhysicsSystem {
                 shape,
                 mass,
                 collision,
-                QueryFilter::new().exclude_rigid_body(body_handle),
+                QueryFilter::new().exclude_rigid_body(body_handle), // .exclude_collider(collider_handle),
             )
         }
 

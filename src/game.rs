@@ -59,33 +59,30 @@ pub struct GameWorld {
     handle_store: HashMap<BlockType, Handle>,
 }
 
+#[derive(Resource)]
+struct Input {
+    player_movement: Option<cgmath::Vector3<f32>>, // if consumed  set to None
+}
+
 fn move_player_system(
     // keyboard_input: Res<Input<bevy::input::keyboard::KeyCode>>,
     mut physics_system: ResMut<PhysicsSystem>,
+    mut input: ResMut<Input>,
     mut query: Query<(&mut Position, &PhysicsBody), With<Player>>,
 ) {
-    for (mut position, physics_body) in &mut query {
-        let mut direction = cgmath::Vector3::new(0.0, 0.00001, 0.0);
-        // if keyboard_input.pressed(KeyCode::W) {
-        //     direction.y += 1.0;
-        // }
-        // if keyboard_input.pressed(KeyCode::S) {
-        //     direction.y -= 1.0;
-        // }
-        // if keyboard_input.pressed(KeyCode::A) {
-        //     direction.x -= 1.0;
-        // }
-        // if keyboard_input.pressed(KeyCode::D) {
-        //     direction.x += 1.0;
-        // }
-        if direction.magnitude() > 0.0 {
-            direction = direction.normalize();
-        }
-        physics_system.move_body(physics_body.body, direction);
+    if let Some(requested_movement) = input.player_movement.take() {
+        for (mut position, physics_body) in &mut query {
+            let mut direction = requested_movement;
+            if direction.magnitude() > 0.0 {
+                direction = direction.normalize();
+            }
+            let player_max_speed = 0.1;
+            physics_system.move_body(physics_body.body, direction * player_max_speed);
 
-        let pos = physics_system.get_position(physics_body.body);
-        position.position = pos.position;
-        position.rotation = pos.rotation;
+            let pos = physics_system.get_position(physics_body.body);
+            position.position = pos.position;
+            position.rotation = pos.rotation;
+        }
     }
 }
 
@@ -114,6 +111,9 @@ impl GameWorld {
 
     fn init(&mut self) {
         self.world.insert_resource(PhysicsSystem::new());
+        self.world.insert_resource(Input {
+            player_movement: None,
+        });
         self.schedule.add_systems(physics_system);
         self.schedule.add_systems(move_player_system);
     }
@@ -184,6 +184,14 @@ impl GameWorld {
 
             z += block_type.block_height();
         }
+    }
+
+    pub fn move_player(&mut self, direction: cgmath::Vector3<f32>) {
+        self.world
+            .get_resource_mut::<Input>()
+            .unwrap()
+            .player_movement = Some(direction);
+
     }
 
     pub(crate) fn iter_instances(&mut self, mesh_handle: Handle) -> Vec<&Position> {

@@ -2,7 +2,7 @@ use cgmath::InnerSpace;
 use level_loader::BlockType;
 use mesh::InstanceRaw;
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     iter,
     sync::Mutex,
 };
@@ -183,6 +183,8 @@ struct State {
 
     _clear_color: wgpu::Color,
     _eye_distance: f32,
+
+    key_pressed: HashSet<VirtualKeyCode>,
 }
 
 impl State {
@@ -453,6 +455,7 @@ impl State {
                 a: 1.0,
             },
             _eye_distance: -0.5,
+            key_pressed: Default::default(),
         }
     }
 
@@ -506,12 +509,11 @@ impl State {
 
     fn update(&mut self) {
         while let Some(command) = command::COMMANDS.pop() {
-            log::info!("Command: {:?}", command);
+            log::info!("Processing command: {:?}", command);
             match command {
                 command::Command::LoadLevel(name) => {
                     self.game_world.clear();
                     for ((x, y), cell) in name.iter_cells() {
-                        log::info!("Add cell at ({},{}): {:?}", x, y, cell);
                         self.game_world.add_cell(x, y, cell);
                     }
                 }
@@ -521,6 +523,20 @@ impl State {
             }
         }
 
+        let mut direction = cgmath::vec3(0.0, 0.0, 0.0);
+        if self.key_pressed.contains(&VirtualKeyCode::W) {
+            direction += cgmath::vec3(0.0, 1.0, 0.0);
+        }
+        if self.key_pressed.contains(&VirtualKeyCode::A) {
+            direction += cgmath::vec3(-1.0, 0.0, 0.0);
+        }
+        if self.key_pressed.contains(&VirtualKeyCode::S) {
+            direction += cgmath::vec3(0.0, -1.0, 0.0);
+        }
+        if self.key_pressed.contains(&VirtualKeyCode::D) {
+            direction += cgmath::vec3(1.0, 0.0, 0.0);
+        }
+        self.game_world.move_player(direction);
         self.game_world.update();
 
         for mesh_handle in self.mesh_store.iter_handles() {
@@ -533,7 +549,7 @@ impl State {
         let time = instant::now() / 1000.0;
         let radius = 2.0;
         let mut eye = cgmath::Point3::new(0.0, 0.0, 0.0);
-        eye.x = 3.0 + (time.cos() * radius) as f32;
+        eye.x = 3.0; //  + (time.cos() * radius) as f32;
         eye.z = 5.0;
         eye.y = -5.0;
         self.camera.target = cgmath::Point3::new(eye.x, 0.0, 0.0);
@@ -672,6 +688,32 @@ pub async fn run() {
                         WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                             // new_inner_size is &&mut so w have to dereference it twice
                             state.resize(**new_inner_size);
+                        }
+                        WindowEvent::KeyboardInput {
+                            input:
+                                KeyboardInput {
+                                    state: ElementState::Pressed,
+                                    virtual_keycode,
+                                    ..
+                                },
+                            ..
+                        } => {
+                            if let &Some(key_code) = virtual_keycode {
+                                state.key_pressed.insert(key_code);
+                            }
+                        }
+                        WindowEvent::KeyboardInput {
+                            input:
+                                KeyboardInput {
+                                    state: ElementState::Released,
+                                    virtual_keycode,
+                                    ..
+                                },
+                            ..
+                        } => {
+                            if let &Some(key_code) = virtual_keycode {
+                                state.key_pressed.remove(&key_code);
+                            }
                         }
                         event => {
                             state.input(event);
