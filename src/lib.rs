@@ -266,7 +266,7 @@ impl State {
             // which way is "up"
             up: cgmath::Vector3::unit_y(),
             aspect: (config.width as f32 / 2.0) / config.height as f32,
-            fovy: 45.0,
+            fovy: 60.0,
             znear: 0.1,
             zfar: 100.0,
         };
@@ -454,7 +454,7 @@ impl State {
                 b: 0.3,
                 a: 1.0,
             },
-            _eye_distance: -0.5,
+            _eye_distance: -1.0,
             key_pressed: Default::default(),
         }
     }
@@ -549,9 +549,9 @@ impl State {
         let time = instant::now() / 1000.0;
         let radius = 2.0;
         let mut eye = cgmath::Point3::new(0.0, 0.0, 0.0);
-        eye.x = 3.0; //  + (time.cos() * radius) as f32;
-        eye.z = 5.0;
-        eye.y = -5.0;
+        eye.x = 9.0;
+        eye.z = 10.0;
+        eye.y = -10.0;
         self.camera.target = cgmath::Point3::new(eye.x, 0.0, 0.0);
         let looking_vec = (self.camera.target - eye).normalize();
         let right_vec = looking_vec.cross(cgmath::Vector3::unit_y());

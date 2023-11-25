@@ -1,7 +1,7 @@
 use std::ops::Add;
 
 use bevy_ecs::system::Resource;
-use rapier3d::{control::KinematicCharacterController, prelude::*};
+use rapier3d::{control::{KinematicCharacterController, CharacterLength, CharacterAutostep}, prelude::*};
 
 use crate::{game::Position, level_loader::BlockPhysicsType};
 
@@ -129,6 +129,12 @@ impl PhysicsSystem {
         let desired_translation = vector![direction.x, direction.y, direction.z];
         let mut character_controller = KinematicCharacterController::default();
         character_controller.up = Vector::z_axis();
+        character_controller.offset = CharacterLength::Absolute(0.1);
+        character_controller.autostep = Some(CharacterAutostep {
+            max_height: CharacterLength::Absolute(0.1),
+            min_width: CharacterLength::Absolute(0.0),
+            include_dynamic_bodies: true,
+        });;
 
         let mut collisions = vec![];
         let corrected_movement = character_controller.move_shape(
@@ -139,7 +145,7 @@ impl PhysicsSystem {
             shape,
             pos,
             desired_translation,
-            QueryFilter::default().exclude_rigid_body(body_handle), // .exclude_collider(collider_handle),
+            QueryFilter::default().exclude_rigid_body(body_handle).exclude_collider(collider_handle),
             |c| collisions.push(c),
         );
 
@@ -152,7 +158,7 @@ impl PhysicsSystem {
                 shape,
                 mass,
                 collision,
-                QueryFilter::new().exclude_rigid_body(body_handle), // .exclude_collider(collider_handle),
+                QueryFilter::new().exclude_rigid_body(body_handle).exclude_collider(collider_handle),
             )
         }
 
