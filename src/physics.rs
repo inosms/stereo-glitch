@@ -1,7 +1,9 @@
-use bevy_ecs::system::Resource;
-use rapier3d::prelude::*;
+use std::ops::Add;
 
-use crate::game::Position;
+use bevy_ecs::system::Resource;
+use rapier3d::{control::KinematicCharacterController, prelude::*};
+
+use crate::{game::Position, level_loader::BlockPhysicsType};
 
 #[derive(Resource)]
 pub struct PhysicsSystem {
@@ -15,6 +17,7 @@ pub struct PhysicsSystem {
     ccd_solver: CCDSolver,
     physics_hooks: (),
     event_handler: (),
+    query_pipeline: QueryPipeline,
 
     rigid_body_set: RigidBodySet,
     collider_set: ColliderSet,
@@ -35,6 +38,7 @@ impl PhysicsSystem {
         let narrow_phase = NarrowPhase::new();
         let impulse_joint_set = ImpulseJointSet::new();
         let multibody_joint_set = MultibodyJointSet::new();
+        let query_pipeline = QueryPipeline::new();
         let ccd_solver = CCDSolver::new();
         let physics_hooks = ();
         let event_handler = ();
@@ -50,6 +54,7 @@ impl PhysicsSystem {
             ccd_solver,
             physics_hooks,
             event_handler,
+            query_pipeline,
 
             rigid_body_set,
             collider_set,
@@ -74,9 +79,11 @@ impl PhysicsSystem {
             &self.physics_hooks,
             &self.event_handler,
         );
+
+        self.query_pipeline.update(&self.rigid_body_set, &self.collider_set);
     }
 
-    pub fn add_immovable(
+    pub fn add_object(
         &mut self,
         x: f32,
         y: f32,
@@ -84,29 +91,15 @@ impl PhysicsSystem {
         x_extent: f32,
         y_extent: f32,
         z_extent: f32,
+        block_physics_type: BlockPhysicsType,
     ) -> RigidBodyHandle {
-        let rigid_body = RigidBodyBuilder::fixed()
-            .translation(vector![x, y, z])
-            .build();
-        let collider = ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build();
-        let body_handle = self.rigid_body_set.insert(rigid_body);
-        self.collider_set
-            .insert_with_parent(collider, body_handle, &mut self.rigid_body_set);
-        body_handle
-    }
-
-    pub fn add_movable(
-        &mut self,
-        x: f32,
-        y: f32,
-        z: f32,
-        x_extent: f32,
-        y_extent: f32,
-        z_extent: f32,
-    ) -> RigidBodyHandle {
-        let rigid_body = RigidBodyBuilder::dynamic()
-            .translation(vector![x, y, z])
-            .build();
+        let rigid_body = match block_physics_type {
+            BlockPhysicsType::Static => RigidBodyBuilder::fixed(),
+            BlockPhysicsType::Kinematic => RigidBodyBuilder::kinematic_position_based(),
+            BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic(),
+        }
+        .translation(vector![x, y, z])
+        .build();
         let collider = ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build();
         let body_handle = self.rigid_body_set.insert(rigid_body);
         self.collider_set
@@ -123,5 +116,51 @@ impl PhysicsSystem {
             position: cgmath::Vector3::new(pos.x, pos.y, pos.z),
             rotation: cgmath::Quaternion::new(rot.i, rot.j, rot.k, rot.w),
         }
+    }
+
+    pub fn move_body(&mut self, body_handle: RigidBodyHandle, direction: cgmath::Vector3<f32>) {
+        // https://github.com/dimforge/rapier/blob/master/src_testbed/testbed.rs#L769
+
+        let body = self.rigid_body_set.get(body_handle).unwrap();
+        let collider_handle = body.colliders().first().unwrap().clone();
+        let collider = self.collider_set.get(collider_handle).unwrap();
+        let shape = collider.shape();
+        let pos = body.position();
+        let mass = body.mass();
+
+        let speed = 0.01;
+        let desired_translation = vector![direction.x, direction.y, direction.z] * speed;
+        let mut character_controller = KinematicCharacterController::default();
+        character_controller.up = Vector::z_axis();
+        character_controller.autostep = None;
+
+        let mut collisions = vec![];
+        let corrected_movement = character_controller.move_shape(
+            self.integration_parameters.dt,
+            &self.rigid_body_set,
+            &self.collider_set,
+            &self.query_pipeline,
+            shape,
+            pos,
+            desired_translation,
+            QueryFilter::default().exclude_rigid_body(body_handle),
+            |c| collisions.push(c),
+        );
+
+        for collision in &collisions {
+            character_controller.solve_character_collision_impulses(
+                self.integration_parameters.dt,
+                &mut self.rigid_body_set,
+                &self.collider_set,
+                &self.query_pipeline,
+                shape,
+                mass,
+                collision,
+                QueryFilter::new().exclude_rigid_body(body_handle),
+            )
+        }
+
+        let body = self.rigid_body_set.get_mut(body_handle).unwrap();
+        body.set_next_kinematic_translation(body.translation() + corrected_movement.translation);
     }
 }

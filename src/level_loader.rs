@@ -34,6 +34,12 @@ impl TryFrom<&str> for Id {
     }
 }
 
+pub enum BlockPhysicsType {
+    Static,
+    Dynamic,
+    Kinematic,
+}
+
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum BlockType {
     FloorNormal,
@@ -56,14 +62,14 @@ impl BlockType {
         }
     }
 
-    pub fn is_static(&self) -> bool {
+    pub fn get_physics_type(&self) -> BlockPhysicsType {
         match self {
-            BlockType::FloorNormal => true,
-            BlockType::Player => false,
-            BlockType::Door => false,
-            BlockType::Empty => true,
-            BlockType::Goal => true,
-            BlockType::Wall => true,
+            BlockType::FloorNormal => BlockPhysicsType::Static,
+            BlockType::Player => BlockPhysicsType::Kinematic,
+            BlockType::Door => BlockPhysicsType::Dynamic,
+            BlockType::Empty => BlockPhysicsType::Static,
+            BlockType::Goal => BlockPhysicsType::Static,
+            BlockType::Wall => BlockPhysicsType::Static,
         }
     }
 }

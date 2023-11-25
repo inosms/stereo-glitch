@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use bevy_ecs::prelude::*;
-use cgmath::Rotation3;
+use cgmath::{InnerSpace, Rotation3};
 
 use crate::{
     level_loader::{BlockType, Cell},
@@ -59,11 +59,34 @@ pub struct GameWorld {
     handle_store: HashMap<BlockType, Handle>,
 }
 
-// This system moves each entity with a Position and Velocity component
-fn logger(query: Query<(&Position, &Player)>) {
-    // for (position, _) in &query {
-    //     log::info!("Player at {:?}", position.position);
-    // }
+fn move_player_system(
+    // keyboard_input: Res<Input<bevy::input::keyboard::KeyCode>>,
+    mut physics_system: ResMut<PhysicsSystem>,
+    mut query: Query<(&mut Position, &PhysicsBody), With<Player>>,
+) {
+    for (mut position, physics_body) in &mut query {
+        let mut direction = cgmath::Vector3::new(0.0, 0.00001, 0.0);
+        // if keyboard_input.pressed(KeyCode::W) {
+        //     direction.y += 1.0;
+        // }
+        // if keyboard_input.pressed(KeyCode::S) {
+        //     direction.y -= 1.0;
+        // }
+        // if keyboard_input.pressed(KeyCode::A) {
+        //     direction.x -= 1.0;
+        // }
+        // if keyboard_input.pressed(KeyCode::D) {
+        //     direction.x += 1.0;
+        // }
+        if direction.magnitude() > 0.0 {
+            direction = direction.normalize();
+        }
+        physics_system.move_body(physics_body.body, direction);
+
+        let pos = physics_system.get_position(physics_body.body);
+        position.position = pos.position;
+        position.rotation = pos.rotation;
+    }
 }
 
 fn physics_system(
@@ -91,8 +114,8 @@ impl GameWorld {
 
     fn init(&mut self) {
         self.world.insert_resource(PhysicsSystem::new());
-        self.schedule.add_systems(logger);
         self.schedule.add_systems(physics_system);
+        self.schedule.add_systems(move_player_system);
     }
 
     pub fn update(&mut self) {
@@ -116,25 +139,15 @@ impl GameWorld {
                     ),
                 };
 
-                let body_handle = if block_type.is_static() {
-                    self.world.resource_mut::<PhysicsSystem>().add_immovable(
-                        x as f32 + 0.5,
-                        -y as f32 + 0.5,
-                        z as f32 + block_type.block_height() as f32 / 2.0,
-                        0.5,
-                        0.5,
-                        block_type.block_height() as f32 / 2.0,
-                    )
-                } else {
-                    self.world.resource_mut::<PhysicsSystem>().add_movable(
-                        x as f32 + 0.5,
-                        -y as f32 + 0.5,
-                        z as f32 + block_type.block_height() as f32 / 2.0,
-                        0.5,
-                        0.5,
-                        block_type.block_height() as f32 / 2.0,
-                    )
-                };
+                let body_handle = self.world.resource_mut::<PhysicsSystem>().add_object(
+                    x as f32 + 0.5,
+                    -y as f32 + 0.5,
+                    z as f32 + block_type.block_height() as f32 / 2.0,
+                    0.5,
+                    0.5,
+                    block_type.block_height() as f32 / 2.0,
+                    block_type.get_physics_type(),
+                );
 
                 let mut entity = self
                     .world
