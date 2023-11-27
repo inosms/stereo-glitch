@@ -178,6 +178,9 @@ struct State {
     camera_bind_group_right: wgpu::BindGroup,
     depth_texture: texture::Texture,
 
+    glitch_area_texture_bind_group: wgpu::BindGroup,
+    glitch_area_texture: texture::Texture,
+
     game_world: game::GameWorld,
     mesh_store: mesh::MeshStore,
 
@@ -320,10 +323,65 @@ impl State {
             label: Some("camera_bind_group"),
         });
 
+        let glitch_area_texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        // This should match the filterable field of the
+                        // corresponding Texture entry above.
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+                label: Some("glitch_area_texture_bind_group_layout"),
+            });
+
+        let glitch_area_texture = texture::Texture::from_raw_rgba8(
+            &device,
+            &queue,
+            &vec![
+                0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                255, 255, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255,
+            ],
+            3,
+            3,
+            None,
+        );
+
+        let glitch_area_texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &glitch_area_texture_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&glitch_area_texture.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&glitch_area_texture.sampler),
+                },
+            ],
+            label: Some("glitch_area_texture_bind_group"),
+        });
+
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&camera_bind_group_layout],
+                bind_group_layouts: &[
+                    &camera_bind_group_layout,
+                    &glitch_area_texture_bind_group_layout,
+                ],
                 push_constant_ranges: &[],
             });
 
@@ -446,6 +504,8 @@ impl State {
             camera_bind_group_left: camera_bind_group_left,
             camera_bind_group_right: camera_bind_group_right,
             depth_texture,
+            glitch_area_texture_bind_group,
+            glitch_area_texture,
             mesh_store,
             game_world: game::GameWorld::new(handle_store),
             _clear_color: wgpu::Color {
@@ -612,8 +672,8 @@ impl State {
             render_pass.set_pipeline(&self.render_pipeline);
             for camera in vec![&self.camera_bind_group_left, &self.camera_bind_group_right] {
                 render_pass.set_bind_group(0, camera, &[]);
+                render_pass.set_bind_group(1, &self.glitch_area_texture_bind_group, &[]);
                 for mesh_handle in self.mesh_store.iter_handles() {
-                    // let instances = self.game_world.iter_instances(mesh_handle);
                     self.mesh_store.get(mesh_handle).map(|mesh| {
                         mesh.render_instances(&mut render_pass);
                     });

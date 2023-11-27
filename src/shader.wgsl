@@ -27,6 +27,7 @@ struct VertexOutput {
     @location(1) clip_space_pos: vec3<f32>,
     // -1 for left eye, 1 for right eye
     @location(2) camera_left: f32,
+    @location(3) world_space_pos: vec4<f32>,
 };
 
 @vertex
@@ -43,7 +44,8 @@ fn vs_main(
     );
     var out: VertexOutput;
     out.color = model.color;
-    out.clip_position = camera.view_proj * model_matrix * vec4<f32>(model.position, 1.0);
+    out.world_space_pos = model_matrix * vec4<f32>(model.position, 1.0);
+    out.clip_position = camera.view_proj * out.world_space_pos;
     out.clip_position.x /= out.clip_position.w;
     out.clip_position.y /= out.clip_position.w;
     out.clip_position.z /= out.clip_position.w;
@@ -56,6 +58,12 @@ fn vs_main(
     return out;
 }
 
+
+@group(1)@binding(0)
+var t_glitch_area: texture_2d<f32>;
+@group(1)@binding(1)
+var s_glitch_area: sampler;
+
 // Fragment shader
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
@@ -63,5 +71,18 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     if ((in.clip_space_pos.x * in.camera_left) < 0.0 || (in.clip_space_pos.x * in.camera_left) > 1.0) {
         discard;
     }
-    return vec4<f32>(in.color, 1.0);
+
+    let w = 3.0;
+    let h = 3.0;
+
+    let u = in.world_space_pos.x / w;
+    let v = in.world_space_pos.y * -1.0 / h;
+
+    let glitch_mask_color = textureSample(t_glitch_area, s_glitch_area, vec2<f32>(u,v));
+
+    if( glitch_mask_color.r > 0.5 ) {
+        return vec4<f32>(in.color, 1.0);
+    } else {
+        return vec4<f32>(0.0,0.0,0.0,1.0);
+    }
 }
