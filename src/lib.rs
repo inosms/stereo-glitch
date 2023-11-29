@@ -269,9 +269,9 @@ impl State {
             // which way is "up"
             up: cgmath::Vector3::unit_y(),
             aspect: (config.width as f32 / 2.0) / config.height as f32,
-            fovy: 60.0,
+            fovy: 50.0,
             znear: 0.1,
-            zfar: 100.0,
+            zfar: 30.0,
         };
 
         let mut camera_uniform = CameraUniform::new(true);
@@ -612,7 +612,7 @@ impl State {
         eye.x = 9.0;
         eye.z = 10.0;
         eye.y = -10.0;
-        self.camera.target = cgmath::Point3::new(eye.x, 0.0, 0.0);
+        self.camera.target = cgmath::Point3::new(eye.x, -5.0, 0.0);
         let looking_vec = (self.camera.target - eye).normalize();
         let right_vec = looking_vec.cross(cgmath::Vector3::unit_y());
         self.camera.eye = eye + right_vec * self._eye_distance * 0.5;
