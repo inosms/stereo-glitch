@@ -58,7 +58,7 @@ impl BlockType {
             BlockType::Door => 1,
             BlockType::Empty => 1,
             BlockType::Goal => 1,
-            BlockType::Wall => 2,
+            BlockType::Wall => 1,
         }
     }
 
