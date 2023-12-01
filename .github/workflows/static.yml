@@ -40,11 +40,13 @@ jobs:
       - name: Build
         run: |
           ./build.sh
+          npm install
+          npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
           # Upload entire repository
-          path: './site/'
+          path: './pkg/'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
