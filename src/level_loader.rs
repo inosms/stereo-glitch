@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fmt::Debug;
 
 use nom::branch::alt;
@@ -9,7 +10,7 @@ use nom::multi::{separated_list0, separated_list1};
 use nom::sequence::{delimited, separated_pair};
 use nom::IResult;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Hash, Eq)]
 pub struct Id {
     id: String,
 }
@@ -84,6 +85,10 @@ impl Cell {
     pub fn block_stack_iter(&self) -> impl Iterator<Item = &(BlockType, Option<Id>)> {
         self.block_stack.iter()
     }
+
+    pub fn is_glitch_area(&self) -> bool {
+        self.is_glitch_area
+    }
 }
 
 pub struct ParsedLevel {
@@ -91,8 +96,45 @@ pub struct ParsedLevel {
 }
 
 impl ParsedLevel {
-    pub fn new(cells: Vec<Vec<Cell>>) -> Self {
-        Self { cells }
+    pub const MAX_LEVEL_WIDTH_AND_HEIGHT: usize = 256;
+
+    pub fn from(cells: Vec<Vec<Cell>>) -> anyhow::Result<Self> {
+        let level = Self { cells };
+
+        // =================================
+        // Validate the level
+        // =================================
+
+        let (width, height, _depth) = level.dimensions();
+        if width > Self::MAX_LEVEL_WIDTH_AND_HEIGHT || height > Self::MAX_LEVEL_WIDTH_AND_HEIGHT {
+            return anyhow::bail!("Level is too large");
+        }
+
+        let player_count = level
+            .iter_cells()
+            .filter(|(_pos, cell)| {
+                cell.block_stack_iter()
+                    .any(|(block_type, _id)| block_type == &BlockType::Player)
+            })
+            .count();
+        if player_count != 1 {
+            return anyhow::bail!("Level must have exactly one player");
+        }
+
+        // Check uniqueness of IDs
+        let mut ids = HashSet::new();
+        for (_pos, cell) in level.iter_cells() {
+            for (_block_type, id) in cell.block_stack_iter() {
+                if let Some(id) = id {
+                    if ids.contains(id) {
+                        return anyhow::bail!("Duplicate ID");
+                    }
+                    ids.insert(id);
+                }
+            }
+        }
+
+        Ok(level)
     }
 
     /// Returns an iterator over all cells in the level.
@@ -104,11 +146,53 @@ impl ParsedLevel {
                 .map(move |(x, cell)| ((x as i32, y as i32), cell))
         })
     }
+
+    /// Returns the dimensions of the level in the form of (x, y, z)
+    pub fn dimensions(&self) -> (usize, usize, usize) {
+        let y = self.cells.len();
+        let x = self.cells.iter().map(|row| row.len()).max().unwrap_or(0);
+        let z = self
+            .cells
+            .iter()
+            .flat_map(|row| row.iter().map(|cell| cell.block_stack.len()))
+            .max()
+            .unwrap_or(0);
+
+        (x, y, z)
+    }
+
+    /// Converts a level into raw RGBA8 data
+    pub fn to_glitch_raw_rgba8(&self) -> Vec<u8> {
+        // Create a new raw texture with the same dimensions as the level
+        let mut raw_data = vec![
+            255;
+            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT
+                * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT
+                * 4
+        ];
+
+        for ((x, y), cell) in self.iter_cells() {
+            let index = (x + y * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as i32) as usize * 4;
+
+            // Set the glitch area to black and the rest to white
+            let color = if cell.is_glitch_area() { 0 } else { 255 };
+
+            raw_data[index] = color;
+            raw_data[index + 1] = color;
+            raw_data[index + 2] = color;
+            raw_data[index + 3] = 255;
+        }
+
+        raw_data
+    }
 }
 
 impl Debug for ParsedLevel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for ((x,y), cell) in self.iter_cells() {
+        let (x, y, z) = self.dimensions();
+        write!(f, "Dimensions: ({}, {}, {})\n", x, y, z)?;
+
+        for ((x, y), cell) in self.iter_cells() {
             write!(f, "Cell at ({},{}): {:?}\n", x, y, cell)?;
         }
         Ok(())
@@ -159,8 +243,8 @@ fn parse_level_line(input: &str) -> IResult<&str, Vec<Cell>> {
     separated_list1(space1, parse_cell)(input)
 }
 
-pub fn parse_level(input: &str) -> IResult<&str, ParsedLevel> {
-    let (_rest, parsed) = separated_list0(newline, parse_level_line)(input)?;
-    log::info!("Rest: {:?}", _rest);
-    Ok((_rest, ParsedLevel::new(parsed)))
+pub fn parse_level(input: &str) -> anyhow::Result<ParsedLevel> {
+    let (_rest, parsed) =
+        separated_list0(newline, parse_level_line)(input).map_err(|e| e.to_owned())?;
+    Ok(ParsedLevel::from(parsed)?)
 }

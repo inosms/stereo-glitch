@@ -101,14 +101,15 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         discard;
     }
 
-    let w = 3.0; // TODO
-    let h = 3.0; // TODO
+    // Ugly hack: just fix the size of the glitch mask so we do not need to pass the size 
+    // or reallocate the texture when the level changes
+    let w = 256.0;
+    let h = 256.0;
 
     let u = in.world_space_pos.x / w;
     let v = in.world_space_pos.y * -1.0 / h;
 
     let glitch_mask_color = textureSample(t_glitch_area, s_glitch_area, vec2<f32>(u,v));
-
     if( glitch_mask_color.r > 0.5 ) {
         return vec4<f32>(in.color, 1.0);
     } else {

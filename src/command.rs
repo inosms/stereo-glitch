@@ -37,7 +37,7 @@ lazy_static::lazy_static! {
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn load_level(level: &str) -> Result<(), String>{
     match level_loader::parse_level(level) {
-        Ok((rest, parsed)) => {
+        Ok(parsed) => {
             COMMANDS.push(Command::LoadLevel(parsed));
             return Ok(());
         },

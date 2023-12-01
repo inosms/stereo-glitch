@@ -1,5 +1,5 @@
 use cgmath::InnerSpace;
-use level_loader::BlockType;
+use level_loader::{BlockType, ParsedLevel};
 use mesh::InstanceRaw;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -307,34 +307,39 @@ impl State {
             label: Some("stereo_camera_bind_group"),
         });
 
-        let stereo_camera_target_left = stereo_camera::RenderEyeTarget::new(stereo_camera::EyeTarget::Left);
-        let stereo_camera_target_right = stereo_camera::RenderEyeTarget::new(stereo_camera::EyeTarget::Right);
+        let stereo_camera_target_left =
+            stereo_camera::RenderEyeTarget::new(stereo_camera::EyeTarget::Left);
+        let stereo_camera_target_right =
+            stereo_camera::RenderEyeTarget::new(stereo_camera::EyeTarget::Right);
 
-        let stereo_camera_left_target_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Stereo Camera Left Target Buffer"),
-            contents: bytemuck::cast_slice(&[stereo_camera_target_left]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
+        let stereo_camera_left_target_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Stereo Camera Left Target Buffer"),
+                contents: bytemuck::cast_slice(&[stereo_camera_target_left]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
 
-        let stereo_camera_right_target_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Stereo Camera Right Target Buffer"),
-            contents: bytemuck::cast_slice(&[stereo_camera_target_right]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
+        let stereo_camera_right_target_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Stereo Camera Right Target Buffer"),
+                contents: bytemuck::cast_slice(&[stereo_camera_target_right]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
 
-        let stereo_camera_target_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-            label: Some("stereo_camera_target_bind_group_layout"),
-        });
+        let stereo_camera_target_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+                label: Some("stereo_camera_target_bind_group_layout"),
+            });
 
         let stereo_camera_left_target_bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -381,15 +386,13 @@ impl State {
                 label: Some("glitch_area_texture_bind_group_layout"),
             });
 
-        let glitch_area_texture = texture::Texture::from_raw_rgba8(
+            // Initialize the texture with empty data
+            let glitch_area_texture = texture::Texture::from_raw_rgba8(
             &device,
             &queue,
-            &vec![
-                0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-                255, 255, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255,
-            ],
-            3,
-            3,
+            &vec![0;ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT * 4],
+            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
+            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
             None,
         );
 
@@ -606,11 +609,17 @@ impl State {
         while let Some(command) = command::COMMANDS.pop() {
             log::info!("Processing command: {:?}", command);
             match command {
-                command::Command::LoadLevel(name) => {
+                command::Command::LoadLevel(parsed_level) => {
                     self.game_world.clear();
-                    for ((x, y), cell) in name.iter_cells() {
+                    for ((x, y), cell) in parsed_level.iter_cells() {
                         self.game_world.add_cell(x, y, cell);
                     }
+                    self.glitch_area_texture.write_rgba8(
+                        &self.queue,
+                        &parsed_level.to_glitch_raw_rgba8(),
+                        ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
+                        ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
+                    );
                 }
                 command::Command::SetEyeDistance(distance) => {
                     self.stereo_camera.set_eye_distance(distance);
@@ -641,12 +650,18 @@ impl State {
             });
         }
 
-        let time = 0.02 * (instant::now() / 1000.0) as f32;
+        let time = 0.05 * (instant::now() / 1000.0) as f32;
         let radius = 10.0 as f32;
-        self.stereo_camera.set_eye(cgmath::Point3::new(9.0 + time.sin() * radius, -10.0 + time.cos() * radius, 7.0));
-        self.stereo_camera.set_target(cgmath::Point3::new(9.0, -5.0, 0.0));
+        self.stereo_camera.set_eye(cgmath::Point3::new(
+            9.0 + time.sin() * radius,
+            -10.0 + time.cos() * radius,
+            7.0,
+        ));
+        self.stereo_camera
+            .set_target(cgmath::Point3::new(9.0, -5.0, 0.0));
 
-        self.stereo_camera_uniform.update_view_proj(&self.stereo_camera);
+        self.stereo_camera_uniform
+            .update_view_proj(&self.stereo_camera);
         self.queue.write_buffer(
             &self.stereo_camera_buffer,
             0,
@@ -690,7 +705,10 @@ impl State {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            for stereo_camera_target in vec![&self.stereo_camera_left_target_bind_group, &self.stereo_camera_right_target_bind_group] {
+            for stereo_camera_target in vec![
+                &self.stereo_camera_left_target_bind_group,
+                &self.stereo_camera_right_target_bind_group,
+            ] {
                 render_pass.set_bind_group(0, &self.stereo_camera_bind_group, &[]);
                 render_pass.set_bind_group(1, stereo_camera_target, &[]);
                 render_pass.set_bind_group(2, &self.glitch_area_texture_bind_group, &[]);
