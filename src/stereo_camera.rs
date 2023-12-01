@@ -80,6 +80,11 @@ impl StereoCamera {
     pub fn set_eye(&mut self, eye: cgmath::Point3<f32>) {
         self.eye = eye;
     }
+
+    /// Set the camera aspect ratio
+    pub fn set_aspect(&mut self, aspect: f32) {
+        self.aspect = aspect;
+    }
 }
 
 /// A uniform struct to hold the view projection matrix (needed for WGSL)

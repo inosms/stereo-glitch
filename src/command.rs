@@ -8,6 +8,8 @@ use crate::level_loader;
 pub enum Command {
     LoadLevel(level_loader::ParsedLevel),
     SetEyeDistance(f32),
+    SetSize(u32, u32),
+    JoystickInput(f32, f32), // input as a vector (x, y)
 }
 
 pub struct CommandQueue {
@@ -51,4 +53,14 @@ pub fn load_level(level: &str) -> Result<(), String>{
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn set_eye_distance(distance: f32) {
     COMMANDS.push(Command::SetEyeDistance(distance));
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn set_size(width: u32, height: u32) {
+    COMMANDS.push(Command::SetSize(width, height));
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn joystick_input(x: f32, y: f32) {
+    COMMANDS.push(Command::JoystickInput(x, y));
 }

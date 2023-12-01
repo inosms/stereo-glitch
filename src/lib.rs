@@ -10,8 +10,10 @@ use stereo_camera::StereoCamera;
 use wgpu::util::DeviceExt;
 
 use winit::{
+    dpi::PhysicalSize,
     event::*,
     event_loop::{ControlFlow, EventLoop},
+    keyboard::{KeyCode, PhysicalKey},
     window::{Window, WindowBuilder},
 };
 
@@ -191,12 +193,13 @@ struct State {
 
     _clear_color: wgpu::Color,
 
-    key_pressed: HashSet<VirtualKeyCode>,
+    key_pressed: HashSet<KeyCode>,
 }
 
 impl State {
     async fn new(window: Window) -> Self {
-        let size = window.inner_size();
+        // dummy size for init. will be resized later
+        let size = PhysicalSize::new(400, 200);
 
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
@@ -386,11 +389,16 @@ impl State {
                 label: Some("glitch_area_texture_bind_group_layout"),
             });
 
-            // Initialize the texture with empty data
-            let glitch_area_texture = texture::Texture::from_raw_rgba8(
+        // Initialize the texture with empty data
+        let glitch_area_texture = texture::Texture::from_raw_rgba8(
             &device,
             &queue,
-            &vec![0;ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT * 4],
+            &vec![
+                0;
+                ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT
+                    * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT
+                    * 4
+            ],
             ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
             ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
             None,
@@ -567,42 +575,11 @@ impl State {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
+            self.stereo_camera
+                .set_aspect((self.config.width as f32 / 2.0) / self.config.height as f32);
             self.depth_texture =
                 texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
         }
-    }
-
-    #[allow(unused_variables)]
-    fn input(&mut self, event: &WindowEvent) -> bool {
-        if let WindowEvent::CursorMoved {
-            device_id,
-            position,
-            modifiers,
-        } = event
-        {
-            self._clear_color = wgpu::Color {
-                r: position.x as f64 / self.size.width as f64,
-                g: position.y as f64 / self.size.height as f64,
-                b: 0.3,
-                a: 1.0,
-            };
-        } else if let WindowEvent::Touch(Touch {
-            device_id,
-            phase,
-            location,
-            force,
-            id,
-            ..
-        }) = event
-        {
-            self._clear_color = wgpu::Color {
-                r: location.x as f64 / self.size.width as f64,
-                g: location.y as f64 / self.size.height as f64,
-                b: 0.3,
-                a: 1.0,
-            };
-        }
-        return false;
     }
 
     fn update(&mut self) {
@@ -624,23 +601,36 @@ impl State {
                 command::Command::SetEyeDistance(distance) => {
                     self.stereo_camera.set_eye_distance(distance);
                 }
+                command::Command::SetSize(width, height) => {
+                    self.resize(winit::dpi::PhysicalSize::new(width, height));
+                }
+                command::Command::JoystickInput(x, y) => {
+                    self.game_world.move_player(cgmath::vec3(x, y, 0.0));
+                }
             }
         }
 
         let mut direction = cgmath::vec3(0.0, 0.0, 0.0);
-        if self.key_pressed.contains(&VirtualKeyCode::W) {
+        let mut button_pressed = false;
+        if self.key_pressed.contains(&KeyCode::KeyW) {
             direction += cgmath::vec3(0.0, 1.0, 0.0);
+            button_pressed = true;
         }
-        if self.key_pressed.contains(&VirtualKeyCode::A) {
+        if self.key_pressed.contains(&KeyCode::KeyA) {
             direction += cgmath::vec3(-1.0, 0.0, 0.0);
+            button_pressed = true;
         }
-        if self.key_pressed.contains(&VirtualKeyCode::S) {
+        if self.key_pressed.contains(&KeyCode::KeyS) {
             direction += cgmath::vec3(0.0, -1.0, 0.0);
+            button_pressed = true;
         }
-        if self.key_pressed.contains(&VirtualKeyCode::D) {
+        if self.key_pressed.contains(&KeyCode::KeyD) {
             direction += cgmath::vec3(1.0, 0.0, 0.0);
+            button_pressed = true;
         }
-        self.game_world.move_player(direction);
+        if button_pressed {
+            self.game_world.move_player(direction);
+        }
         self.game_world.update();
 
         for mesh_handle in self.mesh_store.iter_handles() {
@@ -737,22 +727,17 @@ pub async fn run() {
         }
     }
 
-    let event_loop = EventLoop::new();
+    let event_loop = EventLoop::new().unwrap();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
     #[cfg(target_arch = "wasm32")]
     {
-        // Winit prevents sizing with CSS, so we have to set
-        // the size manually when on web.
-        use winit::dpi::PhysicalSize;
-        window.set_inner_size(PhysicalSize::new(900, 400));
-
         use winit::platform::web::WindowExtWebSys;
         web_sys::window()
             .and_then(|win| win.document())
             .and_then(|doc| {
                 let dst = doc.get_element_by_id("game-container")?;
-                let canvas = web_sys::Element::from(window.canvas());
+                let canvas = web_sys::Element::from(window.canvas()?);
                 dst.append_child(&canvas).ok()?;
                 Some(())
             })
@@ -762,85 +747,81 @@ pub async fn run() {
     // State::new uses async code, so we're going to wait for it to finish
     let mut state = State::new(window).await;
 
-    event_loop.run(move |event, _, control_flow| {
-        match event {
-            Event::WindowEvent {
-                ref event,
-                window_id,
-            } if window_id == state.window().id() => {
-                if !state.input(event) {
+    event_loop
+        .run(move |event, elwt| {
+            match event {
+                Event::WindowEvent {
+                    event: WindowEvent::CloseRequested,
+                    window_id,
+                } if window_id == state.window.id() => elwt.exit(),
+                Event::AboutToWait => {
+                    state.window.request_redraw();
+                }
+                Event::WindowEvent {
+                    ref event,
+                    window_id,
+                } if window_id == state.window().id() => {
+                    // if !state.input(event) {
                     // UPDATED!
                     match event {
-                        WindowEvent::CloseRequested
-                        | WindowEvent::KeyboardInput {
-                            input:
-                                KeyboardInput {
-                                    state: ElementState::Pressed,
-                                    virtual_keycode: Some(VirtualKeyCode::Escape),
-                                    ..
-                                },
-                            ..
-                        } => *control_flow = ControlFlow::Exit,
-                        WindowEvent::Resized(physical_size) => {
-                            state.resize(*physical_size);
-                        }
-                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                            // new_inner_size is &&mut so w have to dereference it twice
-                            state.resize(**new_inner_size);
-                        }
+                        // WindowEvent::Resized(physical_size) => {
+                        //     state.resize(*physical_size);
+                        // }
+                        // TODO
+                        // WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                        //     // new_inner_size is &&mut so w have to dereference it twice
+                        //     state.resize(**new_inner_size);
+                        // }
                         WindowEvent::KeyboardInput {
-                            input:
-                                KeyboardInput {
+                            event:
+                                KeyEvent {
+                                    physical_key,
                                     state: ElementState::Pressed,
-                                    virtual_keycode,
                                     ..
                                 },
                             ..
-                        } => {
-                            if let &Some(key_code) = virtual_keycode {
-                                state.key_pressed.insert(key_code);
+                        } => match &physical_key {
+                            PhysicalKey::Code(key_code) => {
+                                state.key_pressed.insert(*key_code);
                             }
-                        }
+                            _ => {}
+                        },
                         WindowEvent::KeyboardInput {
-                            input:
-                                KeyboardInput {
+                            event:
+                                KeyEvent {
+                                    physical_key,
                                     state: ElementState::Released,
-                                    virtual_keycode,
                                     ..
                                 },
                             ..
-                        } => {
-                            if let &Some(key_code) = virtual_keycode {
-                                state.key_pressed.remove(&key_code);
+                        } => match &physical_key {
+                            PhysicalKey::Code(key_code) => {
+                                state.key_pressed.remove(key_code);
+                            }
+                            _ => {}
+                        },
+                        WindowEvent::RedrawRequested => {
+                            state.update();
+                            match state.render() {
+                                Ok(_) => {}
+                                // Reconfigure the surface if it's lost or outdated
+                                Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                                    state.resize(state.size)
+                                }
+                                // The system is out of memory, we should probably quit
+                                Err(wgpu::SurfaceError::OutOfMemory) => {
+                                    panic!("Out of memory");
+                                }
+
+                                Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                             }
                         }
-                        event => {
-                            state.input(event);
-                        }
+                        _ => {}
                     }
+                    // }
                 }
+                _ => {}
             }
-            Event::RedrawRequested(window_id) if window_id == state.window().id() => {
-                state.update();
-                match state.render() {
-                    Ok(_) => {}
-                    // Reconfigure the surface if it's lost or outdated
-                    Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        state.resize(state.size)
-                    }
-                    // The system is out of memory, we should probably quit
-                    Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-
-                    Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
-                }
-            }
-            Event::RedrawEventsCleared => {
-                // RedrawRequested will only trigger once, unless we manually
-                // request it.
-                state.window().request_redraw();
-            }
-
-            _ => {}
-        }
-    });
+        })
+        .expect("Failed to run event loop");
 }

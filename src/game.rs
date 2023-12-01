@@ -191,7 +191,6 @@ impl GameWorld {
             .get_resource_mut::<Input>()
             .unwrap()
             .player_movement = Some(direction);
-
     }
 
     pub(crate) fn iter_instances(&mut self, mesh_handle: Handle) -> Vec<&Position> {
