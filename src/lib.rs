@@ -653,12 +653,12 @@ impl State {
         let time = 0.05 * (instant::now() / 1000.0) as f32;
         let radius = 10.0 as f32;
         self.stereo_camera.set_eye(cgmath::Point3::new(
-            9.0 + time.sin() * radius,
-            -10.0 + time.cos() * radius,
+            0.0 + time.sin() * radius,
+            0.0 + time.cos() * radius,
             7.0,
         ));
         self.stereo_camera
-            .set_target(cgmath::Point3::new(9.0, -5.0, 0.0));
+            .set_target(cgmath::Point3::new(0.0, 0.0, 0.0));
 
         self.stereo_camera_uniform
             .update_view_proj(&self.stereo_camera);

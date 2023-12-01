@@ -132,7 +132,7 @@ impl GameWorld {
         for (block_type, _) in cell.block_stack_iter() {
             if block_type != &BlockType::Empty {
                 let position = Position {
-                    position: cgmath::Vector3::new(x as f32 + 0.5, -y as f32 + 0.5, z as f32),
+                    position: cgmath::Vector3::new(x as f32 + 0.5, -y as f32 - 0.5, z as f32),
                     rotation: cgmath::Quaternion::from_axis_angle(
                         cgmath::Vector3::unit_z(),
                         cgmath::Deg(0.0),
@@ -141,7 +141,7 @@ impl GameWorld {
 
                 let body_handle = self.world.resource_mut::<PhysicsSystem>().add_object(
                     x as f32 + 0.5,
-                    -y as f32 + 0.5,
+                    -y as f32 - 0.5,
                     z as f32 + block_type.block_height() as f32 / 2.0,
                     0.5,
                     0.5,

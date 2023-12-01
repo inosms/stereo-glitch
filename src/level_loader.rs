@@ -118,7 +118,7 @@ impl ParsedLevel {
             })
             .count();
         if player_count != 1 {
-            return anyhow::bail!("Level must have exactly one player");
+            return anyhow::bail!("Level must have exactly one player, found {}", player_count);
         }
 
         // Check uniqueness of IDs
@@ -182,6 +182,23 @@ impl ParsedLevel {
             raw_data[index + 2] = color;
             raw_data[index + 3] = 255;
         }
+
+        // debug print
+        let (w, h, _d) = self.dimensions();
+        let mut output = String::new();
+        for y in 0..h {
+            for x in 0..w {
+                let index = (x + y * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT) as usize * 4;
+                let color = raw_data[index];
+                if color == 0 {
+                    output.push('X');
+                } else {
+                    output.push('.');
+                }
+            }
+            output.push('\n');
+        }
+        log::info!("Glitch area:\n{}", output);
 
         raw_data
     }
