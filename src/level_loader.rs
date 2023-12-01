@@ -91,6 +91,7 @@ impl Cell {
     }
 }
 
+#[derive(PartialEq)]
 pub struct ParsedLevel {
     cells: Vec<Vec<Cell>>,
 }
@@ -257,11 +258,125 @@ fn parse_cell(input: &str) -> IResult<&str, Cell> {
 }
 
 fn parse_level_line(input: &str) -> IResult<&str, Vec<Cell>> {
-    separated_list1(space1, parse_cell)(input)
+    separated_list1(space1, parse_cell)(input.trim())
 }
 
 pub fn parse_level(input: &str) -> anyhow::Result<ParsedLevel> {
     let (_rest, parsed) =
         separated_list0(newline, parse_level_line)(input).map_err(|e| e.to_owned())?;
     Ok(ParsedLevel::from(parsed)?)
+}
+
+// test
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_level() {
+        assert_eq!(
+            parse_level("N+P").unwrap(),
+            ParsedLevel {
+                cells: vec![vec![Cell {
+                    is_glitch_area: false,
+                    block_stack: vec![(BlockType::FloorNormal, None), (BlockType::Player, None)]
+                }]]
+            }
+        );
+        assert_eq!(
+            parse_level("  N+P").unwrap(),
+            ParsedLevel {
+                cells: vec![vec![Cell {
+                    is_glitch_area: false,
+                    block_stack: vec![(BlockType::FloorNormal, None), (BlockType::Player, None)]
+                }]]
+            }
+        );
+        assert_eq!(
+            parse_level("  N+P  ").unwrap(),
+            ParsedLevel {
+                cells: vec![vec![Cell {
+                    is_glitch_area: false,
+                    block_stack: vec![(BlockType::FloorNormal, None), (BlockType::Player, None)]
+                }]]
+            }
+        );
+        assert_eq!(
+            parse_level("N N N\nN N+P N").unwrap(),
+            ParsedLevel {
+                cells: vec![
+                    vec![
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![(BlockType::FloorNormal, None)]
+                        },
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![(BlockType::FloorNormal, None)]
+                        },
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![(BlockType::FloorNormal, None)]
+                        }
+                    ],
+                    vec![
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![(BlockType::FloorNormal, None)]
+                        },
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![
+                                (BlockType::FloorNormal, None),
+                                (BlockType::Player, None)
+                            ]
+                        },
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![(BlockType::FloorNormal, None)]
+                        }
+                    ]
+                ]
+            }
+        );
+
+        assert_eq!(
+            parse_level("N N     N\nN    N+P        N   \n\n").unwrap(),
+            ParsedLevel {
+                cells: vec![
+                    vec![
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![(BlockType::FloorNormal, None)]
+                        },
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![(BlockType::FloorNormal, None)]
+                        },
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![(BlockType::FloorNormal, None)]
+                        }
+                    ],
+                    vec![
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![(BlockType::FloorNormal, None)]
+                        },
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![
+                                (BlockType::FloorNormal, None),
+                                (BlockType::Player, None)
+                            ]
+                        },
+                        Cell {
+                            is_glitch_area: false,
+                            block_stack: vec![(BlockType::FloorNormal, None)]
+                        }
+                    ]
+                ]
+            }
+        );
+    }
 }
