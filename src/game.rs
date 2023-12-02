@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
 use bevy_ecs::prelude::*;
-use cgmath::{InnerSpace, Rotation3, EuclideanSpace, Point3};
+use cgmath::{EuclideanSpace, InnerSpace, Point3, Rotation3};
 
 use crate::{
-    level_loader::{BlockType, Cell},
+    level_loader::{BlockType, Cell, ParsedLevel},
     mesh::{Handle, Mesh},
-    physics::PhysicsSystem, stereo_camera::StereoCamera,
+    physics::PhysicsSystem,
+    stereo_camera::StereoCamera,
 };
 
 #[derive(Component, Clone, Copy, Debug)]
@@ -28,7 +29,9 @@ impl Default for Position {
 }
 
 #[derive(Component)]
-struct Player;
+struct Player {
+    dead: bool,
+}
 
 #[derive(Component)]
 struct Goal;
@@ -57,6 +60,7 @@ pub struct GameWorld {
     schedule: Schedule,
 
     handle_store: HashMap<BlockType, Handle>,
+    level: Option<ParsedLevel>,
 }
 
 #[derive(Resource)]
@@ -77,7 +81,9 @@ fn move_player_system(
         // Get a matrix that rotates the world y axis to the camera look direction
         // We need this to transform the requested movement vector so that the player moves in the direction the camera is looking
         let camera_look_direction_rotation_matrix = cgmath::Matrix3::from_cols(
-            camera_look_direction.cross(cgmath::Vector3::unit_z()).normalize(),
+            camera_look_direction
+                .cross(cgmath::Vector3::unit_z())
+                .normalize(),
             camera_look_direction,
             cgmath::Vector3::unit_z(),
         );
@@ -88,7 +94,10 @@ fn move_player_system(
                 direction = direction.normalize();
             }
             let player_max_speed = 0.1;
-            physics_system.move_body(physics_body.body, camera_look_direction_rotation_matrix * direction * player_max_speed);
+            physics_system.move_body(
+                physics_body.body,
+                camera_look_direction_rotation_matrix * direction * player_max_speed,
+            );
 
             let pos = physics_system.get_position(physics_body.body);
             position.position = pos.position;
@@ -103,7 +112,6 @@ fn move_camera_system(
     mut query: Query<(&Position, &PhysicsBody), With<Player>>,
 ) {
     for (position, _) in &mut query {
-
         let camera_target_goal = position.position;
         let camera_eye_goal = position.position + cgmath::Vector3::new(-15.0, -15.0, 15.0);
 
@@ -124,12 +132,26 @@ fn physics_system(
     }
 }
 
+fn check_player_dead_system(
+    mut query: Query<(&Position, &PhysicsBody), With<Player>>,
+    mut player: Query<&mut Player>,
+) {
+    for (position, physics_body) in &mut query {
+        if position.position.z < 0.3 {
+            for mut player in &mut player {
+                player.dead = true;
+            }
+        }
+    }
+}
+
 impl GameWorld {
     pub fn new(handle_store: HashMap<BlockType, Handle>) -> Self {
         let mut game_world = Self {
             world: World::default(),
             schedule: Schedule::default(),
             handle_store,
+            level: None,
         };
         game_world.init();
         game_world
@@ -153,10 +175,23 @@ impl GameWorld {
         self.schedule.add_systems(physics_system);
         self.schedule.add_systems(move_player_system);
         self.schedule.add_systems(move_camera_system);
+        self.schedule.add_systems(check_player_dead_system);
     }
 
     pub fn update(&mut self) {
         self.schedule.run(&mut self.world);
+
+        // if player is dead, reset the level
+        let dead_player = self
+            .world
+            .query::<&Player>()
+            .iter(&self.world)
+            .filter(|(player)| player.dead)
+            .count();
+
+        if dead_player > 0 {
+            self.reset_level();
+        }
     }
 
     pub fn clear(&mut self) {
@@ -164,7 +199,22 @@ impl GameWorld {
         self.init();
     }
 
-    pub fn add_cell(&mut self, x: i32, y: i32, cell: &Cell) {
+    pub fn reset_level(&mut self) {
+        self.clear();
+        if let Some(level) = self.level.take() {
+            for ((x, y), cell) in level.iter_cells() {
+                self.add_cell(x, y, cell);
+            }
+            self.level = Some(level);
+        }
+    }
+
+    pub fn load_level(&mut self, level: ParsedLevel) {
+        self.level = Some(level);
+        self.reset_level();
+    }
+
+    fn add_cell(&mut self, x: i32, y: i32, cell: &Cell) {
         let mut z = 0;
         for (block_type, _) in cell.block_stack_iter() {
             if block_type != &BlockType::Empty {
@@ -192,7 +242,7 @@ impl GameWorld {
 
                 match block_type {
                     BlockType::Player => {
-                        entity.insert(Player);
+                        entity.insert(Player { dead: false });
                     }
                     BlockType::Goal => {
                         entity.insert(Goal);

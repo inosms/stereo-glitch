@@ -171,7 +171,7 @@ impl State {
         ]);
 
         let game_world = game::GameWorld::new(handle_store);
-        
+
         let stereo_camera = game_world.get_camera();
         let mut stereo_camera_uniform = stereo_camera::StereoCameraUniform::new();
         stereo_camera_uniform.update_view_proj(&stereo_camera);
@@ -378,7 +378,6 @@ impl State {
         let depth_texture =
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
-        
         Self {
             surface,
             device,
@@ -400,7 +399,7 @@ impl State {
                 g: 0.0,
                 b: 0.0,
                 a: 1.0,
-            },    
+            },
             glitch_area_texture_bind_group,
             glitch_area_texture,
             mesh_store,
@@ -419,7 +418,8 @@ impl State {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.game_world.set_camera_aspect((self.config.width as f32 / 2.0) / self.config.height as f32);
+            self.game_world
+                .set_camera_aspect((self.config.width as f32 / 2.0) / self.config.height as f32);
             self.depth_texture =
                 texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
         }
@@ -430,16 +430,13 @@ impl State {
             log::info!("Processing command: {:?}", command);
             match command {
                 command::Command::LoadLevel(parsed_level) => {
-                    self.game_world.clear();
-                    for ((x, y), cell) in parsed_level.iter_cells() {
-                        self.game_world.add_cell(x, y, cell);
-                    }
                     self.glitch_area_texture.write_rgba8(
                         &self.queue,
                         &parsed_level.to_glitch_raw_rgba8(),
                         ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
                         ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
                     );
+                    self.game_world.load_level(parsed_level);
                 }
                 command::Command::SetEyeDistance(distance) => {
                     self.game_world.set_eye_distance(distance);

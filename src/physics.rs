@@ -127,6 +127,8 @@ impl PhysicsSystem {
         let mass = body.mass();
 
         let desired_translation = vector![direction.x, direction.y, direction.z];
+        let gravity = vector![0.0, 0.0, -0.1];
+        let desired_translation = desired_translation + gravity;
         let mut character_controller = KinematicCharacterController::default();
         character_controller.up = Vector::z_axis();
         character_controller.offset = CharacterLength::Absolute(0.1);
@@ -134,7 +136,7 @@ impl PhysicsSystem {
             max_height: CharacterLength::Absolute(0.1),
             min_width: CharacterLength::Absolute(0.0),
             include_dynamic_bodies: true,
-        });;
+        });
 
         let mut collisions = vec![];
         let corrected_movement = character_controller.move_shape(
