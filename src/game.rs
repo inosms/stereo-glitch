@@ -148,7 +148,7 @@ impl GameWorld {
             20.0,
             0.1,
             50.0,
-            1.5,
+            -3.0, // view cross-eyed
         ));
         self.schedule.add_systems(physics_system);
         self.schedule.add_systems(move_player_system);
