@@ -434,7 +434,7 @@ impl State {
 
     fn update(&mut self) {
         while let Some(command) = command::COMMANDS.pop() {
-            log::info!("Processing command: {:?}", command);
+            log::debug!("Processing command: {:?}", command);
             match command {
                 command::Command::LoadLevel(parsed_level) => {
                     self.glitch_area_texture.write_rgba8(

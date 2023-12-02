@@ -33,7 +33,7 @@ impl PhysicsSystem {
         let rigid_body_set = RigidBodySet::new();
         let collider_set = ColliderSet::new();
 
-        let gravity = vector![0.0, 0.0, -9.81];
+        let gravity = vector![0.0, 0.0, -29.81];
         let integration_parameters = IntegrationParameters::default();
         let physics_pipeline = PhysicsPipeline::new();
         let island_manager = IslandManager::new();
@@ -131,9 +131,8 @@ impl PhysicsSystem {
         let mass = body.mass();
 
         let desired_translation = vector![direction.x, direction.y, direction.z];
-        let gravity = vector![0.0, 0.0, -0.1];
+        let gravity = vector![0.0, 0.0, -0.2];
         let desired_translation = desired_translation + gravity;
-        log::info!("Desired translation: {:?}", desired_translation);
         let mut character_controller = KinematicCharacterController::default();
         character_controller.up = Vector::z_axis();
         character_controller.offset = CharacterLength::Absolute(0.1);
