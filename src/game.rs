@@ -7,7 +7,7 @@ use crate::{
     level_loader::{BlockType, Cell, ParsedLevel},
     mesh::{Handle, Mesh},
     physics::PhysicsSystem,
-    stereo_camera::StereoCamera,
+    stereo_camera::StereoCamera, time_keeper::TimeKeeper,
 };
 
 #[derive(Component, Clone, Copy, Debug)]
@@ -76,8 +76,15 @@ fn move_player_system(
     mut physics_system: ResMut<PhysicsSystem>,
     mut input: ResMut<Input>,
     camera: Res<StereoCamera>,
+    time_keeper: Res<TimeKeeper>,
     mut query: Query<(&mut Position, &PhysicsBody), With<Player>>,
 ) {
+    // Only move the player if we are in a physics tick
+    // Otherwise the player will be frame rate dependent
+    if !time_keeper.peek() {
+        return;
+    }
+
     let requested_movement = input
         .player_movement
         .take()
@@ -130,14 +137,25 @@ fn move_camera_system(
 
 fn physics_system(
     mut physics_system: ResMut<PhysicsSystem>,
+    time_keeper: Res<TimeKeeper>,
     mut query: Query<(&mut Position, &PhysicsBody)>,
 ) {
+    // Only step physics if we are in a physics tick
+    // Otherwise the physics system will be frame rate dependent
+    if !time_keeper.peek() {
+        return;
+    }
+
     physics_system.step();
     for (mut position, physics_body) in &mut query {
         let pos = physics_system.get_position(physics_body.body);
         position.position = pos.position;
         position.rotation = pos.rotation;
     }
+}
+
+fn fixed_update_system(mut time_keeper: ResMut<TimeKeeper>) {
+    time_keeper.tick();
 }
 
 fn check_player_dead_system(
@@ -180,8 +198,9 @@ impl GameWorld {
             50.0,
             -3.0, // view cross-eyed
         ));
+        self.world.insert_resource(TimeKeeper::new(60));
         // The physics system needs to run after the player system so that the player can move
-        self.schedule.add_systems((move_player_system, physics_system).chain());
+        self.schedule.add_systems((move_player_system, physics_system, fixed_update_system).chain());
         self.schedule.add_systems(move_camera_system);
         self.schedule.add_systems(check_player_dead_system);
     }

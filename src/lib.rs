@@ -24,6 +24,7 @@ mod mesh;
 mod physics;
 mod stereo_camera;
 mod texture;
+mod time_keeper;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -564,7 +565,8 @@ pub async fn run() {
     }
 
     let event_loop = EventLoop::new().unwrap();
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
+    let window = WindowBuilder::new()
+    .build(&event_loop).unwrap();
 
     #[cfg(target_arch = "wasm32")]
     {
