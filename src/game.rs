@@ -46,6 +46,9 @@ struct Wall;
 struct Floor;
 
 #[derive(Component)]
+struct Box;
+
+#[derive(Component)]
 pub struct Renderable {
     mesh: Handle,
 }
@@ -260,6 +263,9 @@ impl GameWorld {
                     }
                     BlockType::FloorNormal => {
                         entity.insert(Floor);
+                    }
+                    BlockType::Box => {
+                        entity.insert(Box);
                     }
                     BlockType::Empty => {}
                 }

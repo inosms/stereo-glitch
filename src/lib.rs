@@ -161,6 +161,11 @@ impl State {
             [1.0, 0.0, 1.0],
             initial_instance_buffer_size as usize,
         ));
+        let box_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [0.0, 1.0, 1.0],
+            initial_instance_buffer_size as usize,
+        ));
 
         let handle_store = HashMap::from_iter(vec![
             (BlockType::Wall, wall_mesh),
@@ -168,6 +173,7 @@ impl State {
             (BlockType::Player, player_mesh),
             (BlockType::Goal, goal_mesh),
             (BlockType::Door, door_mesh),
+            (BlockType::Box, box_mesh),
         ]);
 
         let game_world = game::GameWorld::new(handle_store);

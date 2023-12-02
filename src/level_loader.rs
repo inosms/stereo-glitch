@@ -49,6 +49,7 @@ pub enum BlockType {
     Empty,
     Goal,
     Wall,
+    Box,
 }
 
 impl BlockType {
@@ -60,6 +61,7 @@ impl BlockType {
             BlockType::Empty => 1,
             BlockType::Goal => 1,
             BlockType::Wall => 1,
+            BlockType::Box => 1,
         }
     }
 
@@ -67,10 +69,11 @@ impl BlockType {
         match self {
             BlockType::FloorNormal => BlockPhysicsType::Static,
             BlockType::Player => BlockPhysicsType::Kinematic,
-            BlockType::Door => BlockPhysicsType::Dynamic,
+            BlockType::Door => BlockPhysicsType::Static,
             BlockType::Empty => BlockPhysicsType::Static,
             BlockType::Goal => BlockPhysicsType::Static,
             BlockType::Wall => BlockPhysicsType::Static,
+            BlockType::Box => BlockPhysicsType::Dynamic,
         }
     }
 }
@@ -235,6 +238,7 @@ fn parse_block(input: &str) -> IResult<&str, (BlockType, Option<Id>)> {
         value(BlockType::Empty, tag("X")),
         value(BlockType::Goal, tag("G")),
         value(BlockType::Wall, tag("W")),
+        value(BlockType::Box, tag("B")),
     ))(input)?;
 
     let (rest, id) = opt(parse_id)(rest)?;
