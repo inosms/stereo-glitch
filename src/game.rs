@@ -74,7 +74,8 @@ fn move_player_system(
     if let Some(requested_movement) = input.player_movement.take() {
         let camera_look_direction = camera.get_camera_view_direction_projected_to_ground();
 
-        // get a matrix that rotates the world y axis to the camera look direction
+        // Get a matrix that rotates the world y axis to the camera look direction
+        // We need this to transform the requested movement vector so that the player moves in the direction the camera is looking
         let camera_look_direction_rotation_matrix = cgmath::Matrix3::from_cols(
             camera_look_direction.cross(cgmath::Vector3::unit_z()).normalize(),
             camera_look_direction,
