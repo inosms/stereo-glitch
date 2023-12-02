@@ -121,7 +121,7 @@ fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
     // let value = 0.1*sin(uv.x*0.01) + 0.3*cos(uv.y*0.001+2.1) + 0.01*sin(uv.x*3.0+0.76) + 0.01*sin(uv.y*0.04+1.0) + 0.1*sin(uv.y*8.0+1.0)
     // + 0.1*sin(uv.x*100.0) + 0.3*cos(uv.y*7.+8.1) + 0.01*sin(uv.x*2.0 + 5.0);
 
-    let value = noise(uv * 50.0);
+    let value = noise(uv * 90.0);
     return vec4<f32>(value, value, value, 1.0);
 }
 

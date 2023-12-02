@@ -105,7 +105,7 @@ fn move_camera_system(
     for (position, _) in &mut query {
 
         let camera_target_goal = position.position;
-        let camera_eye_goal = position.position + cgmath::Vector3::new(-5.0, -5.0, 5.0);
+        let camera_eye_goal = position.position + cgmath::Vector3::new(-15.0, -15.0, 15.0);
 
         camera.smooth_set_target(Point3::from_vec(camera_target_goal), 0.02);
         camera.smooth_set_eye(Point3::from_vec(camera_eye_goal), 0.02);
@@ -145,10 +145,10 @@ impl GameWorld {
             (0.0, 0.0, 0.0).into(),
             cgmath::Vector3::unit_z(),
             1.0,
-            45.0,
-            0.1,
             20.0,
-            0.9,
+            0.1,
+            50.0,
+            1.5,
         ));
         self.schedule.add_systems(physics_system);
         self.schedule.add_systems(move_player_system);

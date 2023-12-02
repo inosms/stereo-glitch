@@ -34,12 +34,20 @@ init().then(() => {
     window.set_eye_distance = set_eye_distance;
 
     load_level(
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N \n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N \n" +
-        "_N _N _N+P _N _N _N _N _N _N _N _N _N _N \n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N \n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N \n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N \n" +
+        "_N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N+P _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
         "_N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W"
     );
 
