@@ -78,6 +78,16 @@ impl StereoCamera {
         self.target = target;
     }
 
+    /// Smoothly set the camera target
+    pub fn smooth_set_target(&mut self, target: cgmath::Point3<f32>, smooth_factor: f32) {
+        self.target = self.target + (target - self.target) * smooth_factor;
+    }
+
+    /// Smoothly set the camera eye
+    pub fn smooth_set_eye(&mut self, eye: cgmath::Point3<f32>, smooth_factor: f32) {
+        self.eye = self.eye + (eye - self.eye) * smooth_factor;
+    }
+
     /// Set the camera eye
     pub fn set_eye(&mut self, eye: cgmath::Point3<f32>) {
         self.eye = eye;

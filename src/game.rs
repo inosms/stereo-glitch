@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use bevy_ecs::prelude::*;
-use cgmath::{InnerSpace, Rotation3};
+use cgmath::{InnerSpace, Rotation3, EuclideanSpace, Point3};
 
 use crate::{
     level_loader::{BlockType, Cell},
@@ -97,6 +97,21 @@ fn move_player_system(
     }
 }
 
+// Move the camera to always look at the player
+fn move_camera_system(
+    mut camera: ResMut<StereoCamera>,
+    mut query: Query<(&Position, &PhysicsBody), With<Player>>,
+) {
+    for (position, _) in &mut query {
+
+        let camera_target_goal = position.position;
+        let camera_eye_goal = position.position + cgmath::Vector3::new(-5.0, -5.0, 5.0);
+
+        camera.smooth_set_target(Point3::from_vec(camera_target_goal), 0.02);
+        camera.smooth_set_eye(Point3::from_vec(camera_eye_goal), 0.02);
+    }
+}
+
 fn physics_system(
     mut physics_system: ResMut<PhysicsSystem>,
     mut query: Query<(&mut Position, &PhysicsBody)>,
@@ -137,6 +152,7 @@ impl GameWorld {
         ));
         self.schedule.add_systems(physics_system);
         self.schedule.add_systems(move_player_system);
+        self.schedule.add_systems(move_camera_system);
     }
 
     pub fn update(&mut self) {
