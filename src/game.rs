@@ -72,37 +72,42 @@ fn move_player_system(
     // keyboard_input: Res<Input<bevy::input::keyboard::KeyCode>>,
     mut physics_system: ResMut<PhysicsSystem>,
     mut input: ResMut<Input>,
-    mut camera: ResMut<StereoCamera>,
+    camera: Res<StereoCamera>,
     mut query: Query<(&mut Position, &PhysicsBody), With<Player>>,
 ) {
-    if let Some(requested_movement) = input.player_movement.take() {
-        let camera_look_direction = camera.get_camera_view_direction_projected_to_ground();
+    let requested_movement = input
+        .player_movement
+        .take()
+        .unwrap_or(cgmath::Vector3::new(0.0, 0.0, 0.0));
+    let camera_look_direction = camera.get_camera_view_direction_projected_to_ground();
 
-        // Get a matrix that rotates the world y axis to the camera look direction
-        // We need this to transform the requested movement vector so that the player moves in the direction the camera is looking
-        let camera_look_direction_rotation_matrix = cgmath::Matrix3::from_cols(
-            camera_look_direction
-                .cross(cgmath::Vector3::unit_z())
-                .normalize(),
-            camera_look_direction,
-            cgmath::Vector3::unit_z(),
+    // Get a matrix that rotates the world y axis to the camera look direction
+    // We need this to transform the requested movement vector so that the player moves in the direction the camera is looking
+    let camera_look_direction_rotation_matrix = cgmath::Matrix3::from_cols(
+        camera_look_direction
+            .cross(cgmath::Vector3::unit_z())
+            .normalize(),
+        camera_look_direction,
+        cgmath::Vector3::unit_z(),
+    );
+
+    let mut direction = requested_movement;
+    if direction.magnitude() > 1.0 {
+        direction = direction.normalize();
+    }
+    let player_max_speed = 0.1;
+
+    let direction = camera_look_direction_rotation_matrix * direction * player_max_speed;
+
+    for (mut position, physics_body) in &mut query {
+        physics_system.move_body(
+            physics_body.body,
+            direction,
         );
 
-        for (mut position, physics_body) in &mut query {
-            let mut direction = requested_movement;
-            if direction.magnitude() > 0.0 {
-                direction = direction.normalize();
-            }
-            let player_max_speed = 0.1;
-            physics_system.move_body(
-                physics_body.body,
-                camera_look_direction_rotation_matrix * direction * player_max_speed,
-            );
-
-            let pos = physics_system.get_position(physics_body.body);
-            position.position = pos.position;
-            position.rotation = pos.rotation;
-        }
+        let pos = physics_system.get_position(physics_body.body);
+        position.position = pos.position;
+        position.rotation = pos.rotation;
     }
 }
 
@@ -137,7 +142,7 @@ fn check_player_dead_system(
     mut player: Query<&mut Player>,
 ) {
     for (position, physics_body) in &mut query {
-        if position.position.z < 0.3 {
+        if position.position.z < -5.0 {
             for mut player in &mut player {
                 player.dead = true;
             }
@@ -172,8 +177,8 @@ impl GameWorld {
             50.0,
             -3.0, // view cross-eyed
         ));
-        self.schedule.add_systems(physics_system);
-        self.schedule.add_systems(move_player_system);
+        // The physics system needs to run after the player system so that the player can move
+        self.schedule.add_systems((move_player_system, physics_system).chain());
         self.schedule.add_systems(move_camera_system);
         self.schedule.add_systems(check_player_dead_system);
     }

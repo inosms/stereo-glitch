@@ -26,7 +26,7 @@ semi.on('end', function (_evt, _data) {
 // this is needed as the joystick will not emit events when it is not moved
 setInterval(() => {
     joystick_input(joystick_position.x, joystick_position.y);
-}, 100);
+}, 15);
 
 init().then(() => {
     console.log("WASM Loaded");
@@ -34,7 +34,20 @@ init().then(() => {
     window.set_eye_distance = set_eye_distance;
 
     load_level(
-        "_N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W _N+W+W+W+W+W\n" +
+        "N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N+P N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
@@ -44,11 +57,11 @@ init().then(() => {
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N+P _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W _N+W"
+        "_N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W"
     );
 
     // set the size of the canvas to the size of the game-container
