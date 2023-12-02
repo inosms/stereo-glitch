@@ -3,9 +3,10 @@ import init, { load_level, set_eye_distance, set_size, joystick_input } from "..
 
 var semi = nipplejs.create({
     zone: document.getElementById('game-controller-joystick'),
-    mode: 'dynamic',
+    mode: 'static',
+    position: {left: '50%', top: '50%'},
     catchDistance: 80,
-    size: 50,
+    size: 70,
     threshold: 0.0,
     color: 'white',
 });
@@ -75,8 +76,8 @@ init().then(() => {
     }).observe(gameContainer);
 });
 
-
-var static = nipplejs.create({
+// TODO on click
+nipplejs.create({
     zone: document.getElementById('game-controller-action-button'),
     mode: 'static',
     position: {left: '50%', top: '50%'},
@@ -84,5 +85,5 @@ var static = nipplejs.create({
     lockX: true,
     lockY: true,
     shape: 'square',
-    size: 50,
+    size: 70,
 });
