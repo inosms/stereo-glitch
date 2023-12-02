@@ -6,7 +6,7 @@ use cgmath::{InnerSpace, Rotation3};
 use crate::{
     level_loader::{BlockType, Cell},
     mesh::{Handle, Mesh},
-    physics::PhysicsSystem,
+    physics::PhysicsSystem, stereo_camera::StereoCamera,
 };
 
 #[derive(Component, Clone, Copy, Debug)]
@@ -68,16 +68,26 @@ fn move_player_system(
     // keyboard_input: Res<Input<bevy::input::keyboard::KeyCode>>,
     mut physics_system: ResMut<PhysicsSystem>,
     mut input: ResMut<Input>,
+    mut camera: ResMut<StereoCamera>,
     mut query: Query<(&mut Position, &PhysicsBody), With<Player>>,
 ) {
     if let Some(requested_movement) = input.player_movement.take() {
+        let camera_look_direction = camera.get_camera_view_direction_projected_to_ground();
+
+        // get a matrix that rotates the world y axis to the camera look direction
+        let camera_look_direction_rotation_matrix = cgmath::Matrix3::from_cols(
+            camera_look_direction.cross(cgmath::Vector3::unit_z()).normalize(),
+            camera_look_direction,
+            cgmath::Vector3::unit_z(),
+        );
+
         for (mut position, physics_body) in &mut query {
             let mut direction = requested_movement;
             if direction.magnitude() > 0.0 {
                 direction = direction.normalize();
             }
             let player_max_speed = 0.1;
-            physics_system.move_body(physics_body.body, direction * player_max_speed);
+            physics_system.move_body(physics_body.body, camera_look_direction_rotation_matrix * direction * player_max_speed);
 
             let pos = physics_system.get_position(physics_body.body);
             position.position = pos.position;
@@ -114,6 +124,16 @@ impl GameWorld {
         self.world.insert_resource(Input {
             player_movement: None,
         });
+        self.world.insert_resource(StereoCamera::new(
+            (9.0, 0.0, 8.0).into(),
+            (0.0, 0.0, 0.0).into(),
+            cgmath::Vector3::unit_z(),
+            1.0,
+            45.0,
+            0.1,
+            20.0,
+            0.9,
+        ));
         self.schedule.add_systems(physics_system);
         self.schedule.add_systems(move_player_system);
     }
@@ -200,5 +220,23 @@ impl GameWorld {
             .filter(move |(_, renderable)| renderable.mesh == mesh_handle)
             .map(|(position, _)| position)
             .collect()
+    }
+
+    pub fn set_camera_aspect(&mut self, aspect: f32) {
+        self.world
+            .get_resource_mut::<StereoCamera>()
+            .unwrap()
+            .set_aspect(aspect);
+    }
+
+    pub fn set_eye_distance(&mut self, eye_distance: f32) {
+        self.world
+            .get_resource_mut::<StereoCamera>()
+            .unwrap()
+            .set_eye_distance(eye_distance);
+    }
+
+    pub fn get_camera(&self) -> &StereoCamera {
+        self.world.resource::<StereoCamera>()
     }
 }

@@ -1,5 +1,7 @@
+use bevy_ecs::system::Resource;
 use cgmath::InnerSpace;
 
+#[derive(Resource)]
 pub struct StereoCamera {
     /// The camera eye for the center (left and right eye are calculated from this)
     eye: cgmath::Point3<f32>,
@@ -85,6 +87,16 @@ impl StereoCamera {
     pub fn set_aspect(&mut self, aspect: f32) {
         self.aspect = aspect;
     }
+
+    /// Get the direction the camera looks at as a vector projected to the ground
+    pub fn get_camera_view_direction_projected_to_ground(&self) -> cgmath::Vector3<f32> {
+        let camera_look_vec = (self.target - self.eye).normalize();
+
+        let camera_look_vec_projected_to_ground =
+            cgmath::Vector3::new(camera_look_vec.x, camera_look_vec.y, 0.0).normalize();
+
+        camera_look_vec_projected_to_ground
+    }
 }
 
 /// A uniform struct to hold the view projection matrix (needed for WGSL)
@@ -114,10 +126,10 @@ impl StereoCameraUniform {
 
 pub enum EyeTarget {
     Left,
-    Right
+    Right,
 }
 
-/// A uniform struct to hold th eye target. 
+/// A uniform struct to hold th eye target.
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct RenderEyeTarget {

@@ -41,7 +41,6 @@ struct State {
 
     render_pipeline: wgpu::RenderPipeline,
 
-    stereo_camera: stereo_camera::StereoCamera,
     stereo_camera_uniform: stereo_camera::StereoCameraUniform,
     stereo_camera_buffer: wgpu::Buffer,
     stereo_camera_bind_group: wgpu::BindGroup,
@@ -135,16 +134,45 @@ impl State {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
         });
 
-        let stereo_camera = StereoCamera::new(
-            (0.0, 1.0, 2.0).into(),
-            (0.0, 0.0, 0.0).into(),
-            cgmath::Vector3::unit_z(),
-            (config.width as f32 / 2.0) / config.height as f32,
-            45.0,
-            0.1,
-            20.0,
-            0.9,
-        );
+        let mut mesh_store = mesh::MeshStore::new();
+        let initial_instance_buffer_size: i32 = 1;
+        let wall_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [1.0, 0.0, 0.0],
+            initial_instance_buffer_size as usize,
+        ));
+        let floor_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [0.0, 1.0, 0.0],
+            initial_instance_buffer_size as usize,
+        ));
+        let player_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [0.0, 0.0, 1.0],
+            initial_instance_buffer_size as usize,
+        ));
+        let goal_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [1.0, 1.0, 0.0],
+            initial_instance_buffer_size as usize,
+        ));
+        let door_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+            &device,
+            [1.0, 0.0, 1.0],
+            initial_instance_buffer_size as usize,
+        ));
+
+        let handle_store = HashMap::from_iter(vec![
+            (BlockType::Wall, wall_mesh),
+            (BlockType::FloorNormal, floor_mesh),
+            (BlockType::Player, player_mesh),
+            (BlockType::Goal, goal_mesh),
+            (BlockType::Door, door_mesh),
+        ]);
+
+        let game_world = game::GameWorld::new(handle_store);
+        
+        let stereo_camera = game_world.get_camera();
         let mut stereo_camera_uniform = stereo_camera::StereoCameraUniform::new();
         stereo_camera_uniform.update_view_proj(&stereo_camera);
         let stereo_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -350,42 +378,7 @@ impl State {
         let depth_texture =
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
-        let mut mesh_store = mesh::MeshStore::new();
-        let initial_instance_buffer_size: i32 = 1;
-        let wall_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
-            &device,
-            [1.0, 0.0, 0.0],
-            initial_instance_buffer_size as usize,
-        ));
-        let floor_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
-            &device,
-            [0.0, 1.0, 0.0],
-            initial_instance_buffer_size as usize,
-        ));
-        let player_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
-            &device,
-            [0.0, 0.0, 1.0],
-            initial_instance_buffer_size as usize,
-        ));
-        let goal_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
-            &device,
-            [1.0, 1.0, 0.0],
-            initial_instance_buffer_size as usize,
-        ));
-        let door_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
-            &device,
-            [1.0, 0.0, 1.0],
-            initial_instance_buffer_size as usize,
-        ));
-
-        let handle_store = HashMap::from_iter(vec![
-            (BlockType::Wall, wall_mesh),
-            (BlockType::FloorNormal, floor_mesh),
-            (BlockType::Player, player_mesh),
-            (BlockType::Goal, goal_mesh),
-            (BlockType::Door, door_mesh),
-        ]);
-
+        
         Self {
             surface,
             device,
@@ -394,7 +387,6 @@ impl State {
             size,
             window,
             render_pipeline,
-            stereo_camera,
             stereo_camera_uniform,
             stereo_camera_buffer,
             stereo_camera_bind_group,
@@ -403,16 +395,16 @@ impl State {
             stereo_camera_right_target_buffer,
             stereo_camera_right_target_bind_group,
             depth_texture,
-            glitch_area_texture_bind_group,
-            glitch_area_texture,
-            mesh_store,
-            game_world: game::GameWorld::new(handle_store),
             _clear_color: wgpu::Color {
                 r: 0.0,
                 g: 0.0,
                 b: 0.0,
                 a: 1.0,
-            },
+            },    
+            glitch_area_texture_bind_group,
+            glitch_area_texture,
+            mesh_store,
+            game_world,
             key_pressed: Default::default(),
         }
     }
@@ -427,8 +419,7 @@ impl State {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.stereo_camera
-                .set_aspect((self.config.width as f32 / 2.0) / self.config.height as f32);
+            self.game_world.set_camera_aspect((self.config.width as f32 / 2.0) / self.config.height as f32);
             self.depth_texture =
                 texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
         }
@@ -451,7 +442,7 @@ impl State {
                     );
                 }
                 command::Command::SetEyeDistance(distance) => {
-                    self.stereo_camera.set_eye_distance(distance);
+                    self.game_world.set_eye_distance(distance);
                 }
                 command::Command::SetSize(width, height) => {
                     self.resize(winit::dpi::PhysicalSize::new(width, height));
@@ -492,18 +483,8 @@ impl State {
             });
         }
 
-        let time = 0.05 * (instant::now() / 1000.0) as f32;
-        let radius = 10.0 as f32;
-        self.stereo_camera.set_eye(cgmath::Point3::new(
-            0.0 + time.sin() * radius,
-            0.0 + time.cos() * radius,
-            7.0,
-        ));
-        self.stereo_camera
-            .set_target(cgmath::Point3::new(0.0, 0.0, 0.0));
-
         self.stereo_camera_uniform
-            .update_view_proj(&self.stereo_camera);
+            .update_view_proj(&self.game_world.get_camera());
         self.queue.write_buffer(
             &self.stereo_camera_buffer,
             0,
