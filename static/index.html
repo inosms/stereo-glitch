@@ -63,15 +63,33 @@
             }
         }
 
+        #game-controller-action-button {
+            .front::before {
+                content: "A";
+                color: black;
+                width: 100%;
+                height: 100%;
+                display: inline-block;
+                text-align: center;
+                vertical-align: sub;
+            }
+        }
 
-        .front::before {
-            content: "A";
-            color: black;
-            width: 100%;
-            height: 100%;
-            display: inline-block;
-            text-align: center;
-            vertical-align: sub;
+        /* Praise SO https://stackoverflow.com/questions/826782/how-to-disable-text-selection-highlighting */
+        .noselect {
+            -webkit-touch-callout: none;
+            /* iOS Safari */
+            -webkit-user-select: none;
+            /* Safari */
+            -khtml-user-select: none;
+            /* Konqueror HTML */
+            -moz-user-select: none;
+            /* Old versions of Firefox */
+            -ms-user-select: none;
+            /* Internet Explorer/Edge */
+            user-select: none;
+            /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
         }
     </style>
 </head>
@@ -79,7 +97,7 @@
 <body>
     <script type="module" src="script.ts"></script>
     <div id="center-container">
-        <div id="game">
+        <div id="game" class="noselect">
             <div id="game-controller-joystick"></div>
             <div id="game-container"></div>
             <div id="game-controller-action-button"></div>
