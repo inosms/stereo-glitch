@@ -19,9 +19,8 @@ impl TimeKeeper {
     pub fn tick(&mut self) -> bool {
         let now = instant::now();
         let delta = now - self.last_tick_ms;
-        let delta_ms = delta;
-        let ticks = delta_ms as u128 / (1000 / self.ticks_per_second) as u128;
-        if ticks > 0 {
+        let ms_per_tick = 1000.0 / self.ticks_per_second as f64;
+        if delta > ms_per_tick {
             self.last_tick_ms = now;
             true
         } else {
@@ -34,8 +33,7 @@ impl TimeKeeper {
     pub fn peek(&self) -> bool {
         let now = instant::now();
         let delta = now - self.last_tick_ms;
-        let delta_ms = delta;
-        let ticks = delta_ms as u128 / (1000 / self.ticks_per_second) as u128;
-        ticks > 0
+        let ms_per_tick = 1000.0 / self.ticks_per_second as f64;
+        delta > ms_per_tick
     }
 }

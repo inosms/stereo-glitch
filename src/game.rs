@@ -163,7 +163,7 @@ fn check_player_dead_system(
     mut player: Query<&mut Player>,
 ) {
     for (position, physics_body) in &mut query {
-        if position.position.z < -5.0 {
+        if position.position.z < -1.0 {
             for mut player in &mut player {
                 player.dead = true;
             }
