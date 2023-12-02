@@ -20,6 +20,13 @@
             height: 100%;
 
             font-family: "Roboto Regular";
+
+            background-color:  hsl(254, 81%, 97%);
+            color: hsl(254, 81%, 5%);
+        }
+
+        h1 {
+            text-align: center;
         }
 
         #center-container {
@@ -34,7 +41,7 @@
             display: grid;
             width: 100%;
             max-width: 800px;
-            background-color: #242426;
+            background-color: hsl(254, 81%, 5%);
 
             grid-template-columns: 15% 70% 15%;
 
@@ -63,17 +70,13 @@
             }
         }
 
-        #game-controller-action-button {
-            .front::before {
-                content: "A";
-                color: black;
-                width: 100%;
-                height: 100%;
-                display: inline-block;
-                text-align: center;
-                vertical-align: sub;
-            }
-        }
+        .shadow-5 {
+  box-shadow: 0 1px 1px rgba(0,0,0,0.12), 
+              0 2px 2px rgba(0,0,0,0.12), 
+              0 4px 4px rgba(0,0,0,0.12), 
+              0 8px 8px rgba(0,0,0,0.12),
+              0 16px 16px rgba(0,0,0,0.12);
+}
 
         /* Praise SO https://stackoverflow.com/questions/826782/how-to-disable-text-selection-highlighting */
         .noselect {
@@ -96,8 +99,9 @@
 
 <body>
     <script type="module" src="script.ts"></script>
+    <h1>Stereo Glitch Prototype</h1>
     <div id="center-container">
-        <div id="game" class="noselect">
+        <div id="game" class="noselect shadow-5">
             <div id="game-controller-joystick"></div>
             <div id="game-container"></div>
             <div id="game-controller-action-button"></div>
