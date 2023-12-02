@@ -7,45 +7,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>stereo-glitch</title>
     <style>
+        @font-face {
+            font-family: "Roboto Regular";
+            src: url("Roboto-Regular.ttf") format("truetype");
+        }
+
         body,
         html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
+
+            font-family: "Roboto Regular";
+        }
+
+        #center-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #game {
+            border-radius: 40px;
 
             display: grid;
             width: 100%;
             max-width: 800px;
-            background-color: #19191c;
+            background-color: #242426;
 
             grid-template-columns: 15% 70% 15%;
 
             >#game-controller-joystick {
-                position: static;
+                position: relative;
+            }
+
+            >#game-controller-action-button {
+                position: relative;
             }
 
             >#game-container {
                 width: 100%;
                 aspect-ratio: 2/1;
 
-                >canvas {
-                    border-radius: 9px;
+                padding-bottom: 5px;
+                padding-top: 5px;
 
+                >canvas {
+                    padding-left: 0;
+                    padding-right: 0;
+                    margin-left: auto;
+                    margin-right: auto;
+                    display: block;
                 }
             }
+        }
+
+
+        .front::before {
+            content: "A";
+            color: black;
+            width: 100%;
+            height: 100%;
+            display: inline-block;
+            text-align: center;
+            vertical-align: sub;
         }
     </style>
 </head>
 
 <body>
     <script type="module" src="script.ts"></script>
-    <div id="game">
-        <div id="game-controller-joystick"></div>
-        <div id="game-container"></div>
+    <div id="center-container">
+        <div id="game">
+            <div id="game-controller-joystick"></div>
+            <div id="game-container"></div>
+            <div id="game-controller-action-button"></div>
+        </div>
     </div>
 
 </body>

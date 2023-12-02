@@ -556,9 +556,9 @@ impl State {
             mesh_store,
             game_world: game::GameWorld::new(handle_store),
             _clear_color: wgpu::Color {
-                r: 0.1,
-                g: 0.2,
-                b: 0.3,
+                r: 0.0,
+                g: 0.0,
+                b: 0.0,
                 a: 1.0,
             },
             key_pressed: Default::default(),

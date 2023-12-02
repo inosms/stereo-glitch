@@ -5,8 +5,9 @@ var semi = nipplejs.create({
     zone: document.getElementById('game-controller-joystick'),
     mode: 'dynamic',
     catchDistance: 80,
+    size: 50,
     threshold: 0.0,
-    color: 'white'
+    color: 'white',
 });
 
 var joystick_position = { x: 0, y: 0 };
@@ -51,4 +52,16 @@ init().then(() => {
         gameCanvas.height = gameContainer.clientHeight / 2.0;
         set_size(gameContainer.clientWidth, gameContainer.clientHeight);
     }).observe(gameContainer);
+});
+
+
+var static = nipplejs.create({
+    zone: document.getElementById('game-controller-action-button'),
+    mode: 'static',
+    position: {left: '50%', top: '50%'},
+    color: 'white',
+    lockX: true,
+    lockY: true,
+    shape: 'square',
+    size: 50,
 });
