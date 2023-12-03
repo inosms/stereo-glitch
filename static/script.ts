@@ -35,42 +35,42 @@ init().then(() => {
     window.set_eye_distance = set_eye_distance;
 
     load_level(
-        "N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N+B+B+B+B+B+B+B+B+B N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N+B+B+B+B+B+B+B+B+B N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N+B+B+B+B+B+B+B+B+B _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N+P _N _N _N _N+B+B+B+B+B+B+B+B+B _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W+W+W\n" +
-        "_N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W+W+W\n" +
+        "N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W N N N N N N N N N N N N N N N N N N\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W N N N N N N N N N N N N N N N N N N\n" +
+        "N N N N N N N N N N N N N N N N N N+D+D+W N N N N N N N N N N N N N N N N N N\n" +
+        "N N N N N N N N N N N N N N N N N N+D+D+W N N N N N N N N N N N N N N N N N N\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W N N N N N N N N N N N N N N N N N N\n" +
+        "N N N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N N N N N N N N N+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
+        "N N N N N N+B+B+B+B+B+B+B+B+B N N N N N N N N N N N N+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
+        "N N N N N N N N N N N N N N+B+B+B+B+B+B+B+B+B N N N N+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N+B+B+B+B+B+B+B+B+B _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N+P _N _N _N _N+B+B+B+B+B+B+B+B+B _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N N N N N N N N N N N N N N N N N N+W+W+W\n" +
+        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
         "N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W"
     );
 
