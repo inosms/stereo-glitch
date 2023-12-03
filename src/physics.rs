@@ -3,7 +3,8 @@ use std::ops::Add;
 use bevy_ecs::system::Resource;
 use rapier3d::{
     control::{CharacterAutostep, CharacterLength, KinematicCharacterController},
-    prelude::*, crossbeam,
+    crossbeam,
+    prelude::*,
 };
 
 use crate::{game::Position, level_loader::BlockPhysicsType};
@@ -35,7 +36,7 @@ impl PhysicsSystem {
         let rigid_body_set = RigidBodySet::new();
         let collider_set = ColliderSet::new();
 
-        let gravity = vector![0.0, 0.0, -29.81];
+        let gravity = vector![0.0, 0.0, -39.81];
         let integration_parameters = IntegrationParameters::default();
         let physics_pipeline = PhysicsPipeline::new();
         let island_manager = IslandManager::new();
@@ -112,12 +113,14 @@ impl PhysicsSystem {
             BlockPhysicsType::Kinematic => RigidBodyBuilder::kinematic_position_based(),
             BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic(),
         }
+        .ccd_enabled(true)
         .translation(vector![x, y, z])
         .build();
         let collider = ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build();
         let body_handle = self.rigid_body_set.insert(rigid_body);
-        let collider_handle = self.collider_set
-            .insert_with_parent(collider, body_handle, &mut self.rigid_body_set);
+        let collider_handle =
+            self.collider_set
+                .insert_with_parent(collider, body_handle, &mut self.rigid_body_set);
         (body_handle, collider_handle)
     }
 
@@ -135,18 +138,15 @@ impl PhysicsSystem {
             .sensor(true)
             .translation(vector![x_offset, y_offset, z_offset])
             .active_events(ActiveEvents::COLLISION_EVENTS)
-            .active_collision_types(ActiveCollisionTypes::default() | 
-                            ActiveCollisionTypes::KINEMATIC_FIXED)
+            .active_collision_types(
+                ActiveCollisionTypes::default() | ActiveCollisionTypes::KINEMATIC_FIXED,
+            )
             .build();
         self.collider_set
             .insert_with_parent(collider, body_handle, &mut self.rigid_body_set)
     }
 
-    pub fn set_collider_state(
-        &mut self,
-        collider_handle: ColliderHandle,
-        is_active: bool,
-    ) {
+    pub fn set_collider_state(&mut self, collider_handle: ColliderHandle, is_active: bool) {
         let collider = self.collider_set.get_mut(collider_handle).unwrap();
         collider.set_enabled(is_active);
     }
