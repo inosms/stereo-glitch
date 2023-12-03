@@ -151,6 +151,21 @@ impl PhysicsSystem {
         collider.set_enabled(is_active);
     }
 
+    pub fn set_collider_do_not_collide_with_kinetic(
+        &mut self,
+        collider_handle: ColliderHandle,
+        collide_with_kinetic: bool,
+    ) {
+        let collider = self.collider_set.get_mut(collider_handle).unwrap();
+        let mut active_collision_types = collider.active_collision_types();
+        if collide_with_kinetic {
+            active_collision_types |= ActiveCollisionTypes::DYNAMIC_KINEMATIC;
+        } else {
+            active_collision_types &= !ActiveCollisionTypes::DYNAMIC_KINEMATIC;
+        }
+        collider.set_active_collision_types(active_collision_types);
+    }
+
     pub fn get_position(&self, body_handle: RigidBodyHandle) -> Position {
         let body = &self.rigid_body_set[body_handle];
         let pos = body.translation().clone();
@@ -173,7 +188,7 @@ impl PhysicsSystem {
         collider.user_data = user_data;
     }
 
-    pub fn move_body(&mut self, body_handle: RigidBodyHandle, direction: cgmath::Vector3<f32>) {
+    pub fn move_body(&mut self, body_handle: RigidBodyHandle, direction: cgmath::Vector3<f32>, exclude_handles: &[ColliderHandle]) {
         let body = self.rigid_body_set.get(body_handle).unwrap();
         let collider_handle = body.colliders().first().unwrap().clone();
         let collider = self.collider_set.get(collider_handle).unwrap();
@@ -193,6 +208,13 @@ impl PhysicsSystem {
             include_dynamic_bodies: true,
         });
 
+        let mut query_filter = QueryFilter::default()
+        .exclude_rigid_body(body_handle)
+        .exclude_collider(collider_handle);
+        for handle in exclude_handles {
+            query_filter = query_filter.exclude_collider(*handle);
+        }
+
         let mut collisions = vec![];
         let corrected_movement = character_controller.move_shape(
             self.integration_parameters.dt,
@@ -202,12 +224,10 @@ impl PhysicsSystem {
             shape,
             pos,
             desired_translation,
-            QueryFilter::default()
-                .exclude_rigid_body(body_handle)
-                .exclude_collider(collider_handle),
+            query_filter,
             |c| collisions.push(c),
         );
-
+        
         for collision in &collisions {
             character_controller.solve_character_collision_impulses(
                 self.integration_parameters.dt,
@@ -217,13 +237,29 @@ impl PhysicsSystem {
                 shape,
                 mass,
                 collision,
-                QueryFilter::new()
-                    .exclude_rigid_body(body_handle)
-                    .exclude_collider(collider_handle),
+                query_filter,
             )
         }
 
         let body = self.rigid_body_set.get_mut(body_handle).unwrap();
         body.set_next_kinematic_translation(body.translation() + corrected_movement.translation);
+    }
+
+    pub fn build_fixed_joint(
+        &mut self,
+        body1_handle: RigidBodyHandle,
+        body2_handle: RigidBodyHandle,
+        anchor1: cgmath::Vector3<f32>,
+        anchor2: cgmath::Vector3<f32>,
+    ) -> ImpulseJointHandle {
+        let joint = FixedJointBuilder::new()
+            .local_anchor1(point![anchor1.x, anchor1.y, anchor1.z])
+            .local_anchor2(point![anchor2.x, anchor2.y, anchor2.z])
+            .build();
+        self.impulse_joint_set.insert(body1_handle, body2_handle, joint, true)
+    }
+
+    pub fn remove_joint(&mut self, joint_handle: ImpulseJointHandle) {
+        self.impulse_joint_set.remove(joint_handle, true);
     }
 }

@@ -2,6 +2,10 @@ use std::collections::{HashMap, HashSet};
 
 use bevy_ecs::prelude::*;
 use cgmath::{EuclideanSpace, InnerSpace, Point3, Rotation3};
+use rapier3d::{
+    dynamics::{ImpulseJointHandle, MultibodyJointHandle},
+    geometry::ColliderHandle,
+};
 
 use crate::{
     level_loader::{Block, BlockType, Cell, Id, ParsedLevel},
@@ -32,7 +36,13 @@ impl Default for Position {
 #[derive(Component)]
 struct Player {
     dead: bool,
+
+    // When the player is grabbing something this is Some((joint_handle, collider_handle))
+    is_grabbing: Option<(ImpulseJointHandle, ColliderHandle)>,
 }
+
+#[derive(Component)]
+struct Carryable;
 
 #[derive(Component)]
 struct Goal;
@@ -41,7 +51,7 @@ struct Goal;
 struct Door {
     open: bool,
     trigger_id: Id,
-    collider_handle: rapier3d::geometry::ColliderHandle,
+    collider_handle: ColliderHandle,
 }
 
 #[derive(Component)]
@@ -55,7 +65,7 @@ struct Box;
 
 #[derive(Component)]
 struct Sensor {
-    collider: rapier3d::geometry::ColliderHandle,
+    collider: ColliderHandle,
     triggered: bool,
     id: Option<Id>,
     triggered_by: HashSet<Entity>,
@@ -73,6 +83,7 @@ pub struct Invisible;
 #[derive(Component)]
 struct PhysicsBody {
     body: rapier3d::dynamics::RigidBodyHandle,
+    collider: ColliderHandle,
 }
 
 pub struct GameWorld {
@@ -95,6 +106,7 @@ fn move_player_system(
     camera: Res<StereoCamera>,
     time_keeper: Res<TimeKeeper>,
     mut query: Query<(&mut Position, &PhysicsBody), With<Player>>,
+    player_query: Query<&Player>,
 ) {
     // Only move the player if we are in a physics tick
     // Otherwise the player will be frame rate dependent
@@ -126,8 +138,17 @@ fn move_player_system(
 
     let direction = camera_look_direction_rotation_matrix * direction * player_max_speed;
 
+    // If the player holds an object we don't want it to collide with it. 
+    // Thus we need to get the collider handles of all objects the player is holding
+    // in order to exclude them from the collision detection
+    let objects_held_by_player = player_query
+        .iter()
+        .filter_map(|(player)| player.is_grabbing)
+        .map(|(_,handle)| handle)
+        .collect::<Vec<_>>();
+
     for (mut position, physics_body) in &mut query {
-        physics_system.move_body(physics_body.body, direction);
+        physics_system.move_body(physics_body.body, direction, &objects_held_by_player);
 
         let pos = physics_system.get_position(physics_body.body);
         position.position = pos.position;
@@ -352,7 +373,7 @@ impl GameWorld {
                             .add_sensor_collider(
                                 body_handle,
                                 0.5,
-                                0.1,
+                                0.3,
                                 block.block_height() / 2.0,
                                 0.0,
                                 -0.5,
@@ -363,14 +384,21 @@ impl GameWorld {
                     None
                 };
 
-                let mut entity = self
-                    .world
-                    .spawn((position, PhysicsBody { body: body_handle }));
+                let mut entity = self.world.spawn((
+                    position,
+                    PhysicsBody {
+                        body: body_handle,
+                        collider: collider_handle,
+                    },
+                ));
 
                 match block {
                     Block::Player => {
                         entity.insert((
-                            Player { dead: false },
+                            Player {
+                                dead: false,
+                                is_grabbing: None,
+                            },
                             Sensor {
                                 collider: sensor_trigger.unwrap(),
                                 triggered: false,
@@ -396,7 +424,7 @@ impl GameWorld {
                         entity.insert(Floor);
                     }
                     Block::Box => {
-                        entity.insert(Box);
+                        entity.insert((Box, Carryable));
                     }
                     Block::Trigger => {
                         entity.insert(Sensor {
@@ -468,32 +496,115 @@ impl GameWorld {
     }
 
     pub fn player_grab_action(&mut self) {
-        log::info!("grab");
 
-        // let mut query = self.world.query::<(&mut Sensor, &mut Position), With<Player>>();
-        // for (mut sensor, mut position) in &mut query {
-        //     if sensor.triggered {
-        //         let mut query = self.world.query::<(&mut Position), With<Box>>();
-        //         for (mut box_position) in &mut query {
-        //             if !sensor.triggered_by.contains(&box_position.entity()) {
-        //                 continue;
-        //             }
+        let is_already_grabbing = self
+            .world
+            .query_filtered::<(&mut Player), With<Player>>()
+            .iter(&mut self.world)
+            .next()
+            .unwrap()
+            .is_grabbing;
 
-        //             let mut query = self.world.query::<(&mut PhysicsBody), With<Box>>();
-        //             for (mut physics_body) in &mut query {
-        //                 let pos = self.world.resource::<PhysicsSystem>().get_position(physics_body.body);
-        //                 box_position.position.position = pos.position;
-        //                 box_position.position.rotation = pos.rotation;
-        //             }
+        if is_already_grabbing.is_some() {
+            return;
+        }
 
-        //             position.position.z += 0.1;
-        //             break;
-        //         }
-        //     }
-        // }
+        let mut query = self.world.query_filtered::<(&Sensor), With<Player>>();
+        let entities_in_front_of_player = query
+            .iter(&self.world)
+            .filter(|(sensor)| sensor.triggered)
+            .map(|(sensor)| sensor.triggered_by.clone())
+            .flatten()
+            .collect::<HashSet<_>>();
+
+        let mut carryable_entities = self.world.query_filtered::<Entity, With<Carryable>>();
+
+        let carryable_entities_in_front_of_player = carryable_entities
+            .iter(&self.world)
+            .filter(|entity| entities_in_front_of_player.contains(entity))
+            .collect::<Vec<_>>();
+
+        let player_rigid_body = self
+            .world
+            .query_filtered::<&PhysicsBody, With<Player>>()
+            .iter(&self.world)
+            .next()
+            .unwrap()
+            .body;
+
+        // The player can always only hold max one item, so we only take the first one
+        for e in carryable_entities_in_front_of_player.iter().take(1) {
+
+            let entity_rigid_body = self
+                .world
+                .query_filtered::<&PhysicsBody, With<Carryable>>()
+                .get_mut(&mut self.world, *e)
+                .unwrap()
+                .body;
+
+            let grab_handle = self
+                .world
+                .resource_mut::<PhysicsSystem>()
+                .build_fixed_joint(
+                    player_rigid_body,
+                    entity_rigid_body,
+                    // a bit above ground and in front of the player
+                    cgmath::Vector3::new(0.0, -1.0, 0.5),
+                    cgmath::Vector3::new(0.0, 0.0, 0.0),
+                );
+
+            // Disable the collider of the grabbed entity
+            // At first get collider handle of the grabbed entity
+            let entity_collider_handle = self
+                .world
+                .query_filtered::<&PhysicsBody, With<Carryable>>()
+                .get_mut(&mut self.world, *e)
+                .unwrap()
+                .collider;
+
+            self.world
+                .resource_mut::<PhysicsSystem>()
+                .set_collider_do_not_collide_with_kinetic(entity_collider_handle, false);
+
+            // Set the grab handle on the player
+            self.world
+                .query_filtered::<(&mut Player), With<Player>>()
+                .iter_mut(&mut self.world)
+                .next()
+                .unwrap()
+                .is_grabbing = Some((grab_handle, entity_collider_handle));
+        }
     }
 
     pub fn player_release_grab(&mut self) {
-        log::info!("release grab");
+
+        let grab_handle = self
+            .world
+            .query_filtered::<(&mut Player), With<Player>>()
+            .iter_mut(&mut self.world)
+            .next()
+            .unwrap()
+            .is_grabbing
+            .take();
+
+        if let Some((grab_handle, _)) = grab_handle {
+            self.world
+                .resource_mut::<PhysicsSystem>()
+                .remove_joint(grab_handle);
+        }
+
+        // Enable the collider of the grabbed entity
+        // At first get collider handle of the grabbed entity
+        let entity_collider_handle = self
+            .world
+            .query_filtered::<&PhysicsBody, With<Carryable>>()
+            .iter(&mut self.world)
+            .next()
+            .unwrap()
+            .collider;
+
+        self.world
+            .resource_mut::<PhysicsSystem>()
+            .set_collider_do_not_collide_with_kinetic(entity_collider_handle, true);
     }
 }
