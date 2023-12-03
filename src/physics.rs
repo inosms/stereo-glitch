@@ -3,7 +3,7 @@ use std::ops::Add;
 use bevy_ecs::system::Resource;
 use rapier3d::{
     control::{CharacterAutostep, CharacterLength, KinematicCharacterController},
-    prelude::*,
+    prelude::*, crossbeam,
 };
 
 use crate::{game::Position, level_loader::BlockPhysicsType};
@@ -19,8 +19,10 @@ pub struct PhysicsSystem {
     multibody_joint_set: MultibodyJointSet,
     ccd_solver: CCDSolver,
     physics_hooks: (),
-    event_handler: (),
+    event_handler: ChannelEventCollector,
     query_pipeline: QueryPipeline,
+
+    collision_recv: crossbeam::channel::Receiver<CollisionEvent>,
 
     rigid_body_set: RigidBodySet,
     collider_set: ColliderSet,
@@ -44,7 +46,10 @@ impl PhysicsSystem {
         let query_pipeline = QueryPipeline::new();
         let ccd_solver = CCDSolver::new();
         let physics_hooks = ();
-        let event_handler = ();
+
+        let (collision_send, collision_recv) = crossbeam::channel::unbounded();
+        let (contact_force_send, contact_force_recv) = crossbeam::channel::unbounded();
+        let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
 
         Self {
             integration_parameters,
@@ -57,6 +62,7 @@ impl PhysicsSystem {
             ccd_solver,
             physics_hooks,
             event_handler,
+            collision_recv,
             query_pipeline,
 
             rigid_body_set,
@@ -87,6 +93,10 @@ impl PhysicsSystem {
             .update(&self.rigid_body_set, &self.collider_set);
     }
 
+    pub fn poll_collision_events(&mut self) -> Option<CollisionEvent> {
+        self.collision_recv.try_recv().ok()
+    }
+
     pub fn add_object(
         &mut self,
         x: f32,
@@ -109,6 +119,27 @@ impl PhysicsSystem {
         self.collider_set
             .insert_with_parent(collider, body_handle, &mut self.rigid_body_set);
         body_handle
+    }
+
+    pub fn add_sensor_collider(
+        &mut self,
+        body_handle: RigidBodyHandle,
+        x_extent: f32,
+        y_extent: f32,
+        z_extent: f32,
+        x_offset: f32,
+        y_offset: f32,
+        z_offset: f32,
+    ) -> ColliderHandle {
+        let collider = ColliderBuilder::cuboid(x_extent, y_extent, z_extent)
+            .sensor(true)
+            .translation(vector![x_offset, y_offset, z_offset])
+            .active_events(ActiveEvents::COLLISION_EVENTS)
+            .active_collision_types(ActiveCollisionTypes::default() | 
+                            ActiveCollisionTypes::KINEMATIC_FIXED)
+            .build();
+        self.collider_set
+            .insert_with_parent(collider, body_handle, &mut self.rigid_body_set)
     }
 
     pub fn get_position(&self, body_handle: RigidBodyHandle) -> Position {

@@ -20,7 +20,7 @@ impl TimeKeeper {
         let now = instant::now();
         let delta = now - self.last_tick_ms;
         let ms_per_tick = 1000.0 / self.ticks_per_second as f64;
-        if delta > ms_per_tick {
+        if delta >= ms_per_tick {
             self.last_tick_ms = now;
             true
         } else {

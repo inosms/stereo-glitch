@@ -50,18 +50,20 @@ pub enum BlockType {
     Goal,
     Wall,
     Box,
+    Trigger,
 }
 
 impl BlockType {
-    pub fn block_height(&self) -> i32 {
+    pub fn block_height(&self) -> f32 {
         match self {
-            BlockType::FloorNormal => 1,
-            BlockType::Player => 1,
-            BlockType::Door => 1,
-            BlockType::Empty => 1,
-            BlockType::Goal => 1,
-            BlockType::Wall => 1,
-            BlockType::Box => 1,
+            BlockType::FloorNormal => 1.0,
+            BlockType::Player => 1.0,
+            BlockType::Door => 1.0,
+            BlockType::Empty => 1.0,
+            BlockType::Goal => 1.0,
+            BlockType::Wall => 1.0,
+            BlockType::Box => 1.0,
+            BlockType::Trigger => 0.1,
         }
     }
 
@@ -74,6 +76,7 @@ impl BlockType {
             BlockType::Goal => BlockPhysicsType::Static,
             BlockType::Wall => BlockPhysicsType::Static,
             BlockType::Box => BlockPhysicsType::Dynamic,
+            BlockType::Trigger => BlockPhysicsType::Static,
         }
     }
 }
@@ -239,6 +242,7 @@ fn parse_block(input: &str) -> IResult<&str, (BlockType, Option<Id>)> {
         value(BlockType::Goal, tag("G")),
         value(BlockType::Wall, tag("W")),
         value(BlockType::Box, tag("B")),
+        value(BlockType::Trigger, tag("T")),
     ))(input)?;
 
     let (rest, id) = opt(parse_id)(rest)?;

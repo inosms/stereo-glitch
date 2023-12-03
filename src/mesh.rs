@@ -140,6 +140,24 @@ impl Mesh {
         Self::new(vertices, CUBE_INDICES.to_vec(), device, instance_size)
     }
 
+    pub fn new_cube_with_color_and_scale(
+        device: &wgpu::Device,
+        color: [f32; 3],
+        x_scale: f32,
+        y_scale: f32,
+        z_scale: f32,
+        instance_size: usize,
+    ) -> Self {
+        let mut vertices = CUBE_VERTICES.to_vec();
+        for vertex in vertices.iter_mut() {
+            vertex.color = color;
+            vertex.position[0] *= x_scale;
+            vertex.position[1] *= y_scale;
+            vertex.position[2] *= z_scale;
+        }
+        Self::new(vertices, CUBE_INDICES.to_vec(), device, instance_size)
+    }
+
     pub fn update_instance_buffer(
         &mut self,
         device: &wgpu::Device,
