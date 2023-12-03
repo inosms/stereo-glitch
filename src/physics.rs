@@ -162,6 +162,17 @@ impl PhysicsSystem {
         }
     }
 
+    pub fn get_user_data(&self, collider_handle: ColliderHandle) -> Option<u128> {
+        self.collider_set
+            .get(collider_handle)
+            .map(|collider| collider.user_data)
+    }
+
+    pub fn set_user_data(&mut self, collider_handle: ColliderHandle, user_data: u128) {
+        let collider = self.collider_set.get_mut(collider_handle).unwrap();
+        collider.user_data = user_data;
+    }
+
     pub fn move_body(&mut self, body_handle: RigidBodyHandle, direction: cgmath::Vector3<f32>) {
         let body = self.rigid_body_set.get(body_handle).unwrap();
         let collider_handle = body.colliders().first().unwrap().clone();
@@ -175,9 +186,9 @@ impl PhysicsSystem {
         let desired_translation = desired_translation + gravity;
         let mut character_controller = KinematicCharacterController::default();
         character_controller.up = Vector::z_axis();
-        character_controller.offset = CharacterLength::Absolute(0.1);
+        character_controller.offset = CharacterLength::Absolute(0.11);
         character_controller.autostep = Some(CharacterAutostep {
-            max_height: CharacterLength::Absolute(0.1),
+            max_height: CharacterLength::Absolute(0.2),
             min_width: CharacterLength::Absolute(0.0),
             include_dynamic_bodies: true,
         });

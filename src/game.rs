@@ -54,10 +54,11 @@ struct Floor;
 struct Box;
 
 #[derive(Component)]
-struct Trigger {
-    trigger_collider: rapier3d::geometry::ColliderHandle,
+struct Sensor {
+    collider: rapier3d::geometry::ColliderHandle,
     triggered: bool,
     id: Option<Id>,
+    triggered_by: HashSet<Entity>,
 }
 
 #[derive(Component)]
@@ -152,7 +153,7 @@ fn physics_system(
     mut physics_system: ResMut<PhysicsSystem>,
     time_keeper: Res<TimeKeeper>,
     mut query: Query<(&mut Position, &PhysicsBody)>,
-    mut trigger_query: Query<(&mut Trigger)>,
+    mut trigger_query: Query<(&mut Sensor)>,
 ) {
     // Only step physics if we are in a physics tick
     // Otherwise the physics system will be frame rate dependent
@@ -172,14 +173,25 @@ fn physics_system(
     // This map is used to map from a collider handle to the trigger component (to avoid nested queries)
     let mut handle_to_trigger_map = trigger_query
         .iter_mut()
-        .map(|(trigger)| (trigger.trigger_collider, trigger))
+        .map(|(trigger)| (trigger.collider, trigger))
         .collect::<HashMap<_, _>>();
     while let Some(collision_event) = physics_system.poll_collision_events() {
         let triggered = collision_event.started();
-        let colliders_involved = vec![collision_event.collider1(), collision_event.collider2()];
-        for collider in colliders_involved {
-            if let Some(trigger) = handle_to_trigger_map.get_mut(&collider) {
-                trigger.triggered = triggered;
+        let colliders_involved = vec![
+            (collision_event.collider1(), collision_event.collider2()),
+            (collision_event.collider2(), collision_event.collider1()),
+        ];
+        for (this_collider, other_collider) in colliders_involved {
+            if let Some(user_data) = physics_system.get_user_data(other_collider) {
+                let entity = Entity::from_bits(user_data as u64);
+                if let Some(trigger) = handle_to_trigger_map.get_mut(&this_collider) {
+                    if triggered {
+                        trigger.triggered_by.insert(entity);
+                    } else {
+                        trigger.triggered_by.remove(&entity);
+                    }
+                    trigger.triggered = !trigger.triggered_by.is_empty();
+                }
             }
         }
     }
@@ -205,9 +217,9 @@ fn check_player_dead_system(
 fn door_system(
     mut commands: Commands,
     mut query: Query<(&mut Door, Entity)>,
-    trigger_query: Query<(&Trigger)>,
+    trigger_query: Query<(&Sensor)>,
     mut physics_system: ResMut<PhysicsSystem>,
-) {    
+) {
     let triggered_trigger_ids = trigger_query
         .iter()
         .filter(|(trigger)| trigger.triggered)
@@ -315,29 +327,36 @@ impl GameWorld {
                     ),
                 };
 
-                let (body_handle, collider_handle) = self.world.resource_mut::<PhysicsSystem>().add_object(
-                    x as f32 + 0.5,
-                    -y as f32 - 0.5,
-                    z as f32 + block.block_height() / 2.0,
-                    0.5,
-                    0.5,
-                    block.block_height() / 2.0,
-                    block.get_physics_type(),
-                );
+                let (body_handle, collider_handle) =
+                    self.world.resource_mut::<PhysicsSystem>().add_object(
+                        x as f32 + 0.5,
+                        -y as f32 - 0.5,
+                        z as f32 + block.block_height() / 2.0,
+                        0.5,
+                        0.5,
+                        block.block_height() / 2.0,
+                        block.get_physics_type(),
+                    );
 
                 // Add sensor
                 let sensor_trigger = if block.get_block_type() == BlockType::Trigger {
                     Some(
                         self.world
                             .resource_mut::<PhysicsSystem>()
+                            .add_sensor_collider(body_handle, 0.5, 0.5, 0.2, 0.0, 0.0, 0.05),
+                    )
+                } else if block.get_block_type() == BlockType::Player {
+                    Some(
+                        self.world
+                            .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(
                                 body_handle,
                                 0.5,
-                                0.5,
+                                0.1,
                                 block.block_height() / 2.0,
                                 0.0,
+                                -0.5,
                                 0.0,
-                                0.1,
                             ),
                     )
                 } else {
@@ -350,7 +369,15 @@ impl GameWorld {
 
                 match block {
                     Block::Player => {
-                        entity.insert(Player { dead: false });
+                        entity.insert((
+                            Player { dead: false },
+                            Sensor {
+                                collider: sensor_trigger.unwrap(),
+                                triggered: false,
+                                id: None,
+                                triggered_by: HashSet::new(),
+                            },
+                        ));
                     }
                     Block::Goal => {
                         entity.insert(Goal);
@@ -372,10 +399,11 @@ impl GameWorld {
                         entity.insert(Box);
                     }
                     Block::Trigger => {
-                        entity.insert(Trigger {
-                            trigger_collider: sensor_trigger.unwrap(),
+                        entity.insert(Sensor {
+                            collider: sensor_trigger.unwrap(),
                             triggered: false,
                             id: id.clone(),
+                            triggered_by: HashSet::new(),
                         });
                     }
                     Block::Empty => {}
@@ -389,6 +417,14 @@ impl GameWorld {
                         log::warn!("No mesh for block type {:?}", block.get_block_type());
                     }
                 }
+
+                let entity_id = entity.id().to_bits() as u128;
+                self.world
+                    .resource_mut::<PhysicsSystem>()
+                    .set_user_data(collider_handle, entity_id);
+                // Do not set user data to the sensor collider
+                // For our purposes if a collider is a sensor it is not a physical object
+                // By doing that we can distinguish between sensors and other colliders
             }
 
             z += block.block_height();
@@ -403,7 +439,9 @@ impl GameWorld {
     }
 
     pub(crate) fn iter_instances(&mut self, mesh_handle: Handle) -> Vec<&Position> {
-        let mut query = self.world.query_filtered::<(&Position, &Renderable), Without<Invisible>>();
+        let mut query = self
+            .world
+            .query_filtered::<(&Position, &Renderable), Without<Invisible>>();
         query
             .iter(&self.world)
             .filter(move |(_, renderable)| renderable.mesh == mesh_handle)
@@ -427,5 +465,35 @@ impl GameWorld {
 
     pub fn get_camera(&self) -> &StereoCamera {
         self.world.resource::<StereoCamera>()
+    }
+
+    pub fn player_grab_action(&mut self) {
+        log::info!("grab");
+
+        // let mut query = self.world.query::<(&mut Sensor, &mut Position), With<Player>>();
+        // for (mut sensor, mut position) in &mut query {
+        //     if sensor.triggered {
+        //         let mut query = self.world.query::<(&mut Position), With<Box>>();
+        //         for (mut box_position) in &mut query {
+        //             if !sensor.triggered_by.contains(&box_position.entity()) {
+        //                 continue;
+        //             }
+
+        //             let mut query = self.world.query::<(&mut PhysicsBody), With<Box>>();
+        //             for (mut physics_body) in &mut query {
+        //                 let pos = self.world.resource::<PhysicsSystem>().get_position(physics_body.body);
+        //                 box_position.position.position = pos.position;
+        //                 box_position.position.rotation = pos.rotation;
+        //             }
+
+        //             position.position.z += 0.1;
+        //             break;
+        //         }
+        //     }
+        // }
+    }
+
+    pub fn player_release_grab(&mut self) {
+        log::info!("release grab");
     }
 }

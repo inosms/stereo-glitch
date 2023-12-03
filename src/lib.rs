@@ -490,6 +490,7 @@ impl State {
         if button_pressed {
             self.game_world.move_player(direction);
         }
+
         self.game_world.update();
 
         for mesh_handle in self.mesh_store.iter_handles() {
@@ -632,6 +633,10 @@ pub async fn run() {
                         } => match &physical_key {
                             PhysicalKey::Code(key_code) => {
                                 state.key_pressed.insert(*key_code);
+
+                                if key_code == &KeyCode::Enter || key_code == &KeyCode::Space {
+                                    state.game_world.player_grab_action()
+                                }
                             }
                             _ => {}
                         },
@@ -646,6 +651,10 @@ pub async fn run() {
                         } => match &physical_key {
                             PhysicalKey::Code(key_code) => {
                                 state.key_pressed.remove(key_code);
+
+                                if key_code == &KeyCode::Enter || key_code == &KeyCode::Space {
+                                    state.game_world.player_release_grab()
+                                }
                             }
                             _ => {}
                         },

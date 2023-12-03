@@ -90,7 +90,7 @@ impl Block {
             Block::Goal => 1.0,
             Block::Wall => 1.0,
             Block::Box => 1.0,
-            Block::Trigger => 0.1,
+            Block::Trigger => 0.02,
         }
     }
 
