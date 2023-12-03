@@ -1,5 +1,5 @@
 use cgmath::InnerSpace;
-use level_loader::{Block, ParsedLevel, BlockType};
+use level_loader::{Block, BlockType, ParsedLevel};
 use mesh::{InstanceRaw, Vertex};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -142,9 +142,12 @@ impl State {
             [1.0, 0.0, 0.0],
             initial_instance_buffer_size as usize,
         ));
-        let floor_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+        let floor_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
             &device,
             [0.0, 1.0, 0.0],
+            1.0,
+            1.0,
+            8.0,
             initial_instance_buffer_size as usize,
         ));
         let player_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
@@ -574,8 +577,7 @@ pub async fn run() {
     }
 
     let event_loop = EventLoop::new().unwrap();
-    let window = WindowBuilder::new()
-    .build(&event_loop).unwrap();
+    let window = WindowBuilder::new().build(&event_loop).unwrap();
 
     #[cfg(target_arch = "wasm32")]
     {

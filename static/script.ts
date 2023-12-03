@@ -35,43 +35,78 @@ init().then(() => {
     window.set_eye_distance = set_eye_distance;
 
     load_level(
-        "N N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W N N N N N N N N N N N N N N N N N N\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W N N N N N N N N N N N N N N N N N N\n" +
-        "N N N N+P N N N N N N+T#trigger N N N N N N N N+D(#trigger)+D(#trigger)+W N N N N N N N N N N N N N N N N N N\n" +
-        "N N N N N N N N N N N N N N N N N N+D(#trigger)+D(#trigger)+W N N N N N N N N N N N N N N N N N N\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W N N N N N N N N N N N N N N N N N N\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
-        "N N N N N N+B+B+B+B+B+B+B+B+B N N N N N N N N N N N N+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
-        "N N N N N N N N N N N N N N+B+B+B+B+B+B+B+B+B N N N N+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N+W+W+W _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N+B+B+B+B+B+B+B+B+B _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N+B+B+B+B+B+B+B+B+B _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N N N N N N N N N N N N N N N N N N+W+W+W\n" +
-        "N N N N N N N N N N N N N N N N N N+W+W+W\n" +
-        "N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W"
+        "N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N+P   N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N+T#t+X+X+B N N   N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+D(#t)+D(#t) N+D(#t)+D(#t) N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N    _N    _N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N    _N    _N    _N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N    _N    _N+B  _N     N     N     N     N+T#t2 N    N     N+W+W\n" +
+        "N+W+W N     N     N     N    _N    _N    _N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N    _N    _N    _N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+D(#t2)+D(#t2) N+D(#t2)+D(#t2) N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N+W+W N     N     N     N     N     N     N     N     X     X     X     X     X     X\n" +
+        "N+W+W N     N     N     N     N     N     N     N     X     X     X     X     X     X\n" +
+        "N+W+W N     N     N     N     N     N     N     N     X     X     X     X     X     X\n" +
+        "N+W+W N     N     N     N     N     N     N    _N     X     X     X     X     X     X\n" +
+        "N+W+W N     N     N     N     N     N    _N    _N     X     X     X     X     X     X\n" +
+        "_N     N     N     N     N     N     N    _N    _N     N     N     N     N     N     N\n" +
+        "_N     N     N     N     N     N     N    _N    _N    _N    _N     N     N     N     N\n" +
+        "_N     N     N     N     N     N     N    _N    _N    _N    _N    _N     N     N     N\n" +
+        "_N     N     N     N     N     N     N    _N    _N    _N    _N    _N     N     N     N\n" +
+        "_N     N     N     N     N     N    _N    _N    _N    _N    _N    _N    _N    _N    _N\n" +
+        "_N     N     N     N     N    _N    _N    _N    _X    _X    _N    _N    _N    _N    _N\n" +
+        "_N     N     N     N     N    _N    _X    _X    _X    _X    _X    _X    _N    _N    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _X    _X    _X    _X    _X    _N    _N    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _X    _N    _N    _N    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _N    _N    _N    _N    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _N    _N    _N    _N    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _N    _N+B+B _N+B+B  _N  _X   _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _N    _N    _N    _N    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _N    _N    _N    _N    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _X    _N    _N    _N    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _X    _N    _N    _X    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _X    _N    _N    _X    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _X    _N    _N    _X    _X    _X    _X    _N\n" +
+        "_N     N     N+T#t3     N    _N    _N    _X    _X    _N    _N    _X    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _X    _N    _N    _X    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _X    _N    _N    _X    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _X    _X    _N    _N    _X    _X    _X    _X    _N\n" +
+        "_N     N     N     N    _N    _N    _N    _N    _N    _N    _N    _N    _N    _N    _N\n" +
+        "_N     N     N     N    _N    _N     N    _N    _N    _N    _N    _N    _N    N     _N\n" +
+        "_N     N     N     N    _N    _N    _N    _N     N    _N    _N    _N    _N    N     _N\n" +
+        "_N     N     N     N    _N     N    _N    _N    _N    _N    _N    _N    _N    N     _N\n" +
+        "_N     N     N     N    _N     N     N    _N     N    _N    _N    _N    _N    N     _N\n" +
+        "_N     N     N     N    _N     N     N    _N     N    _N    _N    _N     N    N     _N\n" +
+        "_N     N     N     N    _N     N     N    _N     N    _N    _N     N     N    N      N\n" +
+        "_N     N     N     N    _N     N     N     N     N     N     N     N     N    N      N\n" +
+        "_N     N     N     N     N     N     N     N     N     N     N     N     N    N      N\n" +
+        "_N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+D(#t3)+D(#t3) N+D(#t3)+D(#t3) N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W\n"
     );
 
     // set the size of the canvas to the size of the game-container
