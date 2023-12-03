@@ -38,7 +38,7 @@ init().then(() => {
         "N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W\n" +
         "N N N N N N N N N N N N N N N N N N+W+W+W N N N N N N N N N N N N N N N N N N\n" +
         "N N N N N N N N N N N N N N N N N N+W+W+W N N N N N N N N N N N N N N N N N N\n" +
-        "N N N N N N N N N N N N N N N N N N+D+D+W N N N N N N N N N N N N N N N N N N\n" +
+        "N N N N+P N N N N N N N N N N N N N N+D+D+W N N N N N N N N N N N N N N N N N N\n" +
         "N N N N N N N N N N N N N N N N N N+D+D+W N N N N N N N N N N N N N N N N N N\n" +
         "N N N N N N N N N N N N N N N N N N+W+W+W N N N N N N N N N N N N N N N N N N\n" +
         "N N N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N+W+W+W N N N N N N N N N+W+W+W\n" +
@@ -66,7 +66,7 @@ init().then(() => {
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
-        "_N _N _N _N+P _N _N _N _N+B+B+B+B+B+B+B+B+B _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
+        "_N _N _N _N _N _N _N _N+B+B+B+B+B+B+B+B+B _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
         "_N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N _N+W+W+W\n" +
         "_N N N N N N N N N N N N N N N N N N+W+W+W\n" +
