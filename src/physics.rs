@@ -106,7 +106,7 @@ impl PhysicsSystem {
         y_extent: f32,
         z_extent: f32,
         block_physics_type: BlockPhysicsType,
-    ) -> RigidBodyHandle {
+    ) -> (RigidBodyHandle, ColliderHandle) {
         let rigid_body = match block_physics_type {
             BlockPhysicsType::Static => RigidBodyBuilder::fixed(),
             BlockPhysicsType::Kinematic => RigidBodyBuilder::kinematic_position_based(),
@@ -116,9 +116,9 @@ impl PhysicsSystem {
         .build();
         let collider = ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build();
         let body_handle = self.rigid_body_set.insert(rigid_body);
-        self.collider_set
+        let collider_handle = self.collider_set
             .insert_with_parent(collider, body_handle, &mut self.rigid_body_set);
-        body_handle
+        (body_handle, collider_handle)
     }
 
     pub fn add_sensor_collider(
@@ -140,6 +140,15 @@ impl PhysicsSystem {
             .build();
         self.collider_set
             .insert_with_parent(collider, body_handle, &mut self.rigid_body_set)
+    }
+
+    pub fn set_collider_state(
+        &mut self,
+        collider_handle: ColliderHandle,
+        is_active: bool,
+    ) {
+        let collider = self.collider_set.get_mut(collider_handle).unwrap();
+        collider.set_enabled(is_active);
     }
 
     pub fn get_position(&self, body_handle: RigidBodyHandle) -> Position {

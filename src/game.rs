@@ -41,6 +41,7 @@ struct Goal;
 struct Door {
     open: bool,
     trigger_id: Id,
+    collider_handle: rapier3d::geometry::ColliderHandle,
 }
 
 #[derive(Component)]
@@ -205,6 +206,7 @@ fn door_system(
     mut commands: Commands,
     mut query: Query<(&mut Door, Entity)>,
     trigger_query: Query<(&Trigger)>,
+    mut physics_system: ResMut<PhysicsSystem>,
 ) {    
     let triggered_trigger_ids = trigger_query
         .iter()
@@ -221,10 +223,10 @@ fn door_system(
 
         if door.open {
             commands.entity(entity).insert(Invisible);
-            log::info!("Door open");
+            physics_system.set_collider_state(door.collider_handle, false);
         } else {
             commands.entity(entity).remove::<Invisible>();
-            log::info!("Door closed");
+            physics_system.set_collider_state(door.collider_handle, true);
         }
     }
 }
@@ -313,7 +315,7 @@ impl GameWorld {
                     ),
                 };
 
-                let body_handle = self.world.resource_mut::<PhysicsSystem>().add_object(
+                let (body_handle, collider_handle) = self.world.resource_mut::<PhysicsSystem>().add_object(
                     x as f32 + 0.5,
                     -y as f32 - 0.5,
                     z as f32 + block.block_height() / 2.0,
@@ -357,6 +359,7 @@ impl GameWorld {
                         entity.insert(Door {
                             open: false,
                             trigger_id: trigger_id.clone(),
+                            collider_handle,
                         });
                     }
                     Block::Wall => {
@@ -400,7 +403,7 @@ impl GameWorld {
     }
 
     pub(crate) fn iter_instances(&mut self, mesh_handle: Handle) -> Vec<&Position> {
-        let mut query = self.world.query::<(&Position, &Renderable)>();
+        let mut query = self.world.query_filtered::<(&Position, &Renderable), Without<Invisible>>();
         query
             .iter(&self.world)
             .filter(move |(_, renderable)| renderable.mesh == mesh_handle)
