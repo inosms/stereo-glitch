@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use bevy_ecs::prelude::*;
 use cgmath::{EuclideanSpace, InnerSpace, Point3, Rotation3};
 
 use crate::{
-    level_loader::{BlockType, Cell, ParsedLevel},
+    level_loader::{Block, BlockType, Cell, Id, ParsedLevel},
     mesh::{Handle, Mesh},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
@@ -38,7 +38,10 @@ struct Player {
 struct Goal;
 
 #[derive(Component)]
-struct Door;
+struct Door {
+    open: bool,
+    trigger_id: Id,
+}
 
 #[derive(Component)]
 struct Wall;
@@ -53,12 +56,17 @@ struct Box;
 struct Trigger {
     trigger_collider: rapier3d::geometry::ColliderHandle,
     triggered: bool,
+    id: Option<Id>,
 }
 
 #[derive(Component)]
 pub struct Renderable {
     mesh: Handle,
 }
+
+// This component is used to make an entity invisible
+#[derive(Component)]
+pub struct Invisible;
 
 #[derive(Component)]
 struct PhysicsBody {
@@ -159,12 +167,12 @@ fn physics_system(
     }
 
     // Update the state of triggers according to the collision events
-    
+
     // This map is used to map from a collider handle to the trigger component (to avoid nested queries)
     let mut handle_to_trigger_map = trigger_query
         .iter_mut()
         .map(|(trigger)| (trigger.trigger_collider, trigger))
-        .collect::<HashMap<_,_>>();
+        .collect::<HashMap<_, _>>();
     while let Some(collision_event) = physics_system.poll_collision_events() {
         let triggered = collision_event.started();
         let colliders_involved = vec![collision_event.collider1(), collision_event.collider2()];
@@ -189,6 +197,34 @@ fn check_player_dead_system(
             for mut player in &mut player {
                 player.dead = true;
             }
+        }
+    }
+}
+
+fn door_system(
+    mut commands: Commands,
+    mut query: Query<(&mut Door, Entity)>,
+    trigger_query: Query<(&Trigger)>,
+) {    
+    let triggered_trigger_ids = trigger_query
+        .iter()
+        .filter(|(trigger)| trigger.triggered)
+        .filter_map(|(trigger)| trigger.id.clone())
+        .collect::<HashSet<_>>();
+
+    for (mut door, entity) in &mut query {
+        if triggered_trigger_ids.contains(&door.trigger_id) {
+            door.open = true;
+        } else {
+            door.open = false;
+        }
+
+        if door.open {
+            commands.entity(entity).insert(Invisible);
+            log::info!("Door open");
+        } else {
+            commands.entity(entity).remove::<Invisible>();
+            log::info!("Door closed");
         }
     }
 }
@@ -226,6 +262,7 @@ impl GameWorld {
             .add_systems((move_player_system, physics_system, fixed_update_system).chain());
         self.schedule.add_systems(move_camera_system);
         self.schedule.add_systems(check_player_dead_system);
+        self.schedule.add_systems(door_system);
     }
 
     pub fn update(&mut self) {
@@ -266,8 +303,8 @@ impl GameWorld {
 
     fn add_cell(&mut self, x: i32, y: i32, cell: &Cell) {
         let mut z = 0.0;
-        for (block_type, _) in cell.block_stack_iter() {
-            if block_type != &BlockType::Empty {
+        for (block, id) in cell.block_stack_iter() {
+            if block != &Block::Empty {
                 let position = Position {
                     position: cgmath::Vector3::new(x as f32 + 0.5, -y as f32 - 0.5, z as f32),
                     rotation: cgmath::Quaternion::from_axis_angle(
@@ -279,15 +316,15 @@ impl GameWorld {
                 let body_handle = self.world.resource_mut::<PhysicsSystem>().add_object(
                     x as f32 + 0.5,
                     -y as f32 - 0.5,
-                    z as f32 + block_type.block_height() / 2.0,
+                    z as f32 + block.block_height() / 2.0,
                     0.5,
                     0.5,
-                    block_type.block_height() / 2.0,
-                    block_type.get_physics_type(),
+                    block.block_height() / 2.0,
+                    block.get_physics_type(),
                 );
 
                 // Add sensor
-                let sensor_trigger = if block_type == &BlockType::Trigger {
+                let sensor_trigger = if block.get_block_type() == BlockType::Trigger {
                     Some(
                         self.world
                             .resource_mut::<PhysicsSystem>()
@@ -295,7 +332,7 @@ impl GameWorld {
                                 body_handle,
                                 0.5,
                                 0.5,
-                                block_type.block_height() / 2.0,
+                                block.block_height() / 2.0,
                                 0.0,
                                 0.0,
                                 0.1,
@@ -309,45 +346,49 @@ impl GameWorld {
                     .world
                     .spawn((position, PhysicsBody { body: body_handle }));
 
-                match block_type {
-                    BlockType::Player => {
+                match block {
+                    Block::Player => {
                         entity.insert(Player { dead: false });
                     }
-                    BlockType::Goal => {
+                    Block::Goal => {
                         entity.insert(Goal);
                     }
-                    BlockType::Door => {
-                        entity.insert(Door);
+                    Block::Door(trigger_id) => {
+                        entity.insert(Door {
+                            open: false,
+                            trigger_id: trigger_id.clone(),
+                        });
                     }
-                    BlockType::Wall => {
+                    Block::Wall => {
                         entity.insert(Wall);
                     }
-                    BlockType::FloorNormal => {
+                    Block::FloorNormal => {
                         entity.insert(Floor);
                     }
-                    BlockType::Box => {
+                    Block::Box => {
                         entity.insert(Box);
                     }
-                    BlockType::Trigger => {
+                    Block::Trigger => {
                         entity.insert(Trigger {
                             trigger_collider: sensor_trigger.unwrap(),
                             triggered: false,
+                            id: id.clone(),
                         });
                     }
-                    BlockType::Empty => {}
+                    Block::Empty => {}
                 }
 
-                match self.handle_store.get(block_type) {
+                match self.handle_store.get(&block.get_block_type()) {
                     Some(handle) => {
                         entity.insert(Renderable { mesh: *handle });
                     }
                     None => {
-                        log::warn!("No mesh for block type {:?}", block_type);
+                        log::warn!("No mesh for block type {:?}", block.get_block_type());
                     }
                 }
             }
 
-            z += block_type.block_height();
+            z += block.block_height();
         }
     }
 

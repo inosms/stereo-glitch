@@ -1,5 +1,5 @@
 use cgmath::InnerSpace;
-use level_loader::{BlockType, ParsedLevel};
+use level_loader::{Block, ParsedLevel, BlockType};
 use mesh::{InstanceRaw, Vertex};
 use std::{
     collections::{HashMap, HashSet, VecDeque},

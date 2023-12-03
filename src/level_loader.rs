@@ -10,7 +10,7 @@ use nom::multi::{separated_list0, separated_list1};
 use nom::sequence::{delimited, separated_pair};
 use nom::IResult;
 
-#[derive(Debug, PartialEq, Hash, Eq)]
+#[derive(Debug, PartialEq, Hash, Eq, Clone)]
 pub struct Id {
     id: String,
 }
@@ -42,6 +42,20 @@ pub enum BlockPhysicsType {
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
+pub enum Block {
+    FloorNormal,
+    Player,
+    /// A door can be opened by a trigger with the given ID
+    Door(Id),
+    Empty,
+    Goal,
+    Wall,
+    Box,
+    Trigger,
+}
+
+
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum BlockType {
     FloorNormal,
     Player,
@@ -53,30 +67,43 @@ pub enum BlockType {
     Trigger,
 }
 
-impl BlockType {
+impl Block {
+    pub fn get_block_type(&self) -> BlockType {
+        match self {
+            Block::FloorNormal => BlockType::FloorNormal,
+            Block::Player => BlockType::Player,
+            Block::Door(_) => BlockType::Door,
+            Block::Empty => BlockType::Empty,
+            Block::Goal => BlockType::Goal,
+            Block::Wall => BlockType::Wall,
+            Block::Box => BlockType::Box,
+            Block::Trigger => BlockType::Trigger,
+        }
+    }
+
     pub fn block_height(&self) -> f32 {
         match self {
-            BlockType::FloorNormal => 1.0,
-            BlockType::Player => 1.0,
-            BlockType::Door => 1.0,
-            BlockType::Empty => 1.0,
-            BlockType::Goal => 1.0,
-            BlockType::Wall => 1.0,
-            BlockType::Box => 1.0,
-            BlockType::Trigger => 0.1,
+            Block::FloorNormal => 1.0,
+            Block::Player => 1.0,
+            Block::Door(_) => 1.0,
+            Block::Empty => 1.0,
+            Block::Goal => 1.0,
+            Block::Wall => 1.0,
+            Block::Box => 1.0,
+            Block::Trigger => 0.1,
         }
     }
 
     pub fn get_physics_type(&self) -> BlockPhysicsType {
         match self {
-            BlockType::FloorNormal => BlockPhysicsType::Static,
-            BlockType::Player => BlockPhysicsType::Kinematic,
-            BlockType::Door => BlockPhysicsType::Static,
-            BlockType::Empty => BlockPhysicsType::Static,
-            BlockType::Goal => BlockPhysicsType::Static,
-            BlockType::Wall => BlockPhysicsType::Static,
-            BlockType::Box => BlockPhysicsType::Dynamic,
-            BlockType::Trigger => BlockPhysicsType::Static,
+            Block::FloorNormal => BlockPhysicsType::Static,
+            Block::Player => BlockPhysicsType::Kinematic,
+            Block::Door(_) => BlockPhysicsType::Static,
+            Block::Empty => BlockPhysicsType::Static,
+            Block::Goal => BlockPhysicsType::Static,
+            Block::Wall => BlockPhysicsType::Static,
+            Block::Box => BlockPhysicsType::Dynamic,
+            Block::Trigger => BlockPhysicsType::Static,
         }
     }
 }
@@ -84,11 +111,11 @@ impl BlockType {
 #[derive(Debug, PartialEq)]
 pub struct Cell {
     is_glitch_area: bool,
-    block_stack: Vec<(BlockType, Option<Id>)>,
+    block_stack: Vec<(Block, Option<Id>)>,
 }
 
 impl Cell {
-    pub fn block_stack_iter(&self) -> impl Iterator<Item = &(BlockType, Option<Id>)> {
+    pub fn block_stack_iter(&self) -> impl Iterator<Item = &(Block, Option<Id>)> {
         self.block_stack.iter()
     }
 
@@ -121,7 +148,7 @@ impl ParsedLevel {
             .iter_cells()
             .filter(|(_pos, cell)| {
                 cell.block_stack_iter()
-                    .any(|(block_type, _id)| block_type == &BlockType::Player)
+                    .any(|(block_type, _id)| block_type == &Block::Player)
             })
             .count();
         if player_count != 1 {
@@ -137,6 +164,24 @@ impl ParsedLevel {
                         return anyhow::bail!("Duplicate ID");
                     }
                     ids.insert(id);
+                }
+            }
+        }
+
+        // Every door must reference an existing trigger
+        let trigger_ids = level.iter_cells().flat_map(|(_pos, cell)| {
+            cell.block_stack_iter()
+                .filter_map(|(block, id)| match block {
+                    Block::Trigger => id.clone(),
+                    _ => None,
+                })
+        }).collect::<HashSet<_>>();
+        for (_pos, cell) in level.iter_cells() {
+            for (_block_type, id) in cell.block_stack_iter() {
+                if let Block::Door(id) = _block_type {
+                    if !trigger_ids.contains(id) {
+                        return anyhow::bail!("Door references non-existing trigger");
+                    }
                 }
             }
         }
@@ -231,18 +276,26 @@ fn parse_id(input: &str) -> IResult<&str, Id> {
     Ok((rest, Id::try_from(id).unwrap()))
 }
 
+// A door is of the form D(<id>)
+fn parse_door(input: &str) -> IResult<&str, Block> {
+    let (rest, _) = tag("D(")(input)?;
+    let (rest, id) = parse_id(rest)?;
+    let (rest, _) = tag(")")(rest)?;
+    Ok((rest, Block::Door(id)))
+}
+
 // a block is always of the form of a single character and an optional ID
 // e.g. N, P, D, X, G, W, N#abc123, etc.
-fn parse_block(input: &str) -> IResult<&str, (BlockType, Option<Id>)> {
+fn parse_block(input: &str) -> IResult<&str, (Block, Option<Id>)> {
     let (rest, block) = alt((
-        value(BlockType::FloorNormal, tag("N")),
-        value(BlockType::Player, tag("P")),
-        value(BlockType::Door, tag("D")),
-        value(BlockType::Empty, tag("X")),
-        value(BlockType::Goal, tag("G")),
-        value(BlockType::Wall, tag("W")),
-        value(BlockType::Box, tag("B")),
-        value(BlockType::Trigger, tag("T")),
+        value(Block::FloorNormal, tag("N")),
+        value(Block::Player, tag("P")),
+        parse_door,
+        value(Block::Empty, tag("X")),
+        value(Block::Goal, tag("G")),
+        value(Block::Wall, tag("W")),
+        value(Block::Box, tag("B")),
+        value(Block::Trigger, tag("T")),
     ))(input)?;
 
     let (rest, id) = opt(parse_id)(rest)?;
@@ -270,8 +323,13 @@ fn parse_level_line(input: &str) -> IResult<&str, Vec<Cell>> {
 }
 
 pub fn parse_level(input: &str) -> anyhow::Result<ParsedLevel> {
-    let (_rest, parsed) =
+    let (rest, parsed) =
         separated_list0(newline, parse_level_line)(input).map_err(|e| e.to_owned())?;
+
+    if rest.len() > 0 {
+        return Err(anyhow::anyhow!("Failed to parse level. Rest: {}", rest));
+    }
+
     Ok(ParsedLevel::from(parsed)?)
 }
 
@@ -287,7 +345,7 @@ mod tests {
             ParsedLevel {
                 cells: vec![vec![Cell {
                     is_glitch_area: false,
-                    block_stack: vec![(BlockType::FloorNormal, None), (BlockType::Player, None)]
+                    block_stack: vec![(Block::FloorNormal, None), (Block::Player, None)]
                 }]]
             }
         );
@@ -296,7 +354,7 @@ mod tests {
             ParsedLevel {
                 cells: vec![vec![Cell {
                     is_glitch_area: false,
-                    block_stack: vec![(BlockType::FloorNormal, None), (BlockType::Player, None)]
+                    block_stack: vec![(Block::FloorNormal, None), (Block::Player, None)]
                 }]]
             }
         );
@@ -305,7 +363,7 @@ mod tests {
             ParsedLevel {
                 cells: vec![vec![Cell {
                     is_glitch_area: false,
-                    block_stack: vec![(BlockType::FloorNormal, None), (BlockType::Player, None)]
+                    block_stack: vec![(Block::FloorNormal, None), (Block::Player, None)]
                 }]]
             }
         );
@@ -316,32 +374,32 @@ mod tests {
                     vec![
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![(BlockType::FloorNormal, None)]
+                            block_stack: vec![(Block::FloorNormal, None)]
                         },
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![(BlockType::FloorNormal, None)]
+                            block_stack: vec![(Block::FloorNormal, None)]
                         },
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![(BlockType::FloorNormal, None)]
+                            block_stack: vec![(Block::FloorNormal, None)]
                         }
                     ],
                     vec![
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![(BlockType::FloorNormal, None)]
+                            block_stack: vec![(Block::FloorNormal, None)]
                         },
                         Cell {
                             is_glitch_area: false,
                             block_stack: vec![
-                                (BlockType::FloorNormal, None),
-                                (BlockType::Player, None)
+                                (Block::FloorNormal, None),
+                                (Block::Player, None)
                             ]
                         },
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![(BlockType::FloorNormal, None)]
+                            block_stack: vec![(Block::FloorNormal, None)]
                         }
                     ]
                 ]
@@ -355,32 +413,32 @@ mod tests {
                     vec![
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![(BlockType::FloorNormal, None)]
+                            block_stack: vec![(Block::FloorNormal, None)]
                         },
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![(BlockType::FloorNormal, None)]
+                            block_stack: vec![(Block::FloorNormal, None)]
                         },
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![(BlockType::FloorNormal, None)]
+                            block_stack: vec![(Block::FloorNormal, None)]
                         }
                     ],
                     vec![
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![(BlockType::FloorNormal, None)]
+                            block_stack: vec![(Block::FloorNormal, None)]
                         },
                         Cell {
                             is_glitch_area: false,
                             block_stack: vec![
-                                (BlockType::FloorNormal, None),
-                                (BlockType::Player, None)
+                                (Block::FloorNormal, None),
+                                (Block::Player, None)
                             ]
                         },
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![(BlockType::FloorNormal, None)]
+                            block_stack: vec![(Block::FloorNormal, None)]
                         }
                     ]
                 ]
