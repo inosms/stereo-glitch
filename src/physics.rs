@@ -1,9 +1,9 @@
-use std::ops::Add;
-
 use bevy_ecs::system::Resource;
+use cgmath::{EuclideanSpace, InnerSpace};
 use rapier3d::{
     control::{CharacterAutostep, CharacterLength, KinematicCharacterController},
     crossbeam,
+    na::{UnitVector3, Vector3, Isometry3, Translation3},
     prelude::*,
 };
 
@@ -188,7 +188,12 @@ impl PhysicsSystem {
         collider.user_data = user_data;
     }
 
-    pub fn move_body(&mut self, body_handle: RigidBodyHandle, direction: cgmath::Vector3<f32>, exclude_handles: &[ColliderHandle]) {
+    pub fn move_body(
+        &mut self,
+        body_handle: RigidBodyHandle,
+        direction: cgmath::Vector3<f32>,
+        exclude_handles: &[ColliderHandle],
+    ) {
         let body = self.rigid_body_set.get(body_handle).unwrap();
         let collider_handle = body.colliders().first().unwrap().clone();
         let collider = self.collider_set.get(collider_handle).unwrap();
@@ -209,8 +214,8 @@ impl PhysicsSystem {
         });
 
         let mut query_filter = QueryFilter::default()
-        .exclude_rigid_body(body_handle)
-        .exclude_collider(collider_handle);
+            .exclude_rigid_body(body_handle)
+            .exclude_collider(collider_handle);
         for handle in exclude_handles {
             query_filter = query_filter.exclude_collider(*handle);
         }
@@ -227,7 +232,7 @@ impl PhysicsSystem {
             query_filter,
             |c| collisions.push(c),
         );
-        
+
         for collision in &collisions {
             character_controller.solve_character_collision_impulses(
                 self.integration_parameters.dt,
@@ -240,9 +245,42 @@ impl PhysicsSystem {
                 query_filter,
             )
         }
-
         let body = self.rigid_body_set.get_mut(body_handle).unwrap();
-        body.set_next_kinematic_translation(body.translation() + corrected_movement.translation);
+
+        // if actually moving
+        let next_rotation = if direction.magnitude2() > 0.001 {
+            // The initial alignment of the player is to look along the negative y axis.
+            // From this compute the angle of movement around the positive z axis.
+            // This is used to rotate the player to face the direction of movement.
+
+            // We don't care about the z direction
+            let direction_norm = Vector3::new(direction.x, direction.y, 0.0).normalize();
+            let zero_rotation_direction = Vector3::new(0.0, -1.0, 0.0);
+            let axis_of_rotation =
+                rapier3d::na::UnitVector3::try_new(Vector3::new(0.0, 0.0, 1.0), 0.1).unwrap();
+
+            // https://math.stackexchange.com/questions/878785/how-to-find-an-angle-in-range0-360-between-2-vectors
+            let determinant =
+                (direction_norm.cross(&zero_rotation_direction)).dot(&axis_of_rotation);
+            let dot = zero_rotation_direction.dot(&direction_norm);
+            let angle_of_movement = determinant.atan2(dot);
+
+            log::info!("angle_of_movement {}", angle_of_movement);
+            let rotation = rapier3d::na::UnitQuaternion::from_axis_angle(
+                &rapier3d::na::Vector3::x_axis(), // for some reason this must be x not y otherwise the rotation will be weird (???)
+                angle_of_movement,
+            );
+            rotation
+        } else {
+            rapier3d::na::UnitQuaternion::identity()
+        };
+
+        let next_translation = body.translation() + corrected_movement.translation;
+        let next_position = Isometry3::from_parts(
+            Translation3::new(next_translation.x, next_translation.y, next_translation.z),
+            next_rotation,
+        );
+        body.set_next_kinematic_position(next_position);
     }
 
     pub fn build_fixed_joint(
@@ -256,7 +294,8 @@ impl PhysicsSystem {
             .local_anchor1(point![anchor1.x, anchor1.y, anchor1.z])
             .local_anchor2(point![anchor2.x, anchor2.y, anchor2.z])
             .build();
-        self.impulse_joint_set.insert(body1_handle, body2_handle, joint, true)
+        self.impulse_joint_set
+            .insert(body1_handle, body2_handle, joint, true)
     }
 
     pub fn remove_joint(&mut self, joint_handle: ImpulseJointHandle) {

@@ -138,13 +138,13 @@ fn move_player_system(
 
     let direction = camera_look_direction_rotation_matrix * direction * player_max_speed;
 
-    // If the player holds an object we don't want it to collide with it. 
+    // If the player holds an object we don't want it to collide with it.
     // Thus we need to get the collider handles of all objects the player is holding
     // in order to exclude them from the collision detection
     let objects_held_by_player = player_query
         .iter()
         .filter_map(|(player)| player.is_grabbing)
-        .map(|(_,handle)| handle)
+        .map(|(_, handle)| handle)
         .collect::<Vec<_>>();
 
     for (mut position, physics_body) in &mut query {
@@ -496,7 +496,7 @@ impl GameWorld {
     }
 
     pub fn player_grab_action(&mut self) {
-
+        log::info!("Grab action");
         let is_already_grabbing = self
             .world
             .query_filtered::<(&mut Player), With<Player>>()
@@ -506,6 +506,7 @@ impl GameWorld {
             .is_grabbing;
 
         if is_already_grabbing.is_some() {
+            log::info!("Already grabbing something");
             return;
         }
 
@@ -534,7 +535,6 @@ impl GameWorld {
 
         // The player can always only hold max one item, so we only take the first one
         for e in carryable_entities_in_front_of_player.iter().take(1) {
-
             let entity_rigid_body = self
                 .world
                 .query_filtered::<&PhysicsBody, With<Carryable>>()
@@ -549,7 +549,7 @@ impl GameWorld {
                     player_rigid_body,
                     entity_rigid_body,
                     // a bit above ground and in front of the player
-                    cgmath::Vector3::new(0.0, -1.0, 0.5),
+                    cgmath::Vector3::new(0.0, 0.0, 3.0),
                     cgmath::Vector3::new(0.0, 0.0, 0.0),
                 );
 
@@ -562,9 +562,13 @@ impl GameWorld {
                 .unwrap()
                 .collider;
 
-            self.world
-                .resource_mut::<PhysicsSystem>()
-                .set_collider_do_not_collide_with_kinetic(entity_collider_handle, false);
+            // self.world
+            //     .resource_mut::<PhysicsSystem>()
+            //     .set_collider_do_not_collide_with_kinetic(entity_collider_handle, false);
+
+            // self.world
+            //     .resource_mut::<PhysicsSystem>()
+            //     .set_collider_state(entity_collider_handle, false);
 
             // Set the grab handle on the player
             self.world
@@ -577,6 +581,7 @@ impl GameWorld {
     }
 
     pub fn player_release_grab(&mut self) {
+        log::info!("Release grab action");
 
         let grab_handle = self
             .world
@@ -603,8 +608,12 @@ impl GameWorld {
             .unwrap()
             .collider;
 
-        self.world
-            .resource_mut::<PhysicsSystem>()
-            .set_collider_do_not_collide_with_kinetic(entity_collider_handle, true);
+        // self.world
+        //     .resource_mut::<PhysicsSystem>()
+        //     .set_collider_do_not_collide_with_kinetic(entity_collider_handle, true);
+
+        //     self.world
+        //         .resource_mut::<PhysicsSystem>()
+        //         .set_collider_state(entity_collider_handle, true);
     }
 }
