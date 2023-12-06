@@ -272,7 +272,7 @@ impl PhysicsSystem {
             );
             rotation
         } else {
-            rapier3d::na::UnitQuaternion::identity()
+            body.rotation().clone()
         };
 
         let next_translation = body.translation() + corrected_movement.translation;
