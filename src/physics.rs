@@ -3,7 +3,7 @@ use cgmath::{EuclideanSpace, InnerSpace};
 use rapier3d::{
     control::{CharacterAutostep, CharacterLength, KinematicCharacterController},
     crossbeam,
-    na::{UnitVector3, Vector3, Isometry3, Translation3},
+    na::{Isometry3, Translation3, UnitVector3, Vector3},
     prelude::*,
 };
 
@@ -173,7 +173,7 @@ impl PhysicsSystem {
 
         Position {
             position: cgmath::Vector3::new(pos.x, pos.y, pos.z),
-            rotation: cgmath::Quaternion::new(rot.i, rot.j, rot.k, rot.w),
+            rotation: cgmath::Quaternion::new(rot.w, rot.i, rot.j, rot.k),
         }
     }
 
@@ -193,6 +193,7 @@ impl PhysicsSystem {
         body_handle: RigidBodyHandle,
         direction: cgmath::Vector3<f32>,
         exclude_handles: &[ColliderHandle],
+        exclude_bodies: &[RigidBodyHandle]
     ) {
         let body = self.rigid_body_set.get(body_handle).unwrap();
         let collider_handle = body.colliders().first().unwrap().clone();
@@ -218,6 +219,9 @@ impl PhysicsSystem {
             .exclude_collider(collider_handle);
         for handle in exclude_handles {
             query_filter = query_filter.exclude_collider(*handle);
+        }
+        for handle in exclude_bodies {
+            query_filter = query_filter.exclude_rigid_body(*handle);
         }
 
         let mut collisions = vec![];
@@ -265,10 +269,9 @@ impl PhysicsSystem {
             let dot = zero_rotation_direction.dot(&direction_norm);
             let angle_of_movement = determinant.atan2(dot);
 
-            log::info!("angle_of_movement {}", angle_of_movement);
             let rotation = rapier3d::na::UnitQuaternion::from_axis_angle(
-                &rapier3d::na::Vector3::x_axis(), // for some reason this must be x not y otherwise the rotation will be weird (???)
-                angle_of_movement,
+                &rapier3d::na::Vector3::z_axis(),
+                -angle_of_movement,
             );
             rotation
         } else {
@@ -283,22 +286,48 @@ impl PhysicsSystem {
         body.set_next_kinematic_position(next_position);
     }
 
-    pub fn build_fixed_joint(
-        &mut self,
-        body1_handle: RigidBodyHandle,
-        body2_handle: RigidBodyHandle,
-        anchor1: cgmath::Vector3<f32>,
-        anchor2: cgmath::Vector3<f32>,
-    ) -> ImpulseJointHandle {
-        let joint = FixedJointBuilder::new()
-            .local_anchor1(point![anchor1.x, anchor1.y, anchor1.z])
-            .local_anchor2(point![anchor2.x, anchor2.y, anchor2.z])
-            .build();
-        self.impulse_joint_set
-            .insert(body1_handle, body2_handle, joint, true)
+    pub fn set_rigid_body_type(&mut self, body_handle: RigidBodyHandle, body_type: RigidBodyType) {
+        let body = self.rigid_body_set.get_mut(body_handle).unwrap();
+        body.set_body_type(body_type, true);
     }
 
-    pub fn remove_joint(&mut self, joint_handle: ImpulseJointHandle) {
-        self.impulse_joint_set.remove(joint_handle, true);
+    // Set the translation relative to anchor_body_handle in the local space of anchor_body_handle
+    // to_transform_body_handle is the body that will be transformed
+    pub fn set_position_relative_to_body(
+        &mut self,
+        anchor_body_handle: RigidBodyHandle,
+        to_transform_body_handle: RigidBodyHandle,
+        relative_position_local_space: cgmath::Vector3<f32>,
+    ) {
+        let anchor_translation = self
+            .rigid_body_set
+            .get(anchor_body_handle)
+            .unwrap()
+            .translation().clone();
+        let anchor_rotation = self
+            .rigid_body_set
+            .get(anchor_body_handle)
+            .unwrap()
+            .rotation().clone();
+        let relative_position_world_space = anchor_translation
+            + anchor_rotation
+                * rapier3d::na::Vector3::new(
+                    relative_position_local_space.x,
+                    relative_position_local_space.y,
+                    relative_position_local_space.z,
+                );
+
+        self
+            .rigid_body_set
+            .get_mut(to_transform_body_handle)
+            .expect("body to transform not found")
+            .set_next_kinematic_position(Isometry3::from_parts(
+            Translation3::new(
+                relative_position_world_space.x,
+                relative_position_world_space.y,
+                relative_position_world_space.z,
+            ),
+            anchor_rotation,
+        ));
     }
 }

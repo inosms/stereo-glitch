@@ -3,14 +3,14 @@ use std::collections::{HashMap, HashSet};
 use bevy_ecs::prelude::*;
 use cgmath::{EuclideanSpace, InnerSpace, Point3, Rotation3};
 use rapier3d::{
-    dynamics::{ImpulseJointHandle, MultibodyJointHandle},
+    dynamics::{ImpulseJointHandle, MultibodyJointHandle, RigidBodyHandle},
     geometry::ColliderHandle,
 };
 
 use crate::{
     level_loader::{Block, BlockType, Cell, Id, ParsedLevel},
     mesh::{Handle, Mesh},
-    physics::PhysicsSystem,
+    physics::{PhysicsSystem, self},
     stereo_camera::StereoCamera,
     time_keeper::TimeKeeper,
 };
@@ -37,8 +37,8 @@ impl Default for Position {
 struct Player {
     dead: bool,
 
-    // When the player is grabbing something this is Some((joint_handle, collider_handle))
-    is_grabbing: Option<(ImpulseJointHandle, ColliderHandle)>,
+    // When the player is grabbing something this is Some(rigid_body_handle)
+    is_grabbing: Option<RigidBodyHandle>,
 }
 
 #[derive(Component)]
@@ -144,16 +144,26 @@ fn move_player_system(
     let objects_held_by_player = player_query
         .iter()
         .filter_map(|(player)| player.is_grabbing)
-        .map(|(_, handle)| handle)
+        .map(|body| body)
         .collect::<Vec<_>>();
 
     for (mut position, physics_body) in &mut query {
-        physics_system.move_body(physics_body.body, direction, &objects_held_by_player);
+        physics_system.move_body(physics_body.body, direction, &vec![], &vec![]);
 
         let pos = physics_system.get_position(physics_body.body);
         position.position = pos.position;
         position.rotation = pos.rotation;
+
+        for &object_held_by_player in &objects_held_by_player {
+            physics_system.set_position_relative_to_body(
+                physics_body.body,
+                object_held_by_player,
+                cgmath::Vector3::new(0.0, -0.5, 1.5),
+            );
+        }
     }
+
+    
 }
 
 // Move the camera to always look at the player
@@ -373,7 +383,7 @@ impl GameWorld {
                             .add_sensor_collider(
                                 body_handle,
                                 0.5,
-                                0.3,
+                                0.8,
                                 block.block_height() / 2.0,
                                 0.0,
                                 -0.5,
@@ -525,14 +535,6 @@ impl GameWorld {
             .filter(|entity| entities_in_front_of_player.contains(entity))
             .collect::<Vec<_>>();
 
-        let player_rigid_body = self
-            .world
-            .query_filtered::<&PhysicsBody, With<Player>>()
-            .iter(&self.world)
-            .next()
-            .unwrap()
-            .body;
-
         // The player can always only hold max one item, so we only take the first one
         for e in carryable_entities_in_front_of_player.iter().take(1) {
             let entity_rigid_body = self
@@ -542,33 +544,12 @@ impl GameWorld {
                 .unwrap()
                 .body;
 
-            let grab_handle = self
-                .world
+            self.world
                 .resource_mut::<PhysicsSystem>()
-                .build_fixed_joint(
-                    player_rigid_body,
+                .set_rigid_body_type(
                     entity_rigid_body,
-                    // a bit above ground and in front of the player
-                    cgmath::Vector3::new(0.0, 0.0, 3.0),
-                    cgmath::Vector3::new(0.0, 0.0, 0.0),
+                    rapier3d::dynamics::RigidBodyType::KinematicPositionBased,
                 );
-
-            // Disable the collider of the grabbed entity
-            // At first get collider handle of the grabbed entity
-            let entity_collider_handle = self
-                .world
-                .query_filtered::<&PhysicsBody, With<Carryable>>()
-                .get_mut(&mut self.world, *e)
-                .unwrap()
-                .collider;
-
-            // self.world
-            //     .resource_mut::<PhysicsSystem>()
-            //     .set_collider_do_not_collide_with_kinetic(entity_collider_handle, false);
-
-            // self.world
-            //     .resource_mut::<PhysicsSystem>()
-            //     .set_collider_state(entity_collider_handle, false);
 
             // Set the grab handle on the player
             self.world
@@ -576,7 +557,7 @@ impl GameWorld {
                 .iter_mut(&mut self.world)
                 .next()
                 .unwrap()
-                .is_grabbing = Some((grab_handle, entity_collider_handle));
+                .is_grabbing = Some(entity_rigid_body);
         }
     }
 
@@ -592,28 +573,13 @@ impl GameWorld {
             .is_grabbing
             .take();
 
-        if let Some((grab_handle, _)) = grab_handle {
+        if let Some(grabbed_rigid_body) = grab_handle {
             self.world
                 .resource_mut::<PhysicsSystem>()
-                .remove_joint(grab_handle);
+                .set_rigid_body_type(
+                    grabbed_rigid_body,
+                    rapier3d::dynamics::RigidBodyType::Dynamic,
+                );
         }
-
-        // Enable the collider of the grabbed entity
-        // At first get collider handle of the grabbed entity
-        let entity_collider_handle = self
-            .world
-            .query_filtered::<&PhysicsBody, With<Carryable>>()
-            .iter(&mut self.world)
-            .next()
-            .unwrap()
-            .collider;
-
-        // self.world
-        //     .resource_mut::<PhysicsSystem>()
-        //     .set_collider_do_not_collide_with_kinetic(entity_collider_handle, true);
-
-        //     self.world
-        //         .resource_mut::<PhysicsSystem>()
-        //         .set_collider_state(entity_collider_handle, true);
     }
 }
