@@ -115,6 +115,7 @@ impl PhysicsSystem {
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
+        .additional_mass(50.0)
         .build();
         let collider = ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build();
         let body_handle = self.rigid_body_set.insert(rigid_body);
