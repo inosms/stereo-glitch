@@ -37,7 +37,8 @@ impl PhysicsSystem {
         let collider_set = ColliderSet::new();
 
         let gravity = vector![0.0, 0.0, -39.81];
-        let integration_parameters = IntegrationParameters::default();
+        let mut integration_parameters = IntegrationParameters::default();
+        integration_parameters.allowed_linear_error = 0.005;
         let physics_pipeline = PhysicsPipeline::new();
         let island_manager = IslandManager::new();
         let broad_phase = BroadPhase::new();
@@ -111,13 +112,25 @@ impl PhysicsSystem {
         let rigid_body = match block_physics_type {
             BlockPhysicsType::Static => RigidBodyBuilder::fixed(),
             BlockPhysicsType::Kinematic => RigidBodyBuilder::kinematic_position_based(),
-            BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic(),
+            BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic()
+                .additional_mass(20.0)
+                .linear_damping(1.0)
+                .angular_damping(1.0),
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
-        .additional_mass(50.0)
         .build();
-        let collider = ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build();
+        let collider = match block_physics_type {
+            BlockPhysicsType::Static => {
+                ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()
+            }
+            BlockPhysicsType::Kinematic => {
+                ColliderBuilder::capsule_z(z_extent/2.0, x_extent).build()
+            } // make the player lighter so it doesn't push things around
+            BlockPhysicsType::Dynamic => {
+                ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()
+            }
+        };
         let body_handle = self.rigid_body_set.insert(rigid_body);
         let collider_handle =
             self.collider_set
@@ -194,7 +207,7 @@ impl PhysicsSystem {
         body_handle: RigidBodyHandle,
         direction: cgmath::Vector3<f32>,
         exclude_handles: &[ColliderHandle],
-        exclude_bodies: &[RigidBodyHandle]
+        exclude_bodies: &[RigidBodyHandle],
     ) {
         let body = self.rigid_body_set.get(body_handle).unwrap();
         let collider_handle = body.colliders().first().unwrap().clone();
@@ -304,12 +317,14 @@ impl PhysicsSystem {
             .rigid_body_set
             .get(anchor_body_handle)
             .unwrap()
-            .translation().clone();
+            .translation()
+            .clone();
         let anchor_rotation = self
             .rigid_body_set
             .get(anchor_body_handle)
             .unwrap()
-            .rotation().clone();
+            .rotation()
+            .clone();
         let relative_position_world_space = anchor_translation
             + anchor_rotation
                 * rapier3d::na::Vector3::new(
@@ -318,17 +333,16 @@ impl PhysicsSystem {
                     relative_position_local_space.z,
                 );
 
-        self
-            .rigid_body_set
+        self.rigid_body_set
             .get_mut(to_transform_body_handle)
             .expect("body to transform not found")
             .set_next_kinematic_position(Isometry3::from_parts(
-            Translation3::new(
-                relative_position_world_space.x,
-                relative_position_world_space.y,
-                relative_position_world_space.z,
-            ),
-            anchor_rotation,
-        ));
+                Translation3::new(
+                    relative_position_world_space.x,
+                    relative_position_world_space.y,
+                    relative_position_world_space.z,
+                ),
+                anchor_rotation,
+            ));
     }
 }
