@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>stereo-glitch</title>
+    <title>Stereo Glitch Prototype</title>
     <style>
         @font-face {
             font-family: "Roboto Regular";
@@ -30,13 +30,6 @@
             touch-action: manipulation;
         }
 
-        h1 {
-            text-align: center;
-            margin: 0;
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
-
         #center-container {
             display: flex;
             align-items: center;
@@ -57,9 +50,9 @@
             }
 
 
-            grid-template-columns: 15% 70% 15%;
-
-
+            grid-template-columns: 12% 76% 12%;
+            max-height: 100%;
+            aspect-ratio: 2/1;
 
             >#game-controller-joystick {
                 position: relative;
@@ -71,10 +64,7 @@
 
             >#game-container {
                 width: 100%;
-                aspect-ratio: 2/1;
 
-                padding-bottom: 5px;
-                padding-top: 5px;
 
                 >canvas {
                     padding-left: 0;
@@ -135,7 +125,6 @@
 
 <body>
     <script type="module" src="script.ts"></script>
-    <h1 class="noselect">Stereo Glitch Prototype</h1>
     <div id="center-container">
         <div id="game" class="noselect shadow-5 vertical-center">
             <div id="game-controller-joystick"></div>

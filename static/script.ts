@@ -6,7 +6,7 @@ var semi = nipplejs.create({
     mode: 'static',
     position: {left: '50%', top: '50%'},
     catchDistance: 80,
-    size: 70,
+    size: 50,
     threshold: 0.0,
     color: 'white',
 });
@@ -129,5 +129,5 @@ nipplejs.create({
     lockX: true,
     lockY: true,
     shape: 'square',
-    size: 70,
+    size: 50,
 });
