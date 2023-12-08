@@ -118,17 +118,7 @@ impl PhysicsSystem {
         .ccd_enabled(true)
         .translation(vector![x, y, z])
         .build();
-        let collider = match block_physics_type {
-            BlockPhysicsType::Static => {
-                ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()
-            }
-            BlockPhysicsType::Kinematic => {
-                ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build()
-            } // make the player lighter so it doesn't push things around
-            BlockPhysicsType::Dynamic => {
-                ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()
-            }
-        };
+        let collider = ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build();
         let body_handle = self.rigid_body_set.insert(rigid_body);
         let collider_handle =
             self.collider_set
