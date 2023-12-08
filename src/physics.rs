@@ -36,7 +36,7 @@ impl PhysicsSystem {
         let rigid_body_set = RigidBodySet::new();
         let collider_set = ColliderSet::new();
 
-        let gravity = vector![0.0, 0.0, -39.81];
+        let gravity = vector![0.0, 0.0, -40.0];
         let mut integration_parameters = IntegrationParameters::default();
         integration_parameters.allowed_linear_error = 0.005;
         let physics_pipeline = PhysicsPipeline::new();
@@ -113,9 +113,7 @@ impl PhysicsSystem {
             BlockPhysicsType::Static => RigidBodyBuilder::fixed(),
             BlockPhysicsType::Kinematic => RigidBodyBuilder::dynamic().locked_axes(LockedAxes::ROTATION_LOCKED),
             BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic()
-                .additional_mass(20.0)
-                .linear_damping(1.0)
-                .angular_damping(1.0),
+                .additional_mass(10.0),
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
@@ -220,6 +218,8 @@ impl PhysicsSystem {
         let impulse = velocity_change * mass;
 
         body.apply_impulse(impulse, true);
+        // prevent floating
+        body.apply_impulse(self.gravity * mass * self.integration_parameters.dt, true);
 
         // if actually moving
         let next_rotation = if desired_velocity.magnitude2() > 0.001 {
