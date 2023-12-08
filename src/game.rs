@@ -10,7 +10,7 @@ use rapier3d::{
 use crate::{
     level_loader::{Block, BlockType, Cell, Id, ParsedLevel},
     mesh::{Handle, Mesh},
-    physics::{PhysicsSystem, self},
+    physics::{self, PhysicsSystem},
     stereo_camera::StereoCamera,
     time_keeper::TimeKeeper,
 };
@@ -162,8 +162,6 @@ fn move_player_system(
             );
         }
     }
-
-    
 }
 
 // Move the camera to always look at the player
@@ -247,7 +245,7 @@ fn check_player_dead_system(
 
 fn door_system(
     mut commands: Commands,
-    mut query: Query<(&mut Door, Entity)>,
+    mut query: Query<(&mut Door, Entity, &PhysicsBody)>,
     trigger_query: Query<(&Sensor)>,
     mut physics_system: ResMut<PhysicsSystem>,
 ) {
@@ -257,19 +255,20 @@ fn door_system(
         .filter_map(|(trigger)| trigger.id.clone())
         .collect::<HashSet<_>>();
 
-    for (mut door, entity) in &mut query {
-        if triggered_trigger_ids.contains(&door.trigger_id) {
-            door.open = true;
-        } else {
-            door.open = false;
-        }
+    for (mut door, entity, body) in &mut query {
+        let open = triggered_trigger_ids.contains(&door.trigger_id);
+        if open != door.open {
+            door.open = open;
 
-        if door.open {
-            commands.entity(entity).insert(Invisible);
-            physics_system.set_collider_state(door.collider_handle, false);
-        } else {
-            commands.entity(entity).remove::<Invisible>();
-            physics_system.set_collider_state(door.collider_handle, true);
+            if door.open {
+                commands.entity(entity).insert(Invisible);
+                physics_system.set_rigid_body_state(body.body, false);
+                log::info!("Open door {:?}", door.trigger_id);
+            } else {
+                commands.entity(entity).remove::<Invisible>();
+                physics_system.set_rigid_body_state(body.body, true);
+                log::info!("Close door {:?}", door.trigger_id);
+            }
         }
     }
 }

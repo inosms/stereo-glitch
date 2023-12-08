@@ -148,9 +148,9 @@ impl PhysicsSystem {
             .insert_with_parent(collider, body_handle, &mut self.rigid_body_set)
     }
 
-    pub fn set_collider_state(&mut self, collider_handle: ColliderHandle, is_active: bool) {
-        let collider = self.collider_set.get_mut(collider_handle).unwrap();
-        collider.set_enabled(is_active);
+    pub fn set_rigid_body_state(&mut self, body_handle: RigidBodyHandle, is_active: bool) {
+        let body = self.rigid_body_set.get_mut(body_handle).unwrap();
+        body.set_enabled(is_active);
     }
 
     pub fn set_collider_do_not_collide_with_kinetic(
