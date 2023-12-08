@@ -134,7 +134,7 @@ fn move_player_system(
     if direction.magnitude() > 1.0 {
         direction = direction.normalize();
     }
-    let player_max_speed = 0.2;
+    let player_max_speed = 16.0;
 
     let direction = camera_look_direction_rotation_matrix * direction * player_max_speed;
 
@@ -148,7 +148,7 @@ fn move_player_system(
         .collect::<Vec<_>>();
 
     for (mut position, physics_body) in &mut query {
-        physics_system.move_body(physics_body.body, direction, &vec![], &vec![]);
+        physics_system.move_body(physics_body.body, direction);
 
         let pos = physics_system.get_position(physics_body.body);
         position.position = pos.position;

@@ -111,7 +111,7 @@ impl PhysicsSystem {
     ) -> (RigidBodyHandle, ColliderHandle) {
         let rigid_body = match block_physics_type {
             BlockPhysicsType::Static => RigidBodyBuilder::fixed(),
-            BlockPhysicsType::Kinematic => RigidBodyBuilder::kinematic_position_based(),
+            BlockPhysicsType::Kinematic => RigidBodyBuilder::dynamic().locked_axes(LockedAxes::ROTATION_LOCKED),
             BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic()
                 .additional_mass(20.0)
                 .linear_damping(1.0)
@@ -125,7 +125,7 @@ impl PhysicsSystem {
                 ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()
             }
             BlockPhysicsType::Kinematic => {
-                ColliderBuilder::capsule_z(z_extent/2.0, x_extent).build()
+                ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build()
             } // make the player lighter so it doesn't push things around
             BlockPhysicsType::Dynamic => {
                 ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()
@@ -205,74 +205,30 @@ impl PhysicsSystem {
     pub fn move_body(
         &mut self,
         body_handle: RigidBodyHandle,
-        direction: cgmath::Vector3<f32>,
-        exclude_handles: &[ColliderHandle],
-        exclude_bodies: &[RigidBodyHandle],
+        desired_velocity: cgmath::Vector3<f32>
     ) {
-        let body = self.rigid_body_set.get(body_handle).unwrap();
-        let collider_handle = body.colliders().first().unwrap().clone();
-        let collider = self.collider_set.get(collider_handle).unwrap();
-        let shape = collider.shape();
-        let pos = body.position();
-        let mass = body.mass();
-
-        let desired_translation = vector![direction.x, direction.y, direction.z];
-        let gravity = vector![0.0, 0.0, -0.2];
-        let desired_translation = desired_translation + gravity;
-        let mut character_controller = KinematicCharacterController::default();
-        character_controller.up = Vector::z_axis();
-        character_controller.offset = CharacterLength::Absolute(0.11);
-        character_controller.autostep = Some(CharacterAutostep {
-            max_height: CharacterLength::Absolute(0.2),
-            min_width: CharacterLength::Absolute(0.0),
-            include_dynamic_bodies: true,
-        });
-
-        let mut query_filter = QueryFilter::default()
-            .exclude_rigid_body(body_handle)
-            .exclude_collider(collider_handle);
-        for handle in exclude_handles {
-            query_filter = query_filter.exclude_collider(*handle);
-        }
-        for handle in exclude_bodies {
-            query_filter = query_filter.exclude_rigid_body(*handle);
-        }
-
-        let mut collisions = vec![];
-        let corrected_movement = character_controller.move_shape(
-            self.integration_parameters.dt,
-            &self.rigid_body_set,
-            &self.collider_set,
-            &self.query_pipeline,
-            shape,
-            pos,
-            desired_translation,
-            query_filter,
-            |c| collisions.push(c),
-        );
-
-        for collision in &collisions {
-            character_controller.solve_character_collision_impulses(
-                self.integration_parameters.dt,
-                &mut self.rigid_body_set,
-                &self.collider_set,
-                &self.query_pipeline,
-                shape,
-                mass,
-                collision,
-                query_filter,
-            )
-        }
+        // move body using impulses
         let body = self.rigid_body_set.get_mut(body_handle).unwrap();
+        let mass = body.mass();
+        
+        let current_velocity = body.linvel().clone();
+        let velocity_change = vector![
+            desired_velocity.x - current_velocity.x,
+            desired_velocity.y - current_velocity.y,
+            desired_velocity.z - current_velocity.z
+        ];
+        let impulse = velocity_change * mass;
+
+        body.apply_impulse(impulse, true);
 
         // if actually moving
-        let next_rotation = if direction.magnitude2() > 0.001 {
+        let next_rotation = if desired_velocity.magnitude2() > 0.001 {
             // The initial alignment of the player is to look along the negative y axis.
             // From this compute the angle of movement around the positive z axis.
             // This is used to rotate the player to face the direction of movement.
 
             // We don't care about the z direction
-            let direction_norm = Vector3::new(direction.x, direction.y, 0.0).normalize();
+            let direction_norm = Vector3::new(desired_velocity.x, desired_velocity.y, 0.0).normalize();
             let zero_rotation_direction = Vector3::new(0.0, -1.0, 0.0);
             let axis_of_rotation =
                 rapier3d::na::UnitVector3::try_new(Vector3::new(0.0, 0.0, 1.0), 0.1).unwrap();
@@ -292,12 +248,8 @@ impl PhysicsSystem {
             body.rotation().clone()
         };
 
-        let next_translation = body.translation() + corrected_movement.translation;
-        let next_position = Isometry3::from_parts(
-            Translation3::new(next_translation.x, next_translation.y, next_translation.z),
-            next_rotation,
-        );
-        body.set_next_kinematic_position(next_position);
+        body.set_rotation(next_rotation, true);
+
     }
 
     pub fn set_rigid_body_type(&mut self, body_handle: RigidBodyHandle, body_type: RigidBodyType) {
