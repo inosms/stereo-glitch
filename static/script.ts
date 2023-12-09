@@ -12,6 +12,12 @@ var semi = nipplejs.create({
 });
 
 var joystick_position = { x: 0, y: 0 };
+var is_active = false;
+
+semi.on('start', function (_evt, _data) {
+    is_active = true;
+});
+
 semi.on('move', function (_evt, data) {
     joystick_position.x = data.vector.x;
     joystick_position.y = data.vector.y;
@@ -21,13 +27,16 @@ semi.on('move', function (_evt, data) {
 semi.on('end', function (_evt, _data) {
     joystick_position = { x: 0, y: 0 };
     joystick_input(joystick_position.x, joystick_position.y);
+    is_active = false;
 });
 
 // periodically send joystick input to the game
 // this is needed as the joystick will not emit events when it is not moved
 setInterval(() => {
-    joystick_input(joystick_position.x, joystick_position.y);
-}, 15);
+    if (is_active) {
+        joystick_input(joystick_position.x, joystick_position.y);
+    }
+}, 1000 / 80);
 
 init().then(() => {
     console.log("WASM Loaded");
@@ -36,6 +45,67 @@ init().then(() => {
 
     load_level(
         "N N N N N N N N N N N N N N N\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
         "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
         "N+W+W N     N     N     N     N     N     N+P   N     N     N     N     N     N     N+W+W\n" +
         "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +

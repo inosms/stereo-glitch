@@ -36,9 +36,8 @@ impl PhysicsSystem {
         let rigid_body_set = RigidBodySet::new();
         let collider_set = ColliderSet::new();
 
-        let gravity = vector![0.0, 0.0, -40.0];
-        let mut integration_parameters = IntegrationParameters::default();
-        integration_parameters.allowed_linear_error = 0.005;
+        let gravity = vector![0.0, 0.0, -30.81];
+        let integration_parameters = IntegrationParameters::default();
         let physics_pipeline = PhysicsPipeline::new();
         let island_manager = IslandManager::new();
         let broad_phase = BroadPhase::new();
@@ -114,12 +113,15 @@ impl PhysicsSystem {
             BlockPhysicsType::Kinematic => {
                 RigidBodyBuilder::dynamic().locked_axes(LockedAxes::ROTATION_LOCKED)
             }
-            BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic().additional_mass(10.0),
+            BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic()
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
         .build();
-        let collider = ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build();
+        let collider = match block_physics_type {
+            BlockPhysicsType::Static | BlockPhysicsType::Dynamic => ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build(),
+            BlockPhysicsType::Kinematic => ColliderBuilder::capsule_z(z_extent/2.0, x_extent).build(),
+        };
         let body_handle = self.rigid_body_set.insert(rigid_body);
         let collider_handle =
             self.collider_set
@@ -192,7 +194,7 @@ impl PhysicsSystem {
             desired_velocity.y - current_velocity.y,
             // don't change z velocity
             // otherwise gravity will stop working properly
-            0.0, // desired_velocity.z - current_velocity.z 
+         0.0,
         ];
         let impulse = velocity_change * mass;
 
