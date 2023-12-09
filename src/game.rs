@@ -165,7 +165,7 @@ fn move_camera_system(
 ) {
     for (position, _) in &mut query {
         let camera_target_goal = position.position;
-        let camera_eye_goal = position.position + cgmath::Vector3::new(-15.0, -15.0, 15.0);
+        let camera_eye_goal = position.position + cgmath::Vector3::new(-35.0, -35.0, 35.0);
 
         camera.smooth_set_target(cgmath::Point3::from_vec(camera_target_goal), 0.02);
         camera.smooth_set_eye(cgmath::Point3::from_vec(camera_eye_goal), 0.02);
@@ -285,14 +285,14 @@ impl GameWorld {
             player_movement: None,
         });
         self.world.insert_resource(StereoCamera::new(
-            (9.0, 0.0, 8.0).into(),
+            (0.0, -10.0, 00.0).into(),
             (0.0, 0.0, 0.0).into(),
             cgmath::Vector3::unit_z(),
             1.0,
-            20.0,
+            10.0,
             0.1,
             50.0,
-            -3.0, // view cross-eyed
+            -5.0, // view cross-eyed
         ));
         self.world.insert_resource(TimeKeeper::new(60));
         // The physics system needs to run after the player system so that the player can move
