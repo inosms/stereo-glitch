@@ -111,7 +111,8 @@ impl PhysicsSystem {
         let rigid_body = match block_physics_type {
             BlockPhysicsType::Static => RigidBodyBuilder::fixed(),
             BlockPhysicsType::Kinematic => {
-                RigidBodyBuilder::dynamic().locked_axes(LockedAxes::ROTATION_LOCKED)
+                // make the player heaver to avoid bouncing
+                RigidBodyBuilder::dynamic().locked_axes(LockedAxes::ROTATION_LOCKED).gravity_scale(10.0)
             }
             BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic()
         }
@@ -194,7 +195,7 @@ impl PhysicsSystem {
             desired_velocity.y - current_velocity.y,
             // don't change z velocity
             // otherwise gravity will stop working properly
-         0.0,
+            0.0, 
         ];
         let impulse = velocity_change * mass;
 
