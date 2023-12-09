@@ -190,14 +190,14 @@ impl PhysicsSystem {
         let velocity_change = vector![
             desired_velocity.x - current_velocity.x,
             desired_velocity.y - current_velocity.y,
-            desired_velocity.z - current_velocity.z
+            // don't change z velocity
+            // otherwise gravity will stop working properly
+            0.0, // desired_velocity.z - current_velocity.z 
         ];
         let impulse = velocity_change * mass;
 
         body.apply_impulse(impulse, true);
-        // prevent floating
-        body.apply_impulse(self.gravity * mass * self.integration_parameters.dt, true);
-
+     
         // if actually moving
         let next_rotation = if rotate_in_direction_of_movement && desired_velocity.magnitude2() > 0.001 {
             // The initial alignment of the player is to look along the negative y axis.

@@ -35,8 +35,8 @@ init().then(() => {
     window.set_eye_distance = set_eye_distance;
 
     load_level(
-        "N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W N+W+W\n" +
-        "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
+        "N N N N N N N N N N N N N N N\n" +
+        "N N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
         "N+W+W N     N     N     N     N     N     N+P   N     N     N     N     N     N     N+W+W\n" +
         "N+W+W N     N     N     N     N     N     N     N     N     N     N     N     N     N+W+W\n" +
         "N+W+W N     N+B+B N     N     N     N     N     N     N     N+B+B+B+B+B+B+B+B+B+B+B     N     N     N     N+W+W\n" +
