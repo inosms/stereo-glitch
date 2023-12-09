@@ -466,6 +466,12 @@ impl State {
                 command::Command::JoystickInput(x, y) => {
                     self.game_world.move_player(cgmath::vec3(x, y, 0.0));
                 }
+                command::Command::ActionButtonPressed => {
+                    self.game_world.player_pull_action();
+                }
+                command::Command::ActionButtonReleased => {
+                    self.game_world.release_player_pull_action();
+                }
             }
         }
 

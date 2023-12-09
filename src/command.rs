@@ -10,6 +10,8 @@ pub enum Command {
     SetEyeDistance(f32),
     SetSize(u32, u32),
     JoystickInput(f32, f32), // input as a vector (x, y)
+    ActionButtonPressed,
+    ActionButtonReleased,
 }
 
 pub struct CommandQueue {
@@ -63,4 +65,14 @@ pub fn set_size(width: u32, height: u32) {
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn joystick_input(x: f32, y: f32) {
     COMMANDS.push(Command::JoystickInput(x, y));
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn action_button_pressed() {
+    COMMANDS.push(Command::ActionButtonPressed);
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn action_button_released() {
+    COMMANDS.push(Command::ActionButtonReleased);
 }

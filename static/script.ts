@@ -1,5 +1,5 @@
 import nipplejs from 'nipplejs';
-import init, { load_level, set_eye_distance, set_size, joystick_input } from "../pkg/stereo_glitch.js";
+import init, { load_level, set_eye_distance, set_size, joystick_input, action_button_pressed, action_button_released } from "../pkg/stereo_glitch.js";
 
 var semi = nipplejs.create({
     zone: document.getElementById('game-controller-joystick'),
@@ -120,8 +120,7 @@ init().then(() => {
     }).observe(gameContainer);
 });
 
-// TODO on click
-nipplejs.create({
+let action_button = nipplejs.create({
     zone: document.getElementById('game-controller-action-button'),
     mode: 'static',
     position: {left: '50%', top: '50%'},
@@ -130,4 +129,12 @@ nipplejs.create({
     lockY: true,
     shape: 'square',
     size: 50,
+});
+
+action_button.on('start', function (_evt, _data) {
+    action_button_pressed();
+});
+
+action_button.on('end', function (_evt, _data) {
+    action_button_released();
 });
