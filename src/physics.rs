@@ -3,7 +3,7 @@ use cgmath::{EuclideanSpace, InnerSpace};
 use rapier3d::{
     control::{CharacterAutostep, CharacterLength, KinematicCharacterController},
     crossbeam,
-    na::{Isometry3, Translation3, UnitVector3, Vector3},
+    na::{Isometry3, Point3, Translation3, UnitVector3, Vector3},
     prelude::*,
 };
 
@@ -111,9 +111,10 @@ impl PhysicsSystem {
     ) -> (RigidBodyHandle, ColliderHandle) {
         let rigid_body = match block_physics_type {
             BlockPhysicsType::Static => RigidBodyBuilder::fixed(),
-            BlockPhysicsType::Kinematic => RigidBodyBuilder::dynamic().locked_axes(LockedAxes::ROTATION_LOCKED),
-            BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic()
-                .additional_mass(10.0),
+            BlockPhysicsType::Kinematic => {
+                RigidBodyBuilder::dynamic().locked_axes(LockedAxes::ROTATION_LOCKED)
+            }
+            BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic().additional_mass(10.0),
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
@@ -153,21 +154,6 @@ impl PhysicsSystem {
         body.set_enabled(is_active);
     }
 
-    pub fn set_collider_do_not_collide_with_kinetic(
-        &mut self,
-        collider_handle: ColliderHandle,
-        collide_with_kinetic: bool,
-    ) {
-        let collider = self.collider_set.get_mut(collider_handle).unwrap();
-        let mut active_collision_types = collider.active_collision_types();
-        if collide_with_kinetic {
-            active_collision_types |= ActiveCollisionTypes::DYNAMIC_KINEMATIC;
-        } else {
-            active_collision_types &= !ActiveCollisionTypes::DYNAMIC_KINEMATIC;
-        }
-        collider.set_active_collision_types(active_collision_types);
-    }
-
     pub fn get_position(&self, body_handle: RigidBodyHandle) -> Position {
         let body = &self.rigid_body_set[body_handle];
         let pos = body.translation().clone();
@@ -193,12 +179,13 @@ impl PhysicsSystem {
     pub fn move_body(
         &mut self,
         body_handle: RigidBodyHandle,
-        desired_velocity: cgmath::Vector3<f32>
+        desired_velocity: cgmath::Vector3<f32>,
+        rotate_in_direction_of_movement: bool,
     ) {
         // move body using impulses
         let body = self.rigid_body_set.get_mut(body_handle).unwrap();
         let mass = body.mass();
-        
+
         let current_velocity = body.linvel().clone();
         let velocity_change = vector![
             desired_velocity.x - current_velocity.x,
@@ -212,13 +199,14 @@ impl PhysicsSystem {
         body.apply_impulse(self.gravity * mass * self.integration_parameters.dt, true);
 
         // if actually moving
-        let next_rotation = if desired_velocity.magnitude2() > 0.001 {
+        let next_rotation = if rotate_in_direction_of_movement && desired_velocity.magnitude2() > 0.001 {
             // The initial alignment of the player is to look along the negative y axis.
             // From this compute the angle of movement around the positive z axis.
             // This is used to rotate the player to face the direction of movement.
 
             // We don't care about the z direction
-            let direction_norm = Vector3::new(desired_velocity.x, desired_velocity.y, 0.0).normalize();
+            let direction_norm =
+                Vector3::new(desired_velocity.x, desired_velocity.y, 0.0).normalize();
             let zero_rotation_direction = Vector3::new(0.0, -1.0, 0.0);
             let axis_of_rotation =
                 rapier3d::na::UnitVector3::try_new(Vector3::new(0.0, 0.0, 1.0), 0.1).unwrap();
@@ -239,52 +227,18 @@ impl PhysicsSystem {
         };
 
         body.set_rotation(next_rotation, true);
-
     }
 
-    pub fn set_rigid_body_type(&mut self, body_handle: RigidBodyHandle, body_type: RigidBodyType) {
-        let body = self.rigid_body_set.get_mut(body_handle).unwrap();
-        body.set_body_type(body_type, true);
-    }
-
-    // Set the translation relative to anchor_body_handle in the local space of anchor_body_handle
-    // to_transform_body_handle is the body that will be transformed
-    pub fn set_position_relative_to_body(
+    pub fn add_fixed_joint(
         &mut self,
-        anchor_body_handle: RigidBodyHandle,
-        to_transform_body_handle: RigidBodyHandle,
-        relative_position_local_space: cgmath::Vector3<f32>,
-    ) {
-        let anchor_translation = self
-            .rigid_body_set
-            .get(anchor_body_handle)
-            .unwrap()
-            .translation()
-            .clone();
-        let anchor_rotation = self
-            .rigid_body_set
-            .get(anchor_body_handle)
-            .unwrap()
-            .rotation()
-            .clone();
-        let relative_position_world_space = anchor_translation
-            + anchor_rotation
-                * rapier3d::na::Vector3::new(
-                    relative_position_local_space.x,
-                    relative_position_local_space.y,
-                    relative_position_local_space.z,
-                );
-
-        self.rigid_body_set
-            .get_mut(to_transform_body_handle)
-            .expect("body to transform not found")
-            .set_next_kinematic_position(Isometry3::from_parts(
-                Translation3::new(
-                    relative_position_world_space.x,
-                    relative_position_world_space.y,
-                    relative_position_world_space.z,
-                ),
-                anchor_rotation,
-            ));
+        local_anchor1: Point3<f32>,
+        local_anchor2: Point3<f32>,
+        body1: RigidBodyHandle,
+        body2: RigidBodyHandle,
+    ) -> ImpulseJointHandle {
+        let joint = FixedJointBuilder::new()
+            .local_anchor1(local_anchor1)
+            .local_anchor2(local_anchor2);
+        return self.impulse_joint_set.insert(body1, body2, joint, true);
     }
 }
