@@ -37,6 +37,13 @@ pub enum Block {
     Trigger,
     Charge,
     StaticEnemy,
+    LinearEnemy(LinearEnemyDirection),
+}
+
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+pub enum LinearEnemyDirection{
+    XAxis,
+    YAxis,
 }
 
 
@@ -52,6 +59,7 @@ pub enum BlockType {
     Trigger,
     Charge,
     StaticEnemy,
+    LinearEnemy,
 }
 
 impl Block {
@@ -67,6 +75,7 @@ impl Block {
             Block::Trigger => BlockType::Trigger,
             Block::Charge => BlockType::Charge,
             Block::StaticEnemy => BlockType::StaticEnemy,
+            Block::LinearEnemy(_) => BlockType::LinearEnemy,
         }
     }
 
@@ -82,6 +91,7 @@ impl Block {
             Block::Trigger => 0.02,
             Block::Charge => 1.0,
             Block::StaticEnemy => 1.5,
+            Block::LinearEnemy(_) => 1.0,
         }
     }
 }

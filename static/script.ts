@@ -69,7 +69,7 @@ init().then(() => {
         "N+W N     N     N     N+P     N     N     N  N N+W\n" +
         "N+W N     N     N     N     N     N     N  N N+W\n" +
         "N+W N     N     N     N     N     N     N  N N+W\n" +
-        "N+W N     N     N     N+E1     N     N     N  N N+W\n" +
+        "N+W N     N     N     N+E2X     N     N     N  N N+W\n" +
         "N+W N     N     N     N     N     N     N  N N+W\n"
     );
 

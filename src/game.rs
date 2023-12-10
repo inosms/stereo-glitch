@@ -1,14 +1,14 @@
 use std::collections::{HashMap, HashSet};
 
 use bevy_ecs::prelude::*;
-use cgmath::{EuclideanSpace, InnerSpace, Rotation3};
+use cgmath::{EuclideanSpace, InnerSpace, Rotation3, Vector3};
 use rapier3d::geometry::ColliderHandle;
 
 use crate::{
     glitch_area::GlitchAreaVisibility,
     level_loader::{Cell, ParsedLevel},
     mesh::Handle,
-    object_types::{Block, BlockType, Id},
+    object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
     time_keeper::TimeKeeper,
@@ -90,6 +90,12 @@ struct Sensor {
 #[derive(Component)]
 struct DamageArea {
     damage: f32,
+}
+
+#[derive(Component)]
+struct LinearEnemy {
+    current_movement_direction: Vector3<f32>,
+    stuck_counter: u32,
 }
 
 #[derive(Component)]
@@ -408,6 +414,41 @@ fn damage_area_system(
     }
 }
 
+// Linear enemies move along their defined axis until they hit an obstacle which is when they turn around
+// An obstacle is something that causes the enemy to get stuck (e.g. a wall or another enemy).
+// This is measured by the linear velocity of the enemy. If the linear velocity is almost 0 the enemy is stuck.
+fn move_linear_enemy_system(
+    time_keeper: Res<TimeKeeper>,
+    mut query: Query<(&mut LinearEnemy, &PhysicsBody)>,
+    mut physics_system: ResMut<PhysicsSystem>,
+) {
+    // Only move enemies if we are in a physics tick
+    // Otherwise the physics system will be frame rate dependent
+    if !time_keeper.peek() {
+        return;
+    }
+
+    for (mut enemy,  body) in &mut query {
+        let velocity = physics_system.get_velocity_magnitude(body.body);
+        if velocity < 0.1 {
+            enemy.stuck_counter += 1;
+
+            // Wait a bit before turning around
+            let stuck_counter_max = 20;
+            if enemy.stuck_counter > stuck_counter_max {
+                enemy.current_movement_direction = -enemy.current_movement_direction;
+                enemy.stuck_counter = 0;
+            }
+        } else {
+            enemy.stuck_counter = 0;
+        }
+
+        let enemy_max_speed = 4.0;
+        let direction = enemy.current_movement_direction * enemy_max_speed;
+        physics_system.move_body(body.body, direction, true);
+    }
+}
+
 impl GameWorld {
     pub fn new(handle_store: HashMap<BlockType, Handle>) -> Self {
         let mut game_world = Self {
@@ -451,6 +492,7 @@ impl GameWorld {
                 physics_system,
                 charge_recharge_system,
                 player_charge_depletion_system,
+                move_linear_enemy_system,
                 fixed_update_system,
             )
                 .chain(),
@@ -528,7 +570,7 @@ impl GameWorld {
                         0.5,
                         0.5,
                         block.block_height() / 2.0,
-                        block.get_block_type(),
+                        &block,
                     );
 
                 // Add sensor
@@ -543,7 +585,7 @@ impl GameWorld {
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.25, 0.25, 0.5, 0.0, 0.0, 0.0),
                     ),
-                    BlockType::StaticEnemy => Some(
+                    BlockType::StaticEnemy | BlockType::LinearEnemy => Some(
                         self.world
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.55, 0.55, 0.55, 0.0, 0.0, 0.0),
@@ -607,6 +649,24 @@ impl GameWorld {
                                 triggered: false,
                                 id: None,
                                 triggered_by: HashSet::new(),
+                            },
+                            DamageArea { damage: 10.0 },
+                        ));
+                    }
+                    Block::LinearEnemy(direction) => {
+                        entity.insert((
+                            Sensor {
+                                collider: sensor_trigger.unwrap(),
+                                triggered: false,
+                                id: None,
+                                triggered_by: HashSet::new(),
+                            },
+                            LinearEnemy {
+                                current_movement_direction: match direction {
+                                    LinearEnemyDirection::XAxis => Vector3::unit_x(),
+                                    LinearEnemyDirection::YAxis => Vector3::unit_y(),
+                                },
+                                stuck_counter: 0,
                             },
                             DamageArea { damage: 10.0 },
                         ));

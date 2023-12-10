@@ -6,7 +6,10 @@ use rapier3d::{
     prelude::*,
 };
 
-use crate::{game::Position, object_types::BlockType};
+use crate::{
+    game::Position,
+    object_types::{Block, BlockType, LinearEnemyDirection},
+};
 
 #[derive(Resource)]
 pub struct PhysicsSystem {
@@ -105,40 +108,46 @@ impl PhysicsSystem {
         x_extent: f32,
         y_extent: f32,
         z_extent: f32,
-        block_type: BlockType,
+        block: &Block,
     ) -> (RigidBodyHandle, Option<ColliderHandle>) {
-        let rigid_body: RigidBody = match block_type {
-            BlockType::FloorNormal
-            | BlockType::Door
-            | BlockType::Wall
-            | BlockType::Trigger
-            | BlockType::Charge
-            | BlockType::StaticEnemy
-            | BlockType::Goal => RigidBodyBuilder::fixed(),
-            BlockType::Empty => unreachable!(),
-            BlockType::Player => {
+        let rigid_body: RigidBody = match &block {
+            Block::FloorNormal
+            | Block::Door(_)
+            | Block::Wall
+            | Block::Trigger
+            | Block::Charge
+            | Block::StaticEnemy
+            | Block::Goal => RigidBodyBuilder::fixed(),
+            Block::Empty => unreachable!(),
+            Block::Player => {
                 // make the player heaver to avoid bouncing
                 RigidBodyBuilder::dynamic()
                     .locked_axes(LockedAxes::ROTATION_LOCKED)
                     .gravity_scale(10.0)
             }
-            BlockType::Box => RigidBodyBuilder::dynamic(),
+            Block::LinearEnemy(LinearEnemyDirection::XAxis) => RigidBodyBuilder::dynamic()
+                .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED),
+            Block::LinearEnemy(LinearEnemyDirection::YAxis) => RigidBodyBuilder::dynamic()
+                .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED),
+            Block::Box => RigidBodyBuilder::dynamic(),
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
         .build();
         let body_handle = self.rigid_body_set.insert(rigid_body);
 
-        let collider = match block_type {
-            BlockType::FloorNormal
-            | BlockType::Door
-            | BlockType::Wall
-            | BlockType::Trigger
-            | BlockType::Goal
-            | BlockType::StaticEnemy
-            | BlockType::Box => Some(ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()),
-            BlockType::Player => Some(ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build()),
-            BlockType::Empty | BlockType::Charge  => None,
+        let collider = match &block {
+            Block::FloorNormal
+            | Block::Door(_)
+            | Block::Wall
+            | Block::Trigger
+            | Block::Goal
+            | Block::StaticEnemy
+            | Block::Box => Some(ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()),
+            Block::Player | Block::LinearEnemy(_) => {
+                Some(ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build())
+            }
+            Block::Empty | Block::Charge => None,
         };
         let collider_handle = collider.map(|collider| {
             self.collider_set
@@ -184,6 +193,11 @@ impl PhysicsSystem {
             position: cgmath::Vector3::new(pos.x, pos.y, pos.z),
             rotation: cgmath::Quaternion::new(rot.w, rot.i, rot.j, rot.k),
         }
+    }
+
+    pub fn get_velocity_magnitude(&self, body_handle: RigidBodyHandle) -> f32 {
+        let body = &self.rigid_body_set[body_handle];
+        body.linvel().magnitude()
     }
 
     pub fn get_user_data(&self, collider_handle: ColliderHandle) -> Option<u128> {
