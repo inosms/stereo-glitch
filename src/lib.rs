@@ -144,7 +144,7 @@ impl State {
         let initial_instance_buffer_size: i32 = 1;
         let wall_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
             &device,
-            [1.0, 0.0, 0.0],
+            [0.0, 0.5, 0.0],
             initial_instance_buffer_size as usize,
         ));
         let floor_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
@@ -191,6 +191,14 @@ impl State {
             1.0,
             initial_instance_buffer_size as usize,
         ));
+        let static_enemy_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
+            &device,
+            [1.0, 0.0, 0.0],
+            1.0,
+            1.0,
+            1.5,
+            initial_instance_buffer_size as usize,
+        ));
 
         let handle_store = HashMap::from_iter(vec![
             (BlockType::Wall, wall_mesh),
@@ -201,6 +209,7 @@ impl State {
             (BlockType::Box, box_mesh),
             (BlockType::Trigger, trigger_mesh),
             (BlockType::Charge, charge_mesh),
+            (BlockType::StaticEnemy, static_enemy_mesh),
         ]);
 
         let game_world = game::GameWorld::new(handle_store);

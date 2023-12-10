@@ -36,6 +36,7 @@ pub enum Block {
     Box,
     Trigger,
     Charge,
+    StaticEnemy,
 }
 
 
@@ -50,6 +51,7 @@ pub enum BlockType {
     Box,
     Trigger,
     Charge,
+    StaticEnemy,
 }
 
 impl Block {
@@ -64,6 +66,7 @@ impl Block {
             Block::Box => BlockType::Box,
             Block::Trigger => BlockType::Trigger,
             Block::Charge => BlockType::Charge,
+            Block::StaticEnemy => BlockType::StaticEnemy,
         }
     }
 
@@ -78,6 +81,7 @@ impl Block {
             Block::Box => 1.0,
             Block::Trigger => 0.02,
             Block::Charge => 1.0,
+            Block::StaticEnemy => 1.5,
         }
     }
 }

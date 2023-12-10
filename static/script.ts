@@ -47,7 +47,7 @@ init().then(() => {
         "N+W N+W N+W N+W N+W N+W N+W N+W N+W N+W\n" +
         "N+W N   N   N   N   N   N   N   N N+W\n" +
         "N+W N   N   N   N   N   N   N   N N+W\n" +
-        "N+W N   N   N   N+P N   N   N   N N+W\n" +
+        "N+W N   N   N   N N   N   N   N N+W\n" +
         "N+W N   N   N   N   N   N   N   N N+W\n" +
         "N+W N   N   N   N   N   N   N   N N+W\n" +
         "N+W N   N   N   N   N   N   N   N N+W\n" +
@@ -65,6 +65,11 @@ init().then(() => {
         "N+W N     N    _N    _N    _N     N     N  N N+W\n" +
         "N+W N     N    _N    _N    _N     N     N  N N+W\n" +
         "N+W N     N     N     N+C   N     N     N  N N+W\n" +
+        "N+W N     N     N     N     N     N     N  N N+W\n" +
+        "N+W N     N     N     N+P     N     N     N  N N+W\n" +
+        "N+W N     N     N     N     N     N     N  N N+W\n" +
+        "N+W N     N     N     N     N     N     N  N N+W\n" +
+        "N+W N     N     N     N+E1     N     N     N  N N+W\n" +
         "N+W N     N     N     N     N     N     N  N N+W\n"
     );
 

@@ -203,6 +203,7 @@ fn parse_block(input: &str) -> IResult<&str, (Block, Option<Id>)> {
         value(Block::Box, tag("B")),
         value(Block::Trigger, tag("T")),
         value(Block::Charge, tag("C")),
+        value(Block::StaticEnemy, tag("E1")),
     ))(input)?;
 
     let (rest, id) = opt(parse_id)(rest)?;

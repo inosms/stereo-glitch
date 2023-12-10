@@ -5,12 +5,13 @@ use cgmath::{EuclideanSpace, InnerSpace, Rotation3};
 use rapier3d::geometry::ColliderHandle;
 
 use crate::{
+    glitch_area::GlitchAreaVisibility,
     level_loader::{Cell, ParsedLevel},
     mesh::Handle,
     object_types::{Block, BlockType, Id},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    time_keeper::TimeKeeper, glitch_area::GlitchAreaVisibility,
+    time_keeper::TimeKeeper,
 };
 
 const TICKS_PER_SECOND: u32 = 60;
@@ -22,9 +23,12 @@ pub struct Position {
 }
 
 impl Position {
-     fn get_cell(&self) -> (i32, i32) {
-        (self.position.x.floor() as i32, (-self.position.y).floor() as i32)
-     }
+    fn get_cell(&self) -> (i32, i32) {
+        (
+            self.position.x.floor() as i32,
+            (-self.position.y).floor() as i32,
+        )
+    }
 }
 
 impl Default for Position {
@@ -81,6 +85,11 @@ struct Sensor {
     triggered: bool,
     id: Option<Id>,
     triggered_by: HashSet<Entity>,
+}
+
+#[derive(Component)]
+struct DamageArea {
+    damage: f32,
 }
 
 #[derive(Component)]
@@ -234,15 +243,13 @@ fn fixed_update_system(mut time_keeper: ResMut<TimeKeeper>) {
     time_keeper.tick();
 }
 
-fn check_player_dead_system(
-    mut query: Query<(&Position, &PhysicsBody), With<Player>>,
-    mut player: Query<&mut Player>,
-) {
-    for (position, _physics_body) in &mut query {
+fn check_player_dead_system(mut query: Query<(&Position, &mut Player), With<Player>>) {
+    for (position, mut player) in &mut query {
         if position.position.z < -1.0 {
-            for mut player in &mut player {
-                player.dead = true;
-            }
+            player.dead = true;
+        }
+        if player.charge < 0.0 {
+            player.dead = true;
         }
     }
 }
@@ -289,7 +296,7 @@ fn charge_recharge_system(
     if !time_keeper.peek() {
         return;
     }
-    
+
     for (mut charge, sensor, sensor_entity) in &mut query {
         let triggering_player_entity = sensor
             .triggered_by
@@ -302,7 +309,7 @@ fn charge_recharge_system(
         if triggered_by_player && can_recharge {
             for player_entity in triggering_player_entity {
                 if let Ok(mut player) = player_query.get_mut(*player_entity) {
-                    player.charge = (player.charge + 20.0).min(100.0);
+                    player.charge = (player.charge.max(0.0) + 20.0).min(100.0);
                 }
             }
 
@@ -342,14 +349,16 @@ fn player_charge_depletion_system(
             .contains(&player_x_y_cell);
 
         if is_in_glitch_area {
-            if player.charge > 0.0 {
-                player.charge -= deplete_per_tick;
-            } else {
-                player.dead = true;
-            }
+            player.charge -= deplete_per_tick;
         }
 
-        let player_charge = if player.charge > 10.0 { 1.0 } else if player.charge > 0.0 { 0.2 } else { 0.0 };
+        let player_charge = if player.charge > 10.0 {
+            1.0
+        } else if player.charge > 0.0 {
+            0.2
+        } else {
+            0.0
+        };
         // smooth interpolation between 0 and 1
         let alpha = 0.99;
         glitch_area_visibility.visibility =
@@ -384,7 +393,8 @@ impl GameWorld {
             50.0,
             -5.0, // view cross-eyed
         ));
-        self.world.insert_resource(TimeKeeper::new(TICKS_PER_SECOND));
+        self.world
+            .insert_resource(TimeKeeper::new(TICKS_PER_SECOND));
         self.world.insert_resource(GlitchAreaVisibility {
             visibility: 0.0,
             glitch_cells: HashSet::new(),
@@ -488,6 +498,11 @@ impl GameWorld {
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.25, 0.25, 0.5, 0.0, 0.0, 0.0),
                     ),
+                    BlockType::StaticEnemy => Some(
+                        self.world
+                            .resource_mut::<PhysicsSystem>()
+                            .add_sensor_collider(body_handle, 0.55, 0.55, 0.55, 0.0, 0.0, 0.0),
+                    ),
                     _ => None,
                 };
 
@@ -538,6 +553,17 @@ impl GameWorld {
                                 triggered_by: HashSet::new(),
                             },
                             Charge { cooldown_left: 0.0 },
+                        ));
+                    }
+                    Block::StaticEnemy => {
+                        entity.insert((
+                            Sensor {
+                                collider: sensor_trigger.unwrap(),
+                                triggered: false,
+                                id: None,
+                                triggered_by: HashSet::new(),
+                            },
+                            DamageArea { damage: 10.0 },
                         ));
                     }
                     Block::Empty => {}

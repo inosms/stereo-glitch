@@ -113,6 +113,7 @@ impl PhysicsSystem {
             | BlockType::Wall
             | BlockType::Trigger
             | BlockType::Charge
+            | BlockType::StaticEnemy
             | BlockType::Goal => RigidBodyBuilder::fixed(),
             BlockType::Empty => unreachable!(),
             BlockType::Player => {
@@ -134,9 +135,10 @@ impl PhysicsSystem {
             | BlockType::Wall
             | BlockType::Trigger
             | BlockType::Goal
+            | BlockType::StaticEnemy
             | BlockType::Box => Some(ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()),
             BlockType::Player => Some(ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build()),
-            BlockType::Empty | BlockType::Charge => None,
+            BlockType::Empty | BlockType::Charge  => None,
         };
         let collider_handle = collider.map(|collider| {
             self.collider_set
