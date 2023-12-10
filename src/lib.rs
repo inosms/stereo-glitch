@@ -155,9 +155,12 @@ impl State {
             8.0,
             initial_instance_buffer_size as usize,
         ));
-        let player_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
+        let player_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
             &device,
             [0.0, 0.0, 1.0],
+            0.8,
+            0.8,
+            1.0,
             initial_instance_buffer_size as usize,
         ));
         let goal_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(

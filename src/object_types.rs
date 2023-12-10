@@ -96,7 +96,7 @@ impl Block {
             Block::Goal => 1.0,
             Block::Wall => 1.0,
             Block::Box(_) => 1.0,
-            Block::Trigger => 0.02,
+            Block::Trigger => 0.0001,
             Block::Charge => 1.0,
             Block::StaticEnemy => 1.5,
             Block::LinearEnemy(_) => 1.0,

@@ -166,7 +166,6 @@ fn move_player_system(
         direction = direction.normalize();
     }
     let player_max_speed = 16.0;
-
     let direction = camera_look_direction_rotation_matrix * direction * player_max_speed;
 
     for physics_body in &mut query {
@@ -182,8 +181,10 @@ fn move_player_system(
             .filter_map(|entity| physics_body_query.get(*entity).ok())
             .collect();
     }
+    let player_physics_body = query.iter().next().unwrap();
+    let player_velocity = physics_system.get_velocity(player_physics_body.body);
     for physics_body in pulled_bodies {
-        physics_system.move_body(physics_body.body, direction, false);
+        physics_system.move_body(physics_body.body, player_velocity, false);
     }
 }
 
@@ -194,10 +195,10 @@ fn move_camera_system(
 ) {
     for (position, _) in &mut query {
         let camera_target_goal = position.position;
-        let camera_eye_goal = position.position + cgmath::Vector3::new(-35.0, -35.0, 35.0);
+        let camera_eye_goal = position.position + cgmath::Vector3::new(-35.0, -35.0, 70.0);
 
-        camera.smooth_set_target(cgmath::Point3::from_vec(camera_target_goal), 0.02, 3.0);
-        camera.smooth_set_eye(cgmath::Point3::from_vec(camera_eye_goal), 0.02, 3.0);
+        camera.smooth_set_target(cgmath::Point3::from_vec(camera_target_goal), 0.04, 3.0);
+        camera.smooth_set_eye(cgmath::Point3::from_vec(camera_eye_goal), 0.04, 3.0);
     }
 }
 
@@ -402,7 +403,7 @@ fn damage_area_system(
                 // push the player away from the damage area
                 let player_position = player_position.position;
                 let damage_area_position = sensor_position.position;
-                let direction = (player_position - damage_area_position).normalize() * 20.0;
+                let direction = (player_position - damage_area_position).normalize() * 10.0;
                 physics_system.move_body(player_physics_body.body, direction, false);
                 // otherwise the player might get stuck in the damage area
                 input.player_paralized_cooldown = 0.2;
@@ -466,14 +467,14 @@ impl GameWorld {
             player_paralized_cooldown: 0.0,
         });
         self.world.insert_resource(StereoCamera::new(
-            (0.0, -10.0, 00.0).into(),
+            (0.0, -10.0, 0.0).into(),
             (0.0, 0.0, 0.0).into(),
             cgmath::Vector3::unit_z(),
             self.camera_aspect,
-            10.0,
+            7.0,
             0.1,
             50.0,
-            -5.0, // view cross-eyed
+            -12.0, // view cross-eyed
         ));
         self.world
             .insert_resource(TimeKeeper::new(TICKS_PER_SECOND));
@@ -560,14 +561,18 @@ impl GameWorld {
                 };
 
                 // to prevent the boxes from getting stuck in each other
-                let offset = 0.98;
+                let offset = 0.95;
+                let xy_size = match block.get_block_type() {
+                    BlockType::Player => 0.5 * 0.8,
+                    _ => 0.5,
+                };
                 let (body_handle, collider_handle) =
                     self.world.resource_mut::<PhysicsSystem>().add_object(
                         position.position.x,
                         position.position.y,
                         position.position.z,
-                        offset * 0.5,
-                        offset * 0.5,
+                        offset * xy_size,
+                        offset * xy_size,
                         offset * block.block_height() / 2.0,
                         &block,
                     );
@@ -743,7 +748,7 @@ impl GameWorld {
             .unwrap()
             .position;
 
-        let pull_area_extent = 2.0;
+        let pull_area_extent = 3.0;
         // find all Entities that are within [-PULL_AREA_EXTENT, PULL_AREA_EXTENT] of the player in x, y and z
         let query = self
             .world

@@ -123,19 +123,19 @@ impl PhysicsSystem {
                 // make the player heaver to avoid bouncing
                 RigidBodyBuilder::dynamic()
                     .locked_axes(LockedAxes::ROTATION_LOCKED)
-                    .gravity_scale(10.0)
+                    .gravity_scale(3.0)
             }
             Block::LinearEnemy(LinearEnemyDirection::XAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED),
             Block::LinearEnemy(LinearEnemyDirection::YAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED),
-            Block::Box(BoxType::Free) => RigidBodyBuilder::dynamic(),
+            Block::Box(BoxType::Free) => RigidBodyBuilder::dynamic().gravity_scale(3.0),
             Block::Box(BoxType::XAxis) => RigidBodyBuilder::dynamic()
-               .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED),
+               .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED).gravity_scale(3.0),
             Block::Box(BoxType::YAxis) => RigidBodyBuilder::dynamic()
-               .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED),
+               .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED).gravity_scale(3.0),
             Block::Box(BoxType::RotationFixed) => RigidBodyBuilder::dynamic()
-               .locked_axes(LockedAxes::ROTATION_LOCKED),
+               .locked_axes(LockedAxes::ROTATION_LOCKED).gravity_scale(3.0),
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
@@ -146,14 +146,12 @@ impl PhysicsSystem {
             Block::FloorNormal
             | Block::Door(_)
             | Block::Wall
-            | Block::Trigger
-            | Block::Goal
             | Block::StaticEnemy
             | Block::Box(_) => Some(ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()),
             Block::Player | Block::LinearEnemy(_) => {
                 Some(ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build())
             }
-            Block::Empty | Block::Charge => None,
+            Block::Empty | Block::Charge | Block::Trigger | Block::Goal => None,
         };
         let collider_handle = collider.map(|collider| {
             self.collider_set
@@ -204,6 +202,11 @@ impl PhysicsSystem {
     pub fn get_velocity_magnitude(&self, body_handle: RigidBodyHandle) -> f32 {
         let body = &self.rigid_body_set[body_handle];
         body.linvel().magnitude()
+    }
+
+    pub fn get_velocity(&self, body_handle: RigidBodyHandle) -> cgmath::Vector3<f32> {
+        let body = &self.rigid_body_set[body_handle];
+        cgmath::Vector3::new(body.linvel().x, body.linvel().y, body.linvel().z)
     }
 
     pub fn get_user_data(&self, collider_handle: ColliderHandle) -> Option<u128> {
