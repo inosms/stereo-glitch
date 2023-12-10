@@ -344,7 +344,7 @@ impl GameWorld {
         for (block, id) in cell.block_stack_iter() {
             if block != &Block::Empty {
                 let position = Position {
-                    position: cgmath::Vector3::new(x as f32 + 0.5, -y as f32 - 0.5, z as f32),
+                    position: cgmath::Vector3::new(x as f32 + 0.5, -y as f32 - 0.5, z as f32 + block.block_height() / 2.0),
                     rotation: cgmath::Quaternion::from_axis_angle(
                         cgmath::Vector3::unit_z(),
                         cgmath::Deg(0.0),
@@ -363,28 +363,13 @@ impl GameWorld {
                     );
 
                 // Add sensor
-                let sensor_trigger = if block.get_block_type() == BlockType::Trigger {
-                    Some(
+                let sensor_trigger = match block.get_block_type() {
+                    BlockType::Trigger => Some(
                         self.world
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.5, 0.5, 0.2, 0.0, 0.0, 0.05),
-                    )
-                } else if block.get_block_type() == BlockType::Player {
-                    Some(
-                        self.world
-                            .resource_mut::<PhysicsSystem>()
-                            .add_sensor_collider(
-                                body_handle,
-                                0.5,
-                                0.8,
-                                block.block_height() / 2.0,
-                                0.0,
-                                -0.5,
-                                0.0,
-                            ),
-                    )
-                } else {
-                    None
+                    ),
+                    _ => None,
                 };
 
                 let mut entity = self.world.spawn((
@@ -397,18 +382,12 @@ impl GameWorld {
 
                 match block {
                     Block::Player => {
-                        entity.insert((
+                        entity.insert(
                             Player {
                                 dead: false,
                                 pulled_objects: Vec::new(),
-                            },
-                            Sensor {
-                                collider: sensor_trigger.unwrap(),
-                                triggered: false,
-                                id: None,
-                                triggered_by: HashSet::new(),
-                            },
-                        ));
+                            }
+                        );
                     }
                     Block::Goal => {
                         entity.insert(Goal);
