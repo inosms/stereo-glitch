@@ -79,13 +79,27 @@ impl StereoCamera {
     }
 
     /// Smoothly set the camera target
-    pub fn smooth_set_target(&mut self, target: cgmath::Point3<f32>, smooth_factor: f32) {
-        self.target = self.target + (target - self.target) * smooth_factor;
+    /// If the distance between the current target and the new target is greater than jump_distance
+    /// then the target is set immediately
+    pub fn smooth_set_target(&mut self, target: cgmath::Point3<f32>, smooth_factor: f32, jump_distance: f32) {
+        let distance = (self.target - target).magnitude();
+        if distance > jump_distance {
+            self.target = target;
+        } else {
+            self.target = self.target + (target - self.target) * smooth_factor;
+        }
     }
 
     /// Smoothly set the camera eye
-    pub fn smooth_set_eye(&mut self, eye: cgmath::Point3<f32>, smooth_factor: f32) {
-        self.eye = self.eye + (eye - self.eye) * smooth_factor;
+    /// If the distance between the current eye and the new eye is greater than jump_distance
+    /// then the eye is set immediately
+    pub fn smooth_set_eye(&mut self, eye: cgmath::Point3<f32>, smooth_factor: f32, jump_distance: f32) {
+        let distance = (self.eye - eye).magnitude();
+        if distance > jump_distance {
+            self.eye = eye;
+        } else {
+            self.eye = self.eye + (eye - self.eye) * smooth_factor;
+        }
     }
 
     /// Set the camera eye

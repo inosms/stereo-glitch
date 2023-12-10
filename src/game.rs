@@ -193,8 +193,8 @@ fn move_camera_system(
         let camera_target_goal = position.position;
         let camera_eye_goal = position.position + cgmath::Vector3::new(-35.0, -35.0, 35.0);
 
-        camera.smooth_set_target(cgmath::Point3::from_vec(camera_target_goal), 0.02);
-        camera.smooth_set_eye(cgmath::Point3::from_vec(camera_eye_goal), 0.02);
+        camera.smooth_set_target(cgmath::Point3::from_vec(camera_target_goal), 0.02, 3.0);
+        camera.smooth_set_eye(cgmath::Point3::from_vec(camera_eye_goal), 0.02, 3.0);
     }
 }
 
