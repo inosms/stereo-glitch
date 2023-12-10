@@ -54,9 +54,6 @@ struct Player {
 }
 
 #[derive(Component)]
-struct Carryable;
-
-#[derive(Component)]
 struct Goal;
 
 #[derive(Component)]
@@ -623,7 +620,7 @@ impl GameWorld {
                         entity.insert(Floor);
                     }
                     Block::Box(_) => {
-                        entity.insert((Box, Carryable));
+                        entity.insert(Box);
                     }
                     Block::Trigger => {
                         entity.insert(Sensor {
