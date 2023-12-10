@@ -42,14 +42,6 @@
             max-width: 800px;
             background-color: hsl(254, 10%, 15%);
 
-            @media (orientation: portrait) {
-                outline-color: hsl(254, 10%, 30%);
-                outline-style: solid;
-                outline-width: 2px;
-                border-radius: 40px;
-            }
-
-
             grid-template-columns: 12% 76% 12%;
             max-height: 100%;
             aspect-ratio: 2/1;
@@ -64,8 +56,6 @@
 
             >#game-container {
                 width: 100%;
-
-
                 >canvas {
                     padding-left: 0;
                     padding-right: 0;
@@ -78,29 +68,13 @@
             }
         }
 
-        @media (orientation: portrait) {
-
-            /* Praise https://tobiasahlin.com/blog/layered-smooth-box-shadows/ */
-            .shadow-5 {
-
-                box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12),
-                    0 2px 2px rgba(0, 0, 0, 0.12),
-                    0 4px 4px rgba(0, 0, 0, 0.12),
-                    0 8px 8px rgba(0, 0, 0, 0.12),
-                    0 16px 16px rgba(0, 0, 0, 0.12);
-
-            }
-        }
-
         @media (orientation: landscape) {
             .vertical-center {
-
                 margin: 0;
-                position: absolute;
+                position: relative;
                 top: 50%;
-                -ms-transform: translateY(-50%);
-                transform: translateY(-50%);
-
+                -ms-transform: translateY(-0%);
+                transform: translateY(-0%);
             }
         }
 
@@ -125,6 +99,7 @@
 
 <body>
     <script type="module" src="script.ts"></script>
+    <script type="module" src="editor.ts"></script>
     <div id="center-container">
         <div id="game" class="noselect shadow-5 vertical-center">
             <div id="game-controller-joystick"></div>
@@ -132,7 +107,8 @@
             <div id="game-controller-action-button"></div>
         </div>
     </div>
-
+    <button id="load-button">Load</button>
+    <div id="editor"></div>
 </body>
 
 </html>
