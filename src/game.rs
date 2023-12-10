@@ -19,6 +19,12 @@ pub struct Position {
     pub rotation: cgmath::Quaternion<f32>,
 }
 
+impl Position {
+     fn get_cell(&self) -> (i32, i32) {
+        (self.position.x.floor() as i32, (-self.position.y).floor() as i32)
+     }
+}
+
 impl Default for Position {
     fn default() -> Self {
         Self {
@@ -38,7 +44,7 @@ struct Player {
     // the objects the player is currently pulling
     pulled_objects: Vec<Entity>,
 
-    charge: u8,
+    charge: f32,
 }
 
 #[derive(Component)]
@@ -87,6 +93,17 @@ pub struct Invisible;
 #[derive(Component)]
 struct PhysicsBody {
     body: rapier3d::dynamics::RigidBodyHandle,
+}
+
+#[derive(Resource)]
+struct GlitchAreaVisibility {
+    // 0 = invisible, 1 = fully visible
+    // if the player has more than 0 charge, the glitch area is fully visible
+    // this variable is used for slow interpolation between the two states
+    visibility: f32,
+
+    // The cells that are currently glitched
+    glitch_cells: HashSet<(i32, i32)>,
 }
 
 pub struct GameWorld {
@@ -287,7 +304,7 @@ fn charge_recharge_system(
         if triggered_by_player && can_recharge {
             for player_entity in triggering_player_entity {
                 if let Ok(mut player) = player_query.get_mut(*player_entity) {
-                    player.charge = (player.charge + 20).max(100);
+                    player.charge = (player.charge + 20.0).min(100.0);
                 }
             }
 
@@ -301,6 +318,36 @@ fn charge_recharge_system(
         } else {
             commands.entity(sensor_entity).insert(Invisible);
         }
+    }
+}
+
+// When the player is in a glitch area deplete the charge over time
+// If the charge reaches 0 the player dies
+fn player_charge_depletion_system(
+    mut player_query: Query<(&mut Player, &Position)>,
+    mut glitch_area_visibility: ResMut<GlitchAreaVisibility>,
+) {
+    let deplete_per_second = 1.0;
+    let deplete_per_tick = deplete_per_second / 60.0;
+
+    for (mut player, pos) in &mut player_query {
+        let player_x_y_cell = pos.get_cell();
+        let is_in_glitch_area = glitch_area_visibility
+            .glitch_cells
+            .contains(&player_x_y_cell);
+
+        if is_in_glitch_area {
+            if player.charge > 0.0 {
+                player.charge -= deplete_per_tick;
+            } else {
+                player.dead = true;
+            }
+        }
+
+        let player_charge = if player.charge > 0.0 { 1.0 } else { 0.0 };
+        // smooth interpolation between 0 and 1
+        glitch_area_visibility.visibility =
+            glitch_area_visibility.visibility * 0.9 + player_charge * 0.1;
     }
 }
 
@@ -332,12 +379,17 @@ impl GameWorld {
             -5.0, // view cross-eyed
         ));
         self.world.insert_resource(TimeKeeper::new(60));
+        self.world.insert_resource(GlitchAreaVisibility {
+            visibility: 0.0,
+            glitch_cells: HashSet::new(),
+        });
         // The physics system needs to run after the player system so that the player can move
         self.schedule.add_systems(
             (
                 move_player_system,
                 physics_system,
                 charge_recharge_system,
+                player_charge_depletion_system,
                 fixed_update_system,
             )
                 .chain(),
@@ -371,9 +423,17 @@ impl GameWorld {
     pub fn reset_level(&mut self) {
         self.clear();
         if let Some(level) = self.level.take() {
+            let mut glitch_area = HashSet::new();
             for ((x, y), cell) in level.iter_cells() {
                 self.add_cell(x, y, cell);
+                if cell.is_glitch_area() {
+                    glitch_area.insert((x, y));
+                }
             }
+            self.world
+                .get_resource_mut::<GlitchAreaVisibility>()
+                .unwrap()
+                .glitch_cells = glitch_area;
             self.level = Some(level);
         }
     }
@@ -434,7 +494,7 @@ impl GameWorld {
                         entity.insert(Player {
                             dead: false,
                             pulled_objects: Vec::new(),
-                            charge: 0,
+                            charge: 0.0,
                         });
                     }
                     Block::Goal => {
