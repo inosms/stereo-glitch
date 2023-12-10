@@ -1,7 +1,7 @@
-
-use level_loader::{ParsedLevel};
-use object_types::{BlockType};
+use glitch_area::{GlitchAreaVisibility, GlitchAreaVisibilityDTO};
+use level_loader::ParsedLevel;
 use mesh::{InstanceRaw, Vertex};
+use object_types::BlockType;
 use std::{
     collections::{HashMap, HashSet},
     iter,
@@ -12,19 +12,20 @@ use wgpu::util::DeviceExt;
 use winit::{
     dpi::PhysicalSize,
     event::*,
-    event_loop::{EventLoop},
+    event_loop::EventLoop,
     keyboard::{KeyCode, PhysicalKey},
     window::{Window, WindowBuilder},
 };
 
 mod command;
 mod game;
+mod glitch_area;
 mod level_loader;
 mod mesh;
+mod object_types;
 mod physics;
 mod stereo_camera;
 mod texture;
-mod object_types;
 mod time_keeper;
 
 #[cfg(target_arch = "wasm32")]
@@ -50,6 +51,9 @@ struct State {
     stereo_camera_left_target_bind_group: wgpu::BindGroup,
     stereo_camera_right_target_buffer: wgpu::Buffer,
     stereo_camera_right_target_bind_group: wgpu::BindGroup,
+
+    glitch_fragment_data_buffer: wgpu::Buffer,
+    glitch_fragment_data_bind_group: wgpu::BindGroup,
 
     depth_texture: texture::Texture,
 
@@ -288,6 +292,37 @@ impl State {
                 label: Some("stereo_camera_right_target_bind_group"),
             });
 
+        let glitch_fragment_data_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Glitch Fragment Data Buffer"),
+                contents: bytemuck::cast_slice(&[GlitchAreaVisibilityDTO::new(0.0)]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
+
+        let glitch_fragment_data_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+                label: Some("glitch_fragment_data_bind_group_layout"),
+            });
+
+        let glitch_fragment_data_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &glitch_fragment_data_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: glitch_fragment_data_buffer.as_entire_binding(),
+            }],
+            label: Some("glitch_fragment_data_bind_group"),
+        });
+
         let glitch_area_texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[
@@ -350,6 +385,7 @@ impl State {
                     &stereo_camera_bind_group_layout,
                     &stereo_camera_target_group_layout,
                     &glitch_area_texture_bind_group_layout,
+                    &glitch_fragment_data_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -422,6 +458,8 @@ impl State {
             stereo_camera_left_target_bind_group,
             stereo_camera_right_target_buffer,
             stereo_camera_right_target_bind_group,
+            glitch_fragment_data_buffer,
+            glitch_fragment_data_bind_group,
             depth_texture,
             _clear_color: wgpu::Color {
                 r: 0.0,
@@ -523,6 +561,14 @@ impl State {
             0,
             bytemuck::cast_slice(&[self.stereo_camera_uniform]),
         );
+
+        let glitch_visibility_dto: GlitchAreaVisibilityDTO = self.game_world.ref_glitch_area_visibility().into();
+        self.queue.write_buffer(
+            &self.glitch_fragment_data_buffer,
+            0,
+            bytemuck::cast_slice(&[glitch_visibility_dto]),
+        );
+        
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -568,6 +614,7 @@ impl State {
                 render_pass.set_bind_group(0, &self.stereo_camera_bind_group, &[]);
                 render_pass.set_bind_group(1, stereo_camera_target, &[]);
                 render_pass.set_bind_group(2, &self.glitch_area_texture_bind_group, &[]);
+                render_pass.set_bind_group(3, &self.glitch_fragment_data_bind_group, &[]);
                 for mesh_handle in self.mesh_store.iter_handles() {
                     self.mesh_store.get(mesh_handle).map(|mesh| {
                         mesh.render_instances(&mut render_pass);
@@ -648,7 +695,10 @@ pub async fn run() {
                             ..
                         } => match &physical_key {
                             PhysicalKey::Code(key_code) => {
-                                if state.key_pressed.insert(*key_code) && key_code == &KeyCode::Enter || key_code == &KeyCode::Space {
+                                if state.key_pressed.insert(*key_code)
+                                    && key_code == &KeyCode::Enter
+                                    || key_code == &KeyCode::Space
+                                {
                                     state.game_world.player_pull_action()
                                 }
                             }
@@ -664,7 +714,9 @@ pub async fn run() {
                             ..
                         } => match &physical_key {
                             PhysicalKey::Code(key_code) => {
-                                if state.key_pressed.remove(key_code) && key_code == &KeyCode::Enter || key_code == &KeyCode::Space {
+                                if state.key_pressed.remove(key_code) && key_code == &KeyCode::Enter
+                                    || key_code == &KeyCode::Space
+                                {
                                     state.game_world.release_player_pull_action()
                                 }
                             }

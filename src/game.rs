@@ -10,8 +10,10 @@ use crate::{
     object_types::{Block, BlockType, Id},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    time_keeper::TimeKeeper,
+    time_keeper::TimeKeeper, glitch_area::GlitchAreaVisibility,
 };
+
+const TICKS_PER_SECOND: u32 = 60;
 
 #[derive(Component, Clone, Copy, Debug)]
 pub struct Position {
@@ -93,17 +95,6 @@ pub struct Invisible;
 #[derive(Component)]
 struct PhysicsBody {
     body: rapier3d::dynamics::RigidBodyHandle,
-}
-
-#[derive(Resource)]
-struct GlitchAreaVisibility {
-    // 0 = invisible, 1 = fully visible
-    // if the player has more than 0 charge, the glitch area is fully visible
-    // this variable is used for slow interpolation between the two states
-    visibility: f32,
-
-    // The cells that are currently glitched
-    glitch_cells: HashSet<(i32, i32)>,
 }
 
 pub struct GameWorld {
@@ -288,10 +279,17 @@ fn door_system(
 
 fn charge_recharge_system(
     mut commands: Commands,
+    mut time_keeper: ResMut<TimeKeeper>,
     mut query: Query<(&mut Charge, &Sensor, Entity)>,
     mut player_query: Query<&mut Player>,
     mut physics_system: ResMut<PhysicsSystem>,
 ) {
+    // Only recharge charge if we are in a physics tick
+    // Otherwise the physics system will be frame rate dependent
+    if !time_keeper.peek() {
+        return;
+    }
+    
     for (mut charge, sensor, sensor_entity) in &mut query {
         let triggering_player_entity = sensor
             .triggered_by
@@ -310,7 +308,7 @@ fn charge_recharge_system(
 
             charge.cooldown_left = 15.0;
         } else {
-            charge.cooldown_left -= 1.0 / 60.0;
+            charge.cooldown_left -= 1.0 / TICKS_PER_SECOND as f32;
         }
 
         if charge.cooldown_left <= 0.0 {
@@ -324,11 +322,18 @@ fn charge_recharge_system(
 // When the player is in a glitch area deplete the charge over time
 // If the charge reaches 0 the player dies
 fn player_charge_depletion_system(
+    mut time_keeper: ResMut<TimeKeeper>,
     mut player_query: Query<(&mut Player, &Position)>,
     mut glitch_area_visibility: ResMut<GlitchAreaVisibility>,
 ) {
+    // Only deplete charge if we are in a physics tick
+    // Otherwise the physics system will be frame rate dependent
+    if !time_keeper.peek() {
+        return;
+    }
+
     let deplete_per_second = 1.0;
-    let deplete_per_tick = deplete_per_second / 60.0;
+    let deplete_per_tick = deplete_per_second / TICKS_PER_SECOND as f32;
 
     for (mut player, pos) in &mut player_query {
         let player_x_y_cell = pos.get_cell();
@@ -344,10 +349,11 @@ fn player_charge_depletion_system(
             }
         }
 
-        let player_charge = if player.charge > 0.0 { 1.0 } else { 0.0 };
+        let player_charge = if player.charge > 10.0 { 1.0 } else if player.charge > 0.0 { 0.2 } else { 0.0 };
         // smooth interpolation between 0 and 1
+        let alpha = 0.99;
         glitch_area_visibility.visibility =
-            glitch_area_visibility.visibility * 0.9 + player_charge * 0.1;
+            glitch_area_visibility.visibility * alpha + player_charge * (1.0 - alpha);
     }
 }
 
@@ -378,7 +384,7 @@ impl GameWorld {
             50.0,
             -5.0, // view cross-eyed
         ));
-        self.world.insert_resource(TimeKeeper::new(60));
+        self.world.insert_resource(TimeKeeper::new(TICKS_PER_SECOND));
         self.world.insert_resource(GlitchAreaVisibility {
             visibility: 0.0,
             glitch_cells: HashSet::new(),
@@ -637,5 +643,9 @@ impl GameWorld {
             .unwrap()
             .pulled_objects
             .clear();
+    }
+
+    pub fn ref_glitch_area_visibility(&self) -> &GlitchAreaVisibility {
+        self.world.resource::<GlitchAreaVisibility>()
     }
 }

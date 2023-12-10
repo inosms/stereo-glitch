@@ -93,6 +93,17 @@ var t_glitch_area: texture_2d<f32>;
 @group(2)@binding(1)
 var s_glitch_area: sampler;
 
+struct GlitchAreaUniform {
+    visibility: f32,
+
+    _padding_0: f32,
+    _padding_1: f32,
+    _padding_2: f32,
+};
+@group(3)@binding(0)
+var<uniform> glitch_area: GlitchAreaUniform;
+
+
 // Fragment shader
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
@@ -113,7 +124,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     if( glitch_mask_color.r > 0.5 ) {
         return vec4<f32>(in.color, 1.0);
     } else {
-        return random_pattern(vec2<f32>(in.ndc_space_left_eye.x, in.ndc_space_left_eye.y));
+        return glitch_area.visibility * random_pattern(vec2<f32>(in.ndc_space_left_eye.x, in.ndc_space_left_eye.y));
     }
 }
 
