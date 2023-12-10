@@ -1,19 +1,18 @@
-use cgmath::InnerSpace;
+
 use level_loader::{ParsedLevel};
-use object_types::{Block, BlockType};
+use object_types::{BlockType};
 use mesh::{InstanceRaw, Vertex};
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashMap, HashSet},
     iter,
-    sync::Mutex,
 };
-use stereo_camera::StereoCamera;
+
 use wgpu::util::DeviceExt;
 
 use winit::{
     dpi::PhysicalSize,
     event::*,
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::{EventLoop},
     keyboard::{KeyCode, PhysicalKey},
     window::{Window, WindowBuilder},
 };

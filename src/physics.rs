@@ -1,9 +1,8 @@
 use bevy_ecs::system::Resource;
 use cgmath::{EuclideanSpace, InnerSpace};
 use rapier3d::{
-    control::{CharacterAutostep, CharacterLength, KinematicCharacterController},
     crossbeam,
-    na::{Isometry3, Point3, Translation3, UnitVector3, Vector3},
+    na::{Point3, Vector3},
     prelude::*,
 };
 
@@ -49,7 +48,7 @@ impl PhysicsSystem {
         let physics_hooks = ();
 
         let (collision_send, collision_recv) = crossbeam::channel::unbounded();
-        let (contact_force_send, contact_force_recv) = crossbeam::channel::unbounded();
+        let (contact_force_send, _contact_force_recv) = crossbeam::channel::unbounded();
         let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
 
         Self {
@@ -244,18 +243,5 @@ impl PhysicsSystem {
             };
 
         body.set_rotation(next_rotation, true);
-    }
-
-    pub fn add_fixed_joint(
-        &mut self,
-        local_anchor1: Point3<f32>,
-        local_anchor2: Point3<f32>,
-        body1: RigidBodyHandle,
-        body2: RigidBodyHandle,
-    ) -> ImpulseJointHandle {
-        let joint = FixedJointBuilder::new()
-            .local_anchor1(local_anchor1)
-            .local_anchor2(local_anchor2);
-        return self.impulse_joint_set.insert(body1, body2, joint, true);
     }
 }

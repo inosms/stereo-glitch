@@ -2,12 +2,12 @@ use std::collections::HashSet;
 use std::fmt::Debug;
 
 use nom::branch::alt;
-use nom::bytes::complete::{tag, take, take_while1, take_while_m_n};
+use nom::bytes::complete::{tag, take_while_m_n};
 use nom::character::complete::{newline, space1};
-use nom::character::is_space;
+
 use nom::combinator::{opt, value};
 use nom::multi::{separated_list0, separated_list1};
-use nom::sequence::{delimited, separated_pair};
+
 use nom::IResult;
 
 use crate::object_types::{Block, Id};
@@ -83,7 +83,7 @@ impl ParsedLevel {
                 })
         }).collect::<HashSet<_>>();
         for (_pos, cell) in level.iter_cells() {
-            for (_block_type, id) in cell.block_stack_iter() {
+            for (_block_type, _id) in cell.block_stack_iter() {
                 if let Block::Door(id) = _block_type {
                     if !trigger_ids.contains(id) {
                         return anyhow::bail!("Door references non-existing trigger");

@@ -3,16 +3,14 @@ use std::collections::{HashMap, HashSet};
 use bevy_ecs::prelude::*;
 use cgmath::{EuclideanSpace, InnerSpace, Rotation3};
 use rapier3d::{
-    dynamics::{ImpulseJointHandle, MultibodyJointHandle, RigidBodyHandle},
     geometry::ColliderHandle,
-    na::Point3,
 };
 
 use crate::{
     level_loader::{Cell, ParsedLevel},
     object_types::{Block, Id, BlockType},
-    mesh::{Handle, Mesh},
-    physics::{self, PhysicsSystem},
+    mesh::{Handle},
+    physics::{PhysicsSystem},
     stereo_camera::StereoCamera,
     time_keeper::TimeKeeper,
 };
@@ -107,8 +105,8 @@ fn move_player_system(
     mut input: ResMut<Input>,
     camera: Res<StereoCamera>,
     time_keeper: Res<TimeKeeper>,
-    mut query: Query<(&PhysicsBody), With<Player>>,
-    mut physics_body_query: Query<&PhysicsBody>,
+    mut query: Query<&PhysicsBody, With<Player>>,
+    physics_body_query: Query<&PhysicsBody>,
     player_query: Query<&Player>,
 ) {
     // Only move the player if we are in a physics tick
@@ -141,7 +139,7 @@ fn move_player_system(
 
     let direction = camera_look_direction_rotation_matrix * direction * player_max_speed;
 
-    for (physics_body) in &mut query {
+    for physics_body in &mut query {
         physics_system.move_body(physics_body.body, direction, true);
     }
 
@@ -154,7 +152,7 @@ fn move_player_system(
             .filter_map(|entity| physics_body_query.get(*entity).ok())
             .collect();
     }
-    for (physics_body) in pulled_bodies {
+    for physics_body in pulled_bodies {
         physics_system.move_body(physics_body.body, direction, false);
     }
 }
@@ -177,7 +175,7 @@ fn physics_system(
     mut physics_system: ResMut<PhysicsSystem>,
     time_keeper: Res<TimeKeeper>,
     mut query: Query<(&mut Position, &PhysicsBody)>,
-    mut trigger_query: Query<(&mut Sensor)>,
+    mut trigger_query: Query<&mut Sensor>,
 ) {
     // Only step physics if we are in a physics tick
     // Otherwise the physics system will be frame rate dependent
@@ -197,7 +195,7 @@ fn physics_system(
     // This map is used to map from a collider handle to the trigger component (to avoid nested queries)
     let mut handle_to_trigger_map = trigger_query
         .iter_mut()
-        .map(|(trigger)| (trigger.collider, trigger))
+        .map(|trigger| (trigger.collider, trigger))
         .collect::<HashMap<_, _>>();
     while let Some(collision_event) = physics_system.poll_collision_events() {
         let triggered = collision_event.started();
@@ -229,7 +227,7 @@ fn check_player_dead_system(
     mut query: Query<(&Position, &PhysicsBody), With<Player>>,
     mut player: Query<&mut Player>,
 ) {
-    for (position, physics_body) in &mut query {
+    for (position, _physics_body) in &mut query {
         if position.position.z < -1.0 {
             for mut player in &mut player {
                 player.dead = true;
@@ -241,13 +239,13 @@ fn check_player_dead_system(
 fn door_system(
     mut commands: Commands,
     mut query: Query<(&mut Door, Entity, &PhysicsBody)>,
-    trigger_query: Query<(&Sensor)>,
+    trigger_query: Query<&Sensor>,
     mut physics_system: ResMut<PhysicsSystem>,
 ) {
     let triggered_trigger_ids = trigger_query
         .iter()
-        .filter(|(trigger)| trigger.triggered)
-        .filter_map(|(trigger)| trigger.id.clone())
+        .filter(|trigger| trigger.triggered)
+        .filter_map(|trigger| trigger.id.clone())
         .collect::<HashSet<_>>();
 
     for (mut door, entity, body) in &mut query {
@@ -312,7 +310,7 @@ impl GameWorld {
             .world
             .query::<&Player>()
             .iter(&self.world)
-            .filter(|(player)| player.dead)
+            .filter(|player| player.dead)
             .count();
 
         if dead_player > 0 {
@@ -481,7 +479,7 @@ impl GameWorld {
     pub fn player_pull_action(&mut self) {
         let player_position = self
             .world
-            .query_filtered::<(&Position), With<Player>>()
+            .query_filtered::<&Position, With<Player>>()
             .iter(&self.world)
             .next()
             .unwrap()
@@ -489,7 +487,7 @@ impl GameWorld {
 
         let pull_area_extent = 2.0;
         // find all Entities that are within [-PULL_AREA_EXTENT, PULL_AREA_EXTENT] of the player in x, y and z
-        let mut query = self
+        let query = self
             .world
             .query_filtered::<(&Position, Entity), With<PhysicsBody>>()
             .iter(&self.world)
@@ -503,7 +501,7 @@ impl GameWorld {
 
         let mut player = self
             .world
-            .query_filtered::<(&mut Player), With<Player>>()
+            .query_filtered::<&mut Player, With<Player>>()
             .iter_mut(&mut self.world)
             .next()
             .unwrap();
@@ -512,7 +510,7 @@ impl GameWorld {
 
     pub fn release_player_pull_action(&mut self) {
         self.world
-            .query_filtered::<(&mut Player), With<Player>>()
+            .query_filtered::<&mut Player, With<Player>>()
             .iter_mut(&mut self.world)
             .next()
             .unwrap()
