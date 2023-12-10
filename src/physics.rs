@@ -7,7 +7,10 @@ use rapier3d::{
     prelude::*,
 };
 
-use crate::{game::Position, level_loader::BlockPhysicsType};
+use crate::{
+    game::Position,
+    level_loader::{BlockPhysicsType, BlockType},
+};
 
 #[derive(Resource)]
 pub struct PhysicsSystem {
@@ -106,22 +109,35 @@ impl PhysicsSystem {
         x_extent: f32,
         y_extent: f32,
         z_extent: f32,
-        block_physics_type: BlockPhysicsType,
+        block_type: BlockType,
     ) -> (RigidBodyHandle, ColliderHandle) {
-        let rigid_body = match block_physics_type {
-            BlockPhysicsType::Static => RigidBodyBuilder::fixed(),
-            BlockPhysicsType::Kinematic => {
+        let rigid_body: RigidBody = match block_type {
+            BlockType::FloorNormal
+            | BlockType::Door
+            | BlockType::Wall
+            | BlockType::Trigger
+            | BlockType::Goal => RigidBodyBuilder::fixed(),
+            BlockType::Empty => unreachable!(),
+            BlockType::Player => {
                 // make the player heaver to avoid bouncing
-                RigidBodyBuilder::dynamic().locked_axes(LockedAxes::ROTATION_LOCKED).gravity_scale(10.0)
+                RigidBodyBuilder::dynamic()
+                    .locked_axes(LockedAxes::ROTATION_LOCKED)
+                    .gravity_scale(10.0)
             }
-            BlockPhysicsType::Dynamic => RigidBodyBuilder::dynamic()
+            BlockType::Box => RigidBodyBuilder::dynamic(),
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
         .build();
-        let collider = match block_physics_type {
-            BlockPhysicsType::Static | BlockPhysicsType::Dynamic => ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build(),
-            BlockPhysicsType::Kinematic => ColliderBuilder::capsule_z(z_extent/2.0, x_extent).build(),
+        let collider = match block_type {
+            BlockType::FloorNormal
+            | BlockType::Door
+            | BlockType::Wall
+            | BlockType::Trigger
+            | BlockType::Goal
+            | BlockType::Box => ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build(),
+            BlockType::Empty => unreachable!(),
+            BlockType::Player => ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build(),
         };
         let body_handle = self.rigid_body_set.insert(rigid_body);
         let collider_handle =
@@ -195,39 +211,40 @@ impl PhysicsSystem {
             desired_velocity.y - current_velocity.y,
             // don't change z velocity
             // otherwise gravity will stop working properly
-            0.0, 
+            0.0,
         ];
         let impulse = velocity_change * mass;
 
         body.apply_impulse(impulse, true);
-     
+
         // if actually moving
-        let next_rotation = if rotate_in_direction_of_movement && desired_velocity.magnitude2() > 0.001 {
-            // The initial alignment of the player is to look along the negative y axis.
-            // From this compute the angle of movement around the positive z axis.
-            // This is used to rotate the player to face the direction of movement.
+        let next_rotation =
+            if rotate_in_direction_of_movement && desired_velocity.magnitude2() > 0.001 {
+                // The initial alignment of the player is to look along the negative y axis.
+                // From this compute the angle of movement around the positive z axis.
+                // This is used to rotate the player to face the direction of movement.
 
-            // We don't care about the z direction
-            let direction_norm =
-                Vector3::new(desired_velocity.x, desired_velocity.y, 0.0).normalize();
-            let zero_rotation_direction = Vector3::new(0.0, -1.0, 0.0);
-            let axis_of_rotation =
-                rapier3d::na::UnitVector3::try_new(Vector3::new(0.0, 0.0, 1.0), 0.1).unwrap();
+                // We don't care about the z direction
+                let direction_norm =
+                    Vector3::new(desired_velocity.x, desired_velocity.y, 0.0).normalize();
+                let zero_rotation_direction = Vector3::new(0.0, -1.0, 0.0);
+                let axis_of_rotation =
+                    rapier3d::na::UnitVector3::try_new(Vector3::new(0.0, 0.0, 1.0), 0.1).unwrap();
 
-            // https://math.stackexchange.com/questions/878785/how-to-find-an-angle-in-range0-360-between-2-vectors
-            let determinant =
-                (direction_norm.cross(&zero_rotation_direction)).dot(&axis_of_rotation);
-            let dot = zero_rotation_direction.dot(&direction_norm);
-            let angle_of_movement = determinant.atan2(dot);
+                // https://math.stackexchange.com/questions/878785/how-to-find-an-angle-in-range0-360-between-2-vectors
+                let determinant =
+                    (direction_norm.cross(&zero_rotation_direction)).dot(&axis_of_rotation);
+                let dot = zero_rotation_direction.dot(&direction_norm);
+                let angle_of_movement = determinant.atan2(dot);
 
-            let rotation = rapier3d::na::UnitQuaternion::from_axis_angle(
-                &rapier3d::na::Vector3::z_axis(),
-                -angle_of_movement,
-            );
-            rotation
-        } else {
-            body.rotation().clone()
-        };
+                let rotation = rapier3d::na::UnitQuaternion::from_axis_angle(
+                    &rapier3d::na::Vector3::z_axis(),
+                    -angle_of_movement,
+                );
+                rotation
+            } else {
+                body.rotation().clone()
+            };
 
         body.set_rotation(next_rotation, true);
     }

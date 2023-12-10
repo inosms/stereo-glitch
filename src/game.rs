@@ -359,7 +359,7 @@ impl GameWorld {
                         0.5,
                         0.5,
                         block.block_height() / 2.0,
-                        block.get_physics_type(),
+                        block.get_block_type(),
                     );
 
                 // Add sensor
