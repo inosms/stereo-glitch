@@ -112,6 +112,7 @@ pub struct GameWorld {
 
     handle_store: HashMap<BlockType, Handle>,
     level: Option<ParsedLevel>,
+    camera_aspect: f32,
 }
 
 #[derive(Resource)]
@@ -414,6 +415,7 @@ impl GameWorld {
             schedule: Schedule::default(),
             handle_store,
             level: None,
+            camera_aspect: 1.0,
         };
         game_world.init();
         game_world
@@ -429,7 +431,7 @@ impl GameWorld {
             (0.0, -10.0, 00.0).into(),
             (0.0, 0.0, 0.0).into(),
             cgmath::Vector3::unit_z(),
-            1.0,
+            self.camera_aspect,
             10.0,
             0.1,
             50.0,
@@ -655,6 +657,7 @@ impl GameWorld {
     }
 
     pub fn set_camera_aspect(&mut self, aspect: f32) {
+        self.camera_aspect = aspect;
         self.world
             .get_resource_mut::<StereoCamera>()
             .unwrap()
