@@ -7,10 +7,7 @@ use rapier3d::{
     prelude::*,
 };
 
-use crate::{
-    game::Position,
-    level_loader::{BlockPhysicsType, BlockType},
-};
+use crate::{game::Position, object_types::BlockType};
 
 #[derive(Resource)]
 pub struct PhysicsSystem {

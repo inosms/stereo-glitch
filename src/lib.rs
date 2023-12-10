@@ -1,5 +1,6 @@
 use cgmath::InnerSpace;
-use level_loader::{Block, BlockType, ParsedLevel};
+use level_loader::{ParsedLevel};
+use object_types::{Block, BlockType};
 use mesh::{InstanceRaw, Vertex};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -24,6 +25,7 @@ mod mesh;
 mod physics;
 mod stereo_camera;
 mod texture;
+mod object_types;
 mod time_keeper;
 
 #[cfg(target_arch = "wasm32")]

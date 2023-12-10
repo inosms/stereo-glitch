@@ -9,7 +9,8 @@ use rapier3d::{
 };
 
 use crate::{
-    level_loader::{Block, BlockType, Cell, Id, ParsedLevel},
+    level_loader::{Cell, ParsedLevel},
+    object_types::{Block, Id, BlockType},
     mesh::{Handle, Mesh},
     physics::{self, PhysicsSystem},
     stereo_camera::StereoCamera,
