@@ -353,9 +353,9 @@ impl GameWorld {
 
                 let (body_handle, collider_handle) =
                     self.world.resource_mut::<PhysicsSystem>().add_object(
-                        x as f32 + 0.5,
-                        -y as f32 - 0.5,
-                        z as f32 + block.block_height() / 2.0,
+                        position.position.x,
+                        position.position.y,
+                        position.position.z,
                         0.5,
                         0.5,
                         block.block_height() / 2.0,
