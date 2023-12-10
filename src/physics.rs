@@ -8,7 +8,7 @@ use rapier3d::{
 
 use crate::{
     game::Position,
-    object_types::{Block, BlockType, LinearEnemyDirection},
+    object_types::{Block, BlockType, LinearEnemyDirection, BoxType},
 };
 
 #[derive(Resource)]
@@ -129,7 +129,13 @@ impl PhysicsSystem {
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED),
             Block::LinearEnemy(LinearEnemyDirection::YAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED),
-            Block::Box => RigidBodyBuilder::dynamic(),
+            Block::Box(BoxType::Free) => RigidBodyBuilder::dynamic(),
+            Block::Box(BoxType::XAxis) => RigidBodyBuilder::dynamic()
+               .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED),
+            Block::Box(BoxType::YAxis) => RigidBodyBuilder::dynamic()
+               .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED),
+            Block::Box(BoxType::RotationFixed) => RigidBodyBuilder::dynamic()
+               .locked_axes(LockedAxes::ROTATION_LOCKED),
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
@@ -143,7 +149,7 @@ impl PhysicsSystem {
             | Block::Trigger
             | Block::Goal
             | Block::StaticEnemy
-            | Block::Box => Some(ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()),
+            | Block::Box(_) => Some(ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()),
             Block::Player | Block::LinearEnemy(_) => {
                 Some(ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build())
             }

@@ -428,7 +428,7 @@ fn move_linear_enemy_system(
         return;
     }
 
-    for (mut enemy,  body) in &mut query {
+    for (mut enemy, body) in &mut query {
         let velocity = physics_system.get_velocity_magnitude(body.body);
         if velocity < 0.1 {
             enemy.stuck_counter += 1;
@@ -562,14 +562,16 @@ impl GameWorld {
                     ),
                 };
 
+                // to prevent the boxes from getting stuck in each other
+                let offset = 0.98;
                 let (body_handle, collider_handle) =
                     self.world.resource_mut::<PhysicsSystem>().add_object(
                         position.position.x,
                         position.position.y,
                         position.position.z,
-                        0.5,
-                        0.5,
-                        block.block_height() / 2.0,
+                        offset * 0.5,
+                        offset * 0.5,
+                        offset * block.block_height() / 2.0,
                         &block,
                     );
 
@@ -620,7 +622,7 @@ impl GameWorld {
                     Block::FloorNormal => {
                         entity.insert(Floor);
                     }
-                    Block::Box => {
+                    Block::Box(_) => {
                         entity.insert((Box, Carryable));
                     }
                     Block::Trigger => {

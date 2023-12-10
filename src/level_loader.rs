@@ -10,7 +10,7 @@ use nom::multi::{separated_list0, separated_list1};
 
 use nom::IResult;
 
-use crate::object_types::{Block, Id, LinearEnemyDirection};
+use crate::object_types::{Block, Id, LinearEnemyDirection, BoxType};
 
 
 
@@ -200,7 +200,10 @@ fn parse_block(input: &str) -> IResult<&str, (Block, Option<Id>)> {
         value(Block::Empty, tag("X")),
         value(Block::Goal, tag("G")),
         value(Block::Wall, tag("W")),
-        value(Block::Box, tag("B")),
+        value(Block::Box(BoxType::Free), tag("BF")),
+        value(Block::Box(BoxType::XAxis), tag("BX")),
+        value(Block::Box(BoxType::YAxis), tag("BY")),
+        value(Block::Box(BoxType::RotationFixed), tag("BRF")),
         value(Block::Trigger, tag("T")),
         value(Block::Charge, tag("C")),
         value(Block::StaticEnemy, tag("E1")),

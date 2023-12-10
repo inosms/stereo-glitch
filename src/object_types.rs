@@ -33,7 +33,7 @@ pub enum Block {
     Empty,
     Goal,
     Wall,
-    Box,
+    Box(BoxType),
     Trigger,
     Charge,
     StaticEnemy,
@@ -44,6 +44,14 @@ pub enum Block {
 pub enum LinearEnemyDirection{
     XAxis,
     YAxis,
+}
+
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+pub enum BoxType{
+    XAxis,
+    YAxis,
+    RotationFixed,
+    Free,
 }
 
 
@@ -71,7 +79,7 @@ impl Block {
             Block::Empty => BlockType::Empty,
             Block::Goal => BlockType::Goal,
             Block::Wall => BlockType::Wall,
-            Block::Box => BlockType::Box,
+            Block::Box(_) => BlockType::Box,
             Block::Trigger => BlockType::Trigger,
             Block::Charge => BlockType::Charge,
             Block::StaticEnemy => BlockType::StaticEnemy,
@@ -87,7 +95,7 @@ impl Block {
             Block::Empty => 1.0,
             Block::Goal => 1.0,
             Block::Wall => 1.0,
-            Block::Box => 1.0,
+            Block::Box(_) => 1.0,
             Block::Trigger => 0.02,
             Block::Charge => 1.0,
             Block::StaticEnemy => 1.5,
