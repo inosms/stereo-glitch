@@ -53,12 +53,16 @@ init().then(() => {
         "N+W N   N   N   N   N   N   N   N N+W\n" +
         "N+W N+W   N+W   N+W   N+D(#t)+D(#t) N+D(#t)+D(#t)   N+W   N+W   N+W N+W\n" +
         "N+W N     N     N     N     N     N     N  N N+W\n" +
+        "N+W N     N     N     N     N     N     N  N N+W\n" +
         "N+W N     N     N      N+T#t+X+X+B     N     N     N  N N+W\n" +
         "N+W N     N     N     N     N     N     N  N N+W\n" +
         "N+W N     N     N     N     N     N     N  N N+W\n" +
         "N+W N     N     N     N     N     N     N  N N+W\n" +
         "N+W N     N     N     N+C     N     N     N  N N+W\n" +
         "N+W N     N     N     N     N     N     N  N N+W\n" +
+        "N+W N     N    _N    _N    _N     N     N  N N+W\n" +
+        "N+W N     N    _N    _N    _N     N     N  N N+W\n" +
+        "N+W N     N    _N    _N    _N     N     N  N N+W\n" +
         "N+W N     N    _N    _N    _N     N     N  N N+W\n" +
         "N+W N     N     N     N+C   N     N     N  N N+W\n" +
         "N+W N     N     N     N     N     N     N  N N+W\n"
