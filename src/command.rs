@@ -2,7 +2,7 @@ use std::{sync::Mutex, collections::VecDeque};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-use crate::level_loader;
+use crate::{level_loader, level_compressor};
 
 #[derive(Debug)]
 pub enum Command {
@@ -75,4 +75,14 @@ pub fn action_button_pressed() {
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn action_button_released() {
     COMMANDS.push(Command::ActionButtonReleased);
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn compress_level_to_url(level: &str) -> String{
+    level_compressor::compress_level(level)
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn decompress_level_from_url(level: &str) -> Result<String, String>{
+    level_compressor::decompress_level(level)
 }

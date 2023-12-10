@@ -1,5 +1,15 @@
 import nipplejs from 'nipplejs';
-import init, { load_level, set_eye_distance, set_size, joystick_input, action_button_pressed, action_button_released } from "../pkg/stereo_glitch.js";
+import init, { load_level, set_eye_distance, set_size, joystick_input, action_button_pressed, action_button_released, compress_level_to_url, decompress_level_from_url } from "../pkg/stereo_glitch.js";
+import { basicSetup, EditorView } from "codemirror"
+
+// export the functions 
+export { load_level, set_eye_distance, compress_level_to_url, decompress_level_from_url };
+
+// make the function available to the window
+window.load_level = load_level;
+window.set_eye_distance = set_eye_distance;
+window.compress_level_to_url = compress_level_to_url;
+window.decompress_level_from_url = decompress_level_from_url;
 
 export const INITIAL_LEVEL = "N+W N+W N+W N+W N+W N+W\n" +
     "N+W N   N   N   N   N+W\n" +
@@ -118,12 +128,46 @@ setInterval(() => {
     }
 }, 1000 / 80);
 
+// The Markdown parser will dynamically load parsers
+// for code blocks, using @codemirror/language-data to
+// look up the appropriate dynamic import.
+let view = new EditorView({
+    doc: "", // level
+    extensions: [
+      basicSetup,
+    ],
+    parent: document.getElementById("editor")!,
+  });
+  
+  // on pressing load button get the content of the editor and load it
+  document.getElementById("load-button")!.addEventListener("click", () => {
+    const level = view.state.doc.toString();
+    load_level(level);
+  
+    // set it to the url with ?level=... so that it can be shared
+    const url = compress_level_to_url(level)
+    window.history.replaceState({}, "", "?level=" + url);
+  });
+
 init().then(() => {
     console.log("WASM Loaded");
-    window.load_level = load_level;
-    window.set_eye_distance = set_eye_distance;
 
-    load_level(INITIAL_LEVEL);
+    // get level from ?level=... url parameter if it exists otherwise use INITIAL_LEVEL
+    const urlParams = new URLSearchParams(window.location.search);
+    // decompress the level from the url or fall back to INITIAL_LEVEL
+    var level = INITIAL_LEVEL;
+    try {
+        level = decompress_level_from_url(urlParams.get('level'));
+    }
+    catch (e) {
+        console.log("Could not decompress level from url: " + e);
+    }
+    load_level(level);
+
+    // set the level to the editor
+    view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: level },
+    });
 
     // set the size of the canvas to the size of the game-container
     const gameContainer = document.getElementById("game-container");

@@ -27,6 +27,7 @@ mod physics;
 mod stereo_camera;
 mod texture;
 mod time_keeper;
+mod level_compressor;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
