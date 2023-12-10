@@ -35,6 +35,7 @@ pub enum Block {
     Wall,
     Box,
     Trigger,
+    Charge,
 }
 
 
@@ -48,6 +49,7 @@ pub enum BlockType {
     Wall,
     Box,
     Trigger,
+    Charge,
 }
 
 impl Block {
@@ -61,6 +63,7 @@ impl Block {
             Block::Wall => BlockType::Wall,
             Block::Box => BlockType::Box,
             Block::Trigger => BlockType::Trigger,
+            Block::Charge => BlockType::Charge,
         }
     }
 
@@ -74,6 +77,7 @@ impl Block {
             Block::Wall => 1.0,
             Block::Box => 1.0,
             Block::Trigger => 0.02,
+            Block::Charge => 1.0,
         }
     }
 }

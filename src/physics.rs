@@ -106,12 +106,13 @@ impl PhysicsSystem {
         y_extent: f32,
         z_extent: f32,
         block_type: BlockType,
-    ) -> (RigidBodyHandle, ColliderHandle) {
+    ) -> (RigidBodyHandle, Option<ColliderHandle>) {
         let rigid_body: RigidBody = match block_type {
             BlockType::FloorNormal
             | BlockType::Door
             | BlockType::Wall
             | BlockType::Trigger
+            | BlockType::Charge
             | BlockType::Goal => RigidBodyBuilder::fixed(),
             BlockType::Empty => unreachable!(),
             BlockType::Player => {
@@ -125,20 +126,23 @@ impl PhysicsSystem {
         .ccd_enabled(true)
         .translation(vector![x, y, z])
         .build();
+        let body_handle = self.rigid_body_set.insert(rigid_body);
+
         let collider = match block_type {
             BlockType::FloorNormal
             | BlockType::Door
             | BlockType::Wall
             | BlockType::Trigger
             | BlockType::Goal
-            | BlockType::Box => ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build(),
-            BlockType::Empty => unreachable!(),
-            BlockType::Player => ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build(),
+            | BlockType::Box => Some(ColliderBuilder::cuboid(x_extent, y_extent, z_extent).build()),
+            BlockType::Player => Some(ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build()),
+            BlockType::Empty | BlockType::Charge => None,
         };
-        let body_handle = self.rigid_body_set.insert(rigid_body);
-        let collider_handle =
+        let collider_handle = collider.map(|collider| {
             self.collider_set
-                .insert_with_parent(collider, body_handle, &mut self.rigid_body_set);
+                .insert_with_parent(collider, body_handle, &mut self.rigid_body_set)
+        });
+
         (body_handle, collider_handle)
     }
 

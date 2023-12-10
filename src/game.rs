@@ -2,15 +2,13 @@ use std::collections::{HashMap, HashSet};
 
 use bevy_ecs::prelude::*;
 use cgmath::{EuclideanSpace, InnerSpace, Rotation3};
-use rapier3d::{
-    geometry::ColliderHandle,
-};
+use rapier3d::geometry::ColliderHandle;
 
 use crate::{
     level_loader::{Cell, ParsedLevel},
-    object_types::{Block, Id, BlockType},
-    mesh::{Handle},
-    physics::{PhysicsSystem},
+    mesh::Handle,
+    object_types::{Block, BlockType, Id},
+    physics::PhysicsSystem,
     stereo_camera::StereoCamera,
     time_keeper::TimeKeeper,
 };
@@ -39,6 +37,8 @@ struct Player {
 
     // the objects the player is currently pulling
     pulled_objects: Vec<Entity>,
+
+    charge: u8,
 }
 
 #[derive(Component)]
@@ -51,11 +51,15 @@ struct Goal;
 struct Door {
     open: bool,
     trigger_id: Id,
-    collider_handle: ColliderHandle,
 }
 
 #[derive(Component)]
 struct Wall;
+
+#[derive(Component)]
+struct Charge {
+    cooldown_left: f32,
+}
 
 #[derive(Component)]
 struct Floor;
@@ -83,7 +87,6 @@ pub struct Invisible;
 #[derive(Component)]
 struct PhysicsBody {
     body: rapier3d::dynamics::RigidBodyHandle,
-    collider: ColliderHandle,
 }
 
 pub struct GameWorld {
@@ -266,6 +269,41 @@ fn door_system(
     }
 }
 
+fn charge_recharge_system(
+    mut commands: Commands,
+    mut query: Query<(&mut Charge, &Sensor, Entity)>,
+    mut player_query: Query<&mut Player>,
+    mut physics_system: ResMut<PhysicsSystem>,
+) {
+    for (mut charge, sensor, sensor_entity) in &mut query {
+        let triggering_player_entity = sensor
+            .triggered_by
+            .iter()
+            .filter(|&entity| player_query.get_mut(*entity).is_ok())
+            .collect::<Vec<_>>();
+
+        let triggered_by_player = !triggering_player_entity.is_empty();
+        let can_recharge = charge.cooldown_left <= 0.0;
+        if triggered_by_player && can_recharge {
+            for player_entity in triggering_player_entity {
+                if let Ok(mut player) = player_query.get_mut(*player_entity) {
+                    player.charge = (player.charge + 20).max(100);
+                }
+            }
+
+            charge.cooldown_left = 15.0;
+        } else {
+            charge.cooldown_left -= 1.0 / 60.0;
+        }
+
+        if charge.cooldown_left <= 0.0 {
+            commands.entity(sensor_entity).remove::<Invisible>();
+        } else {
+            commands.entity(sensor_entity).insert(Invisible);
+        }
+    }
+}
+
 impl GameWorld {
     pub fn new(handle_store: HashMap<BlockType, Handle>) -> Self {
         let mut game_world = Self {
@@ -295,8 +333,15 @@ impl GameWorld {
         ));
         self.world.insert_resource(TimeKeeper::new(60));
         // The physics system needs to run after the player system so that the player can move
-        self.schedule
-            .add_systems((move_player_system, physics_system, fixed_update_system).chain());
+        self.schedule.add_systems(
+            (
+                move_player_system,
+                physics_system,
+                charge_recharge_system,
+                fixed_update_system,
+            )
+                .chain(),
+        );
         self.schedule.add_systems(move_camera_system);
         self.schedule.add_systems(check_player_dead_system);
         self.schedule.add_systems(door_system);
@@ -343,7 +388,11 @@ impl GameWorld {
         for (block, id) in cell.block_stack_iter() {
             if block != &Block::Empty {
                 let position = Position {
-                    position: cgmath::Vector3::new(x as f32 + 0.5, -y as f32 - 0.5, z as f32 + block.block_height() / 2.0),
+                    position: cgmath::Vector3::new(
+                        x as f32 + 0.5,
+                        -y as f32 - 0.5,
+                        z as f32 + block.block_height() / 2.0,
+                    ),
                     rotation: cgmath::Quaternion::from_axis_angle(
                         cgmath::Vector3::unit_z(),
                         cgmath::Deg(0.0),
@@ -368,25 +417,25 @@ impl GameWorld {
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.5, 0.5, 0.2, 0.0, 0.0, 0.05),
                     ),
+                    BlockType::Charge => Some(
+                        self.world
+                            .resource_mut::<PhysicsSystem>()
+                            .add_sensor_collider(body_handle, 0.25, 0.25, 0.5, 0.0, 0.0, 0.0),
+                    ),
                     _ => None,
                 };
 
-                let mut entity = self.world.spawn((
-                    position,
-                    PhysicsBody {
-                        body: body_handle,
-                        collider: collider_handle,
-                    },
-                ));
+                let mut entity = self
+                    .world
+                    .spawn((position, PhysicsBody { body: body_handle }));
 
                 match block {
                     Block::Player => {
-                        entity.insert(
-                            Player {
-                                dead: false,
-                                pulled_objects: Vec::new(),
-                            }
-                        );
+                        entity.insert(Player {
+                            dead: false,
+                            pulled_objects: Vec::new(),
+                            charge: 0,
+                        });
                     }
                     Block::Goal => {
                         entity.insert(Goal);
@@ -395,7 +444,6 @@ impl GameWorld {
                         entity.insert(Door {
                             open: false,
                             trigger_id: trigger_id.clone(),
-                            collider_handle,
                         });
                     }
                     Block::Wall => {
@@ -415,6 +463,17 @@ impl GameWorld {
                             triggered_by: HashSet::new(),
                         });
                     }
+                    Block::Charge => {
+                        entity.insert((
+                            Sensor {
+                                collider: sensor_trigger.unwrap(),
+                                triggered: false,
+                                id: None,
+                                triggered_by: HashSet::new(),
+                            },
+                            Charge { cooldown_left: 0.0 },
+                        ));
+                    }
                     Block::Empty => {}
                 }
 
@@ -427,13 +486,15 @@ impl GameWorld {
                     }
                 }
 
-                let entity_id = entity.id().to_bits() as u128;
-                self.world
-                    .resource_mut::<PhysicsSystem>()
-                    .set_user_data(collider_handle, entity_id);
-                // Do not set user data to the sensor collider
-                // For our purposes if a collider is a sensor it is not a physical object
-                // By doing that we can distinguish between sensors and other colliders
+                if let Some(collider_handle) = collider_handle {
+                    let entity_id = entity.id().to_bits() as u128;
+                    self.world
+                        .resource_mut::<PhysicsSystem>()
+                        .set_user_data(collider_handle, entity_id);
+                    // Do not set user data to the sensor collider
+                    // For our purposes if a collider is a sensor it is not a physical object
+                    // By doing that we can distinguish between sensors and other colliders
+                }
             }
 
             z += block.block_height();
