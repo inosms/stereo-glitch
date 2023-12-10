@@ -117,6 +117,7 @@ pub struct GameWorld {
 #[derive(Resource)]
 struct Input {
     player_movement: Option<cgmath::Vector3<f32>>, // if consumed  set to None
+    player_paralized_cooldown: f32,
 }
 
 fn move_player_system(
@@ -132,6 +133,11 @@ fn move_player_system(
     // Only move the player if we are in a physics tick
     // Otherwise the player will be frame rate dependent
     if !time_keeper.peek() {
+        return;
+    }
+
+    if input.player_paralized_cooldown > 0.0 {
+        input.player_paralized_cooldown -= 1.0 / TICKS_PER_SECOND as f32;
         return;
     }
 
@@ -366,6 +372,41 @@ fn player_charge_depletion_system(
     }
 }
 
+// when a player triggers a sensor that is also attached to a damage area the player takes damage
+// and is pushed away from the damage area
+fn damage_area_system(
+    time_keeper: Res<TimeKeeper>,
+    mut input: ResMut<Input>,
+    mut query: Query<(&DamageArea, &Sensor, &Position)>,
+    mut player_query: Query<(&mut Player, &Position, &PhysicsBody)>,
+    mut physics_system: ResMut<PhysicsSystem>,
+) {
+    // Only deplete charge if we are in a physics tick
+    // Otherwise the physics system will be frame rate dependent
+    if !time_keeper.peek() {
+        return;
+    }
+
+    for (damage_area, sensor, sensor_position) in &mut query {
+        for &triggering_entity in &sensor.triggered_by {
+            // Only damage the player
+            if let Ok((mut player, player_position, player_physics_body)) =
+                player_query.get_mut(triggering_entity)
+            {
+                player.charge -= damage_area.damage;
+
+                // push the player away from the damage area
+                let player_position = player_position.position;
+                let damage_area_position = sensor_position.position;
+                let direction = (player_position - damage_area_position).normalize() * 20.0;
+                physics_system.move_body(player_physics_body.body, direction, false);
+                // otherwise the player might get stuck in the damage area
+                input.player_paralized_cooldown = 0.2;
+            }
+        }
+    }
+}
+
 impl GameWorld {
     pub fn new(handle_store: HashMap<BlockType, Handle>) -> Self {
         let mut game_world = Self {
@@ -382,6 +423,7 @@ impl GameWorld {
         self.world.insert_resource(PhysicsSystem::new());
         self.world.insert_resource(Input {
             player_movement: None,
+            player_paralized_cooldown: 0.0,
         });
         self.world.insert_resource(StereoCamera::new(
             (0.0, -10.0, 00.0).into(),
@@ -403,6 +445,7 @@ impl GameWorld {
         self.schedule.add_systems(
             (
                 move_player_system,
+                damage_area_system,
                 physics_system,
                 charge_recharge_system,
                 player_charge_depletion_system,
