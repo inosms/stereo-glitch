@@ -128,26 +128,54 @@ setInterval(() => {
     }
 }, 1000 / 80);
 
-// The Markdown parser will dynamically load parsers
-// for code blocks, using @codemirror/language-data to
-// look up the appropriate dynamic import.
+
+import { parser } from "./parser.js"
+import { styleTags, tags as t } from "@lezer/highlight"
+
+let parserWithMetadata = parser.configure({
+    props: [
+        styleTags({
+            Concat: t.operator,
+            Glitch: t.invalid,
+            NormalFloor: t.atom,
+            Wall: t.typeName,
+            Enemy: t.typeName,
+            Goal: t.typeName,
+            Charge: t.typeName,
+            Trigger: t.typeName,
+            Door: t.typeName,
+            Player: t.typeName,
+            Box: t.typeName,
+            Id: t.controlKeyword,
+            "( )": t.paren
+        })
+    ]
+});
+
+import { LRLanguage } from "@codemirror/language"
+
+export const levelfileLanguage = LRLanguage.define({
+    parser: parserWithMetadata,
+})
+
 let view = new EditorView({
     doc: "", // level
     extensions: [
-      basicSetup,
+        basicSetup,
+        levelfileLanguage,
     ],
     parent: document.getElementById("editor")!,
-  });
-  
-  // on pressing load button get the content of the editor and load it
-  document.getElementById("load-button")!.addEventListener("click", () => {
+});
+
+// on pressing load button get the content of the editor and load it
+document.getElementById("load-button")!.addEventListener("click", () => {
     const level = view.state.doc.toString();
     load_level(level);
-  
+
     // set it to the url with ?level=... so that it can be shared
     const url = compress_level_to_url(level)
     window.history.replaceState({}, "", "?level=" + url);
-  });
+});
 
 init().then(() => {
     console.log("WASM Loaded");

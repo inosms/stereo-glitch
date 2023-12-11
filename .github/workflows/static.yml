@@ -41,6 +41,7 @@ jobs:
         run: |
           ./build.sh
           npm install
+          npm run prepare
           npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2

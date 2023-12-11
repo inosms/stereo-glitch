@@ -1,0 +1,43 @@
+@top Level { Row+ }
+
+Cell {
+    Glitch? (Block Concat)* Block
+}
+
+Row {
+    (Cell space)+ (newline | eof)
+}
+
+Block {
+   (NormalFloor |
+    Wall |
+    Box |
+    Trigger |
+    Charge |
+    Goal |
+    Enemy |
+    (Door "(" Id ")" ) |
+    Player) Id?
+}
+
+Id {
+    id
+}
+
+@tokens {
+  space { @whitespace+ }
+  NormalFloor { "N" }
+  Wall { "W" }
+  Box { "BX" | "BY" | "BRF" | "BF" }
+  Player { "P" }
+  Door { "D" }
+  Trigger { "T" }
+  Enemy { "E1" | "E2X" | "E2Y" }
+  Concat { "+" }
+  Charge { "C" }
+  Glitch { "_" }
+  Goal { "G" }
+  newline { "\n" }
+  eof { @eof }
+  id { "#" ($[A-Za-z0-9]+) }
+}
