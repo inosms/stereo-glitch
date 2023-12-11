@@ -8,7 +8,8 @@ use crate::{level_loader, level_compressor};
 pub enum Command {
     LoadLevel(level_loader::ParsedLevel),
     SetEyeDistance(f32),
-    SetSize(u32, u32),
+    // SetSize(width, height, pixel_ratio (dpi))
+    SetSize(u32, u32, f32),
     JoystickInput(f32, f32), // input as a vector (x, y)
     ActionButtonPressed,
     ActionButtonReleased,
@@ -58,8 +59,8 @@ pub fn set_eye_distance(distance: f32) {
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn set_size(width: u32, height: u32) {
-    COMMANDS.push(Command::SetSize(width, height));
+pub fn set_size(width: u32, height: u32, pixel_ratio: f32) {
+    COMMANDS.push(Command::SetSize(width, height, pixel_ratio));
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]

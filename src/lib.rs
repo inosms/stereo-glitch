@@ -2,6 +2,7 @@ use glitch_area::{GlitchAreaVisibility, GlitchAreaVisibilityDTO};
 use level_loader::ParsedLevel;
 use mesh::{InstanceRaw, Vertex};
 use object_types::BlockType;
+use rapier3d::na::ComplexField;
 use std::{
     collections::{HashMap, HashSet},
     iter,
@@ -530,8 +531,9 @@ impl State {
                 command::Command::SetEyeDistance(distance) => {
                     self.game_world.set_eye_distance(distance);
                 }
-                command::Command::SetSize(width, height) => {
-                    self.resize(winit::dpi::PhysicalSize::new(width, height));
+                command::Command::SetSize(width, height, scale_factor) => {
+                    log::info!("SetSize: {} {} {}", width, height, scale_factor);
+                    self.resize(winit::dpi::LogicalSize::new(width, height).to_physical(scale_factor as f64));
                 }
                 command::Command::JoystickInput(x, y) => {
                     self.game_world.move_player(cgmath::vec3(x, y, 0.0));

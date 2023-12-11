@@ -202,9 +202,14 @@ init().then(() => {
     // listen on resize of gameContainer
     new ResizeObserver(() => {
         const gameCanvas = document.querySelector("#game-container > canvas");
-        gameCanvas.width = gameContainer.clientWidth / 2.0;
-        gameCanvas.height = gameContainer.clientHeight / 2.0;
-        set_size(gameContainer.clientWidth, gameContainer.clientHeight);
+        console.log("Resizing canvas to " + gameContainer.clientWidth + "x" + gameContainer.clientHeight);
+        gameCanvas.width = gameContainer.clientWidth;
+        gameCanvas.height = gameContainer.clientHeight;
+        set_size(gameContainer.clientWidth, gameContainer.clientHeight, window.devicePixelRatio);
+        // set the css width and height to the same as the canvas divided by the devicePixelRatio
+        // this is needed to make the canvas appear sharp on high dpi screens
+        gameCanvas.style.width = gameCanvas.width + "px";
+        gameCanvas.style.height = gameCanvas.height + "px";
     }).observe(gameContainer);
 });
 
