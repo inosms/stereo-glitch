@@ -532,7 +532,6 @@ impl State {
                     self.game_world.set_eye_distance(distance);
                 }
                 command::Command::SetSize(width, height, scale_factor) => {
-                    log::info!("SetSize: {} {} {}", width, height, scale_factor);
                     self.resize(winit::dpi::LogicalSize::new(width, height).to_physical(scale_factor as f64));
                 }
                 command::Command::JoystickInput(x, y) => {

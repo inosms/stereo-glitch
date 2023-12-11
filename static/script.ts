@@ -202,7 +202,6 @@ init().then(() => {
     // listen on resize of gameContainer
     new ResizeObserver(() => {
         const gameCanvas = document.querySelector("#game-container > canvas");
-        console.log("Resizing canvas to " + gameContainer.clientWidth + "x" + gameContainer.clientHeight);
         gameCanvas.width = gameContainer.clientWidth;
         gameCanvas.height = gameContainer.clientHeight;
         set_size(gameContainer.clientWidth, gameContainer.clientHeight, window.devicePixelRatio);
