@@ -165,7 +165,7 @@ fn move_player_system(
     if direction.magnitude() > 1.0 {
         direction = direction.normalize();
     }
-    let player_max_speed = 12.0;
+    let player_max_speed = 9.0;
     let direction = camera_look_direction_rotation_matrix * direction * player_max_speed;
 
     for physics_body in &mut query {
