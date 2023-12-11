@@ -136,7 +136,7 @@ fn move_player_system(
 ) {
     // Only move the player if we are in a physics tick
     // Otherwise the player will be frame rate dependent
-    if !time_keeper.peek() {
+    if !time_keeper.is_in_fixed_tick() {
         return;
     }
 
@@ -210,7 +210,7 @@ fn physics_system(
 ) {
     // Only step physics if we are in a physics tick
     // Otherwise the physics system will be frame rate dependent
-    if !time_keeper.peek() {
+    if !time_keeper.is_in_fixed_tick() {
         return;
     }
 
@@ -304,7 +304,7 @@ fn charge_recharge_system(
 ) {
     // Only recharge charge if we are in a physics tick
     // Otherwise the physics system will be frame rate dependent
-    if !time_keeper.peek() {
+    if !time_keeper.is_in_fixed_tick() {
         return;
     }
 
@@ -346,7 +346,7 @@ fn player_charge_depletion_system(
 ) {
     // Only deplete charge if we are in a physics tick
     // Otherwise the physics system will be frame rate dependent
-    if !time_keeper.peek() {
+    if !time_keeper.is_in_fixed_tick() {
         return;
     }
 
@@ -388,7 +388,7 @@ fn damage_area_system(
 ) {
     // Only deplete charge if we are in a physics tick
     // Otherwise the physics system will be frame rate dependent
-    if !time_keeper.peek() {
+    if !time_keeper.is_in_fixed_tick() {
         return;
     }
 
@@ -422,7 +422,7 @@ fn move_linear_enemy_system(
 ) {
     // Only move enemies if we are in a physics tick
     // Otherwise the physics system will be frame rate dependent
-    if !time_keeper.peek() {
+    if !time_keeper.is_in_fixed_tick() {
         return;
     }
 
@@ -485,13 +485,13 @@ impl GameWorld {
         // The physics system needs to run after the player system so that the player can move
         self.schedule.add_systems(
             (
+                fixed_update_system,
                 move_player_system,
                 damage_area_system,
                 physics_system,
                 charge_recharge_system,
                 player_charge_depletion_system,
                 move_linear_enemy_system,
-                fixed_update_system,
             )
                 .chain(),
         );
