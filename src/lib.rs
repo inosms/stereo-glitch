@@ -27,8 +27,8 @@ mod object_types;
 mod physics;
 mod stereo_camera;
 mod texture;
-mod time_keeper;
 mod level_compressor;
+mod game_objects;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -191,8 +191,8 @@ impl State {
         let charge_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
             &device,
             [1.0, 1.0, 1.0],
-            0.5,
-            0.5,
+            1.0,
+            1.0,
             1.0,
             initial_instance_buffer_size as usize,
         ));

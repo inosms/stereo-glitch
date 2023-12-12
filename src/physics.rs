@@ -7,8 +7,7 @@ use rapier3d::{
 };
 
 use crate::{
-    game::Position,
-    object_types::{Block, BlockType, LinearEnemyDirection, BoxType},
+    object_types::{Block, BlockType, LinearEnemyDirection, BoxType}, game_objects::position::Position,
 };
 
 #[derive(Resource)]
@@ -196,6 +195,7 @@ impl PhysicsSystem {
         Position {
             position: cgmath::Vector3::new(pos.x, pos.y, pos.z),
             rotation: cgmath::Quaternion::new(rot.w, rot.i, rot.j, rot.k),
+            scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
         }
     }
 

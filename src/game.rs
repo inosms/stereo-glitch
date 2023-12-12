@@ -11,47 +11,10 @@ use crate::{
     object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    time_keeper::TimeKeeper,
+    game_objects::{time_keeper::TimeKeeper, position::Position, charge_ghost::{move_ghost_system, ChargeGhost}, player::Player},
 };
 
 const TICKS_PER_SECOND: u32 = 60;
-
-#[derive(Component, Clone, Copy, Debug)]
-pub struct Position {
-    pub position: cgmath::Vector3<f32>,
-    pub rotation: cgmath::Quaternion<f32>,
-}
-
-impl Position {
-    fn get_cell(&self) -> (i32, i32) {
-        (
-            self.position.x.floor() as i32,
-            (-self.position.y).floor() as i32,
-        )
-    }
-}
-
-impl Default for Position {
-    fn default() -> Self {
-        Self {
-            position: cgmath::Vector3::new(0.0, 0.0, 0.0),
-            rotation: cgmath::Quaternion::from_axis_angle(
-                cgmath::Vector3::unit_z(),
-                cgmath::Deg(0.0),
-            ),
-        }
-    }
-}
-
-#[derive(Component)]
-struct Player {
-    dead: bool,
-
-    // the objects the player is currently pulling
-    pulled_objects: Vec<Entity>,
-
-    charge: f32,
-}
 
 #[derive(Component)]
 struct Goal;
@@ -68,6 +31,8 @@ struct Wall;
 #[derive(Component)]
 struct Charge {
     cooldown_left: f32,
+
+    spawned_ghost: Option<Entity>,
 }
 
 #[derive(Component)]
@@ -298,9 +263,10 @@ fn door_system(
 fn charge_recharge_system(
     mut commands: Commands,
     mut time_keeper: ResMut<TimeKeeper>,
-    mut query: Query<(&mut Charge, &Sensor, Entity)>,
+    mut query: Query<(&mut Charge, &Sensor, Entity, &Position)>,
     mut player_query: Query<&mut Player>,
-    mut physics_system: ResMut<PhysicsSystem>,
+    mut ghost_query: Query<&mut ChargeGhost>,
+    renderable_query: Query<&Renderable>,
 ) {
     // Only recharge charge if we are in a physics tick
     // Otherwise the physics system will be frame rate dependent
@@ -308,7 +274,9 @@ fn charge_recharge_system(
         return;
     }
 
-    for (mut charge, sensor, sensor_entity) in &mut query {
+    let charge_added = 20.0;
+
+    for (mut charge, sensor, sensor_entity, position) in &mut query {
         let triggering_player_entity = sensor
             .triggered_by
             .iter()
@@ -320,7 +288,11 @@ fn charge_recharge_system(
         if triggered_by_player && can_recharge {
             for player_entity in triggering_player_entity {
                 if let Ok(mut player) = player_query.get_mut(*player_entity) {
-                    player.charge = (player.charge.max(0.0) + 20.0).min(100.0);
+                    player.charge = (player.charge.max(0.0) + charge_added).min(100.0);
+                    if let Ok(mut ghost) = ghost_query.get_mut(charge.spawned_ghost.unwrap()) {
+                        ghost.initiate_despawn();
+                    }
+                    charge.spawned_ghost = None;
                 }
             }
 
@@ -329,10 +301,32 @@ fn charge_recharge_system(
             charge.cooldown_left -= 1.0 / TICKS_PER_SECOND as f32;
         }
 
-        if charge.cooldown_left <= 0.0 {
-            commands.entity(sensor_entity).remove::<Invisible>();
-        } else {
-            commands.entity(sensor_entity).insert(Invisible);
+        if charge.cooldown_left <= 0.0 && charge.spawned_ghost.is_none() {
+            let ghost = commands.spawn((
+                Position {
+                    position: Vector3::new(
+                        position.position.x,
+                        position.position.y,
+                        position.position.z + 0.5,
+                    ),
+                    rotation: position.rotation,
+                    scale: position.scale,
+                },
+                Renderable {
+                    mesh: renderable_query
+                        .get(sensor_entity)
+                        .unwrap()
+                        .mesh
+                        .clone(),
+                },
+                ChargeGhost::new(
+                    charge_added,
+                    None,
+                    0.0,
+                    position.position,
+                ),
+            ));
+            charge.spawned_ghost = Some(ghost.id());
         }
     }
 }
@@ -492,6 +486,7 @@ impl GameWorld {
                 charge_recharge_system,
                 player_charge_depletion_system,
                 move_linear_enemy_system,
+                move_ghost_system,
             )
                 .chain(),
         );
@@ -558,6 +553,7 @@ impl GameWorld {
                         cgmath::Vector3::unit_z(),
                         cgmath::Deg(0.0),
                     ),
+                    scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
                 };
 
                 // to prevent the boxes from getting stuck in each other
@@ -643,7 +639,8 @@ impl GameWorld {
                                 id: None,
                                 triggered_by: HashSet::new(),
                             },
-                            Charge { cooldown_left: 0.0 },
+                            Charge { cooldown_left: 0.0, spawned_ghost: None },
+                            Invisible,
                         ));
                     }
                     Block::StaticEnemy => {
@@ -677,6 +674,8 @@ impl GameWorld {
                     }
                     Block::Empty => {}
                 }
+                // we need that later
+                let added_entity_id = entity.id();
 
                 match self.handle_store.get(&block.get_block_type()) {
                     Some(handle) => {
@@ -695,6 +694,30 @@ impl GameWorld {
                     // Do not set user data to the sensor collider
                     // For our purposes if a collider is a sensor it is not a physical object
                     // By doing that we can distinguish between sensors and other colliders
+                }
+
+                if block.get_block_type() == BlockType::Player {
+                    // spawn a ghost following the player 
+                    self.world.spawn((
+                        Position {
+                            position: Vector3::new(
+                                position.position.x,
+                                position.position.y,
+                                position.position.z + 0.5,
+                            ),
+                            rotation: position.rotation,
+                            scale: position.scale,
+                        },
+                        Renderable {
+                            mesh: self.handle_store[&BlockType::Charge],
+                        },
+                        ChargeGhost::new(
+                            0.0, // initialize with 0 charge
+                            Some(added_entity_id),
+                            1.0,
+                            position.position,
+                        ),
+                    ));
                 }
             }
 

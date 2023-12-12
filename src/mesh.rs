@@ -1,8 +1,7 @@
-
 use cgmath::prelude::*;
 use wgpu::util::DeviceExt;
 
-use crate::game::Position;
+use crate::game_objects::position::Position;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -44,7 +43,7 @@ const CUBE_VERTICES: &[Vertex] = &[
         color: [0.0, 0.0, 0.0],
     },
     Vertex {
-        position: [-0.5, -0.5,-0.5],
+        position: [-0.5, -0.5, -0.5],
         color: [0.0, 0.0, 0.0],
     },
     Vertex {
@@ -132,7 +131,11 @@ impl Mesh {
         )
     }
 
-    pub fn new_cube_with_color(device: &wgpu::Device, color: [f32; 3], instance_size: usize) -> Self {
+    pub fn new_cube_with_color(
+        device: &wgpu::Device,
+        color: [f32; 3],
+        instance_size: usize,
+    ) -> Self {
         let mut vertices = CUBE_VERTICES.to_vec();
         for vertex in vertices.iter_mut() {
             vertex.color = color;
@@ -172,7 +175,11 @@ impl Mesh {
         self.instances_used_num = instances.len();
 
         if self.instance_buffer_size < instances.len() {
-            log::info!("Will recreate buffer. Current buffer of size {} is too small for {} instances", self.instance_buffer_size, instances.len());
+            log::info!(
+                "Will recreate buffer. Current buffer of size {} is too small for {} instances",
+                self.instance_buffer_size,
+                instances.len()
+            );
             self.instance_buffer.destroy();
             self.instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Instance Buffer"),
@@ -255,6 +262,7 @@ impl From<&Position> for InstanceRaw {
     fn from(position: &Position) -> Self {
         InstanceRaw {
             model: (cgmath::Matrix4::from_translation(position.position)
+                * cgmath::Matrix4::from_nonuniform_scale(position.scale.x, position.scale.y, position.scale.z)
                 * cgmath::Matrix4::from(position.rotation))
             .into(),
         }
