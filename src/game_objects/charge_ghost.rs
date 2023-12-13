@@ -66,7 +66,7 @@ impl ChargeGhost {
 
     // Returns whether the ghost is dead
     pub fn is_dead(&self) -> bool {
-        self.animation_charge_value <= 0.0 && self.is_despawning
+        self.animation_charge_value <= 0.05 && self.is_despawning
     }
 
     // Initiates the despawn of the ghost
@@ -92,6 +92,7 @@ pub fn move_ghost_system(
     for (mut ghost, entity) in query.iter_mut() {
         if ghost.is_dead() {
             commands.entity(entity).despawn();
+            continue;
         }
 
         // Animate the ghost
