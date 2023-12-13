@@ -1,4 +1,4 @@
-use glitch_area::{GlitchAreaVisibility, GlitchAreaVisibilityDTO};
+use game_objects::glitch_area::GlitchAreaVisibilityDTO;
 use level_loader::ParsedLevel;
 use mesh::{InstanceRaw, Vertex};
 use object_types::BlockType;
@@ -20,7 +20,6 @@ use winit::{
 
 mod command;
 mod game;
-mod glitch_area;
 mod level_loader;
 mod mesh;
 mod object_types;

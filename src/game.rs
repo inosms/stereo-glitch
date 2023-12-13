@@ -5,16 +5,14 @@ use cgmath::{EuclideanSpace, InnerSpace, Rotation3, Vector3};
 use rapier3d::geometry::ColliderHandle;
 
 use crate::{
-    glitch_area::GlitchAreaVisibility,
     level_loader::{Cell, ParsedLevel},
     mesh::Handle,
     object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    game_objects::{time_keeper::TimeKeeper, position::Position, charge_ghost::{move_ghost_system, ChargeGhost}, player::Player},
+    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, Charge, player_charge_depletion_system}, player::Player, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable},
 };
 
-const TICKS_PER_SECOND: u32 = 60;
 
 #[derive(Component)]
 struct Goal;
@@ -28,26 +26,12 @@ struct Door {
 #[derive(Component)]
 struct Wall;
 
-#[derive(Component)]
-struct Charge {
-    cooldown_left: f32,
-
-    spawned_ghost: Option<Entity>,
-}
 
 #[derive(Component)]
 struct Floor;
 
 #[derive(Component)]
 struct Box;
-
-#[derive(Component)]
-struct Sensor {
-    collider: ColliderHandle,
-    triggered: bool,
-    id: Option<Id>,
-    triggered_by: HashSet<Entity>,
-}
 
 #[derive(Component)]
 struct DamageArea {
@@ -58,11 +42,6 @@ struct DamageArea {
 struct LinearEnemy {
     current_movement_direction: Vector3<f32>,
     stuck_counter: u32,
-}
-
-#[derive(Component)]
-pub struct Renderable {
-    mesh: Handle,
 }
 
 // This component is used to make an entity invisible
@@ -260,115 +239,6 @@ fn door_system(
     }
 }
 
-fn charge_recharge_system(
-    mut commands: Commands,
-    mut time_keeper: ResMut<TimeKeeper>,
-    mut query: Query<(&mut Charge, &Sensor, Entity, &Position)>,
-    mut player_query: Query<&mut Player>,
-    mut ghost_query: Query<&mut ChargeGhost>,
-    renderable_query: Query<&Renderable>,
-) {
-    // Only recharge charge if we are in a physics tick
-    // Otherwise the physics system will be frame rate dependent
-    if !time_keeper.is_in_fixed_tick() {
-        return;
-    }
-
-    let charge_added = 20.0;
-
-    for (mut charge, sensor, sensor_entity, position) in &mut query {
-        let triggering_player_entity = sensor
-            .triggered_by
-            .iter()
-            .filter(|&entity| player_query.get_mut(*entity).is_ok())
-            .collect::<Vec<_>>();
-
-        let triggered_by_player = !triggering_player_entity.is_empty();
-        let can_recharge = charge.cooldown_left <= 0.0;
-        if triggered_by_player && can_recharge {
-            for player_entity in triggering_player_entity {
-                if let Ok(mut player) = player_query.get_mut(*player_entity) {
-                    player.charge = (player.charge.max(0.0) + charge_added).min(100.0);
-                    if let Ok(mut ghost) = ghost_query.get_mut(charge.spawned_ghost.unwrap()) {
-                        ghost.initiate_despawn();
-                    }
-                    charge.spawned_ghost = None;
-                }
-            }
-
-            charge.cooldown_left = 10.0;
-        } else {
-            charge.cooldown_left -= 1.0 / TICKS_PER_SECOND as f32;
-        }
-
-        if charge.cooldown_left <= 0.0 && charge.spawned_ghost.is_none() {
-            let ghost = commands.spawn((
-                Position {
-                    position: Vector3::new(
-                        position.position.x,
-                        position.position.y,
-                        position.position.z + 0.5,
-                    ),
-                    rotation: position.rotation,
-                    scale: Vector3::new(0.0, 0.0, 0.0),
-                },
-                Renderable {
-                    mesh: renderable_query
-                        .get(sensor_entity)
-                        .unwrap()
-                        .mesh
-                        .clone(),
-                },
-                ChargeGhost::new_stationary(
-                    charge_added,
-                    position.position,
-                ),
-            ));
-            charge.spawned_ghost = Some(ghost.id());
-        }
-    }
-}
-
-// When the player is in a glitch area deplete the charge over time
-// If the charge reaches 0 the player dies
-fn player_charge_depletion_system(
-    mut time_keeper: ResMut<TimeKeeper>,
-    mut player_query: Query<(&mut Player, &Position)>,
-    mut glitch_area_visibility: ResMut<GlitchAreaVisibility>,
-) {
-    // Only deplete charge if we are in a physics tick
-    // Otherwise the physics system will be frame rate dependent
-    if !time_keeper.is_in_fixed_tick() {
-        return;
-    }
-
-    let deplete_per_second = 1.0;
-    let deplete_per_tick = deplete_per_second / TICKS_PER_SECOND as f32;
-
-    for (mut player, pos) in &mut player_query {
-        let player_x_y_cell = pos.get_cell();
-        let is_in_glitch_area = glitch_area_visibility
-            .glitch_cells
-            .contains(&player_x_y_cell);
-
-        if is_in_glitch_area {
-            player.charge -= deplete_per_tick;
-        }
-
-        let player_charge = if player.charge > 10.0 {
-            1.0
-        } else if player.charge > 0.0 {
-            0.2
-        } else {
-            0.0
-        };
-        // smooth interpolation between 0 and 1
-        let alpha = 0.99;
-        glitch_area_visibility.visibility =
-            glitch_area_visibility.visibility * alpha + player_charge * (1.0 - alpha);
-    }
-}
-
 // when a player triggers a sensor that is also attached to a damage area the player takes damage
 // and is pushed away from the damage area
 fn damage_area_system(
@@ -484,7 +354,7 @@ impl GameWorld {
                 charge_recharge_system,
                 player_charge_depletion_system,
                 move_linear_enemy_system,
-                move_ghost_system,
+                move_charge_ghost_system,
             )
                 .chain(),
         );
@@ -637,7 +507,7 @@ impl GameWorld {
                                 id: None,
                                 triggered_by: HashSet::new(),
                             },
-                            Charge { cooldown_left: 0.0, spawned_ghost: None },
+                            Charge::new(),
                             Invisible,
                         ));
                     }
