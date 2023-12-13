@@ -33,18 +33,33 @@ pub struct ChargeGhost {
 }
 
 impl ChargeGhost {
-    pub fn new(
-        charge: f32,
-        follow_entity: Option<Entity>,
+    // Creates a new ghost that follows an entity
+    pub fn new_following(
+        follow_entity: Entity,
         following_distance: f32,
-        center_position: cgmath::Vector3<f32>,
+        initial_position: cgmath::Vector3<f32>,
+    ) -> Self {
+        Self {
+            charge: 0.0,
+            animation_charge_value: 0.0,
+            follow_entity: Some(follow_entity),
+            following_distance,
+            center_position: initial_position,
+            is_despawning: false,
+        }
+    }
+
+    // Creates a new ghost that is stationary
+    pub fn new_stationary(
+        charge: f32,
+        initial_position: cgmath::Vector3<f32>,
     ) -> Self {
         Self {
             charge,
             animation_charge_value: 0.0,
-            follow_entity,
-            following_distance,
-            center_position,
+            follow_entity: None,
+            following_distance: 0.0,
+            center_position: initial_position,
             is_despawning: false,
         }
     }
@@ -80,13 +95,12 @@ pub fn move_ghost_system(
         }
 
         // Animate the ghost
-        let animation_delta = ghost.charge - ghost.animation_charge_value;
-        let animation_speed = 5.0;
+        let animation_delta = (ghost.charge - ghost.animation_charge_value).min(1.0);
+        let animation_speed = 30.0;
         ghost.animation_charge_value += time.delta_seconds() * animation_delta * animation_speed;
 
         // If the ghost is following an entity then move it towards the entity
         if let Some(follow_entity) = ghost.follow_entity {
-
             // sync charge with player charge
             let player = player_query.get(follow_entity).unwrap();
             ghost.charge = player.charge;
@@ -116,8 +130,11 @@ pub fn move_ghost_system(
         // Update the position of the ghost
         ghost_position.position.x = ghost.center_position.x;
         ghost_position.position.y = ghost.center_position.y;
+
+        let is_in_following_mode = ghost.follow_entity.is_some();
         let max_scale = 0.7;
+        let min_scale = if is_in_following_mode { 0.2 } else { 0.0 };
         let max_charge = 100.0;
-        ghost_position.scale = cgmath::Vector3::new(1.0, 1.0, 1.0) * (ghost.animation_charge_value / max_charge).sqrt() * max_scale;
+        ghost_position.scale = cgmath::Vector3::new(1.0, 1.0, 1.0) * ((ghost.animation_charge_value / max_charge).sqrt() * max_scale).max(min_scale);
     }
 }

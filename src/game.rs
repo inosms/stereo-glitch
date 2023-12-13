@@ -296,7 +296,7 @@ fn charge_recharge_system(
                 }
             }
 
-            charge.cooldown_left = 15.0;
+            charge.cooldown_left = 10.0;
         } else {
             charge.cooldown_left -= 1.0 / TICKS_PER_SECOND as f32;
         }
@@ -310,7 +310,7 @@ fn charge_recharge_system(
                         position.position.z + 0.5,
                     ),
                     rotation: position.rotation,
-                    scale: position.scale,
+                    scale: Vector3::new(0.0, 0.0, 0.0),
                 },
                 Renderable {
                     mesh: renderable_query
@@ -319,10 +319,8 @@ fn charge_recharge_system(
                         .mesh
                         .clone(),
                 },
-                ChargeGhost::new(
+                ChargeGhost::new_stationary(
                     charge_added,
-                    None,
-                    0.0,
                     position.position,
                 ),
             ));
@@ -711,9 +709,8 @@ impl GameWorld {
                         Renderable {
                             mesh: self.handle_store[&BlockType::Charge],
                         },
-                        ChargeGhost::new(
-                            0.0, // initialize with 0 charge
-                            Some(added_entity_id),
+                        ChargeGhost::new_following(
+                            added_entity_id,
                             1.0,
                             position.position,
                         ),
