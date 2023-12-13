@@ -7,7 +7,8 @@ use rapier3d::{
 };
 
 use crate::{
-    object_types::{Block, BlockType, LinearEnemyDirection, BoxType}, game_objects::position::Position,
+    game_objects::position::Position,
+    object_types::{Block, BlockType, BoxType, LinearEnemyDirection},
 };
 
 #[derive(Resource)]
@@ -130,11 +131,14 @@ impl PhysicsSystem {
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED),
             Block::Box(BoxType::Free) => RigidBodyBuilder::dynamic().gravity_scale(3.0),
             Block::Box(BoxType::XAxis) => RigidBodyBuilder::dynamic()
-               .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED).gravity_scale(3.0),
+                .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED)
+                .gravity_scale(3.0),
             Block::Box(BoxType::YAxis) => RigidBodyBuilder::dynamic()
-               .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED).gravity_scale(3.0),
+                .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED)
+                .gravity_scale(3.0),
             Block::Box(BoxType::RotationFixed) => RigidBodyBuilder::dynamic()
-               .locked_axes(LockedAxes::ROTATION_LOCKED).gravity_scale(3.0),
+                .locked_axes(LockedAxes::ROTATION_LOCKED)
+                .gravity_scale(3.0),
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
@@ -243,34 +247,34 @@ impl PhysicsSystem {
         body.apply_impulse(impulse, true);
 
         // if actually moving
-        let next_rotation =
-            if rotate_in_direction_of_movement && desired_velocity.magnitude2() > 0.001 {
-                // The initial alignment of the player is to look along the negative y axis.
-                // From this compute the angle of movement around the positive z axis.
-                // This is used to rotate the player to face the direction of movement.
 
-                // We don't care about the z direction
-                let direction_norm =
-                    Vector3::new(desired_velocity.x, desired_velocity.y, 0.0).normalize();
-                let zero_rotation_direction = Vector3::new(0.0, -1.0, 0.0);
-                let axis_of_rotation =
-                    rapier3d::na::UnitVector3::try_new(Vector3::new(0.0, 0.0, 1.0), 0.1).unwrap();
+        if rotate_in_direction_of_movement && desired_velocity.magnitude2() > 0.001 {
+            // The initial alignment of the player is to look along the negative y axis.
+            // From this compute the angle of movement around the positive z axis.
+            // This is used to rotate the player to face the direction of movement.
 
-                // https://math.stackexchange.com/questions/878785/how-to-find-an-angle-in-range0-360-between-2-vectors
-                let determinant =
-                    (direction_norm.cross(&zero_rotation_direction)).dot(&axis_of_rotation);
-                let dot = zero_rotation_direction.dot(&direction_norm);
-                let angle_of_movement = determinant.atan2(dot);
+            // We don't care about the z direction
+            let direction_norm =
+                Vector3::new(desired_velocity.x, desired_velocity.y, 0.0).normalize();
+            let zero_rotation_direction = Vector3::new(0.0, -1.0, 0.0);
+            let axis_of_rotation =
+                rapier3d::na::UnitVector3::try_new(Vector3::new(0.0, 0.0, 1.0), 0.1).unwrap();
 
-                let rotation = rapier3d::na::UnitQuaternion::from_axis_angle(
-                    &rapier3d::na::Vector3::z_axis(),
-                    -angle_of_movement,
-                );
-                rotation
-            } else {
-                body.rotation().clone()
-            };
+            // https://math.stackexchange.com/questions/878785/how-to-find-an-angle-in-range0-360-between-2-vectors
+            let determinant =
+                (direction_norm.cross(&zero_rotation_direction)).dot(&axis_of_rotation);
+            let dot = zero_rotation_direction.dot(&direction_norm);
+            let angle_of_movement = determinant.atan2(dot);
 
-        body.set_rotation(next_rotation, true);
+            let next_rotation = rapier3d::na::UnitQuaternion::from_axis_angle(
+                &rapier3d::na::Vector3::z_axis(),
+                -angle_of_movement,
+            );
+
+            let current_rotation = body.rotation().clone();
+            let lerped_rotation = current_rotation.slerp(&next_rotation, 0.5);
+
+            body.set_rotation(lerped_rotation, true);
+        }
     }
 }
