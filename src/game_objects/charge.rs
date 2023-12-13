@@ -13,13 +13,13 @@ use super::{
 };
 
 #[derive(Component)]
-pub struct Charge {
+pub struct ChargeSpawnArea {
     cooldown_left: f32,
 
     spawned_ghost: Option<Entity>,
 }
 
-impl Charge {
+impl ChargeSpawnArea {
     pub fn new() -> Self {
         Self {
             cooldown_left: 0.0,
@@ -163,7 +163,7 @@ pub fn move_charge_ghost_system(
 pub fn charge_recharge_system(
     mut commands: Commands,
     mut time_keeper: ResMut<TimeKeeper>,
-    mut query: Query<(&mut Charge, &Sensor, Entity, &Position)>,
+    mut query: Query<(&mut ChargeSpawnArea, &Sensor, Entity, &Position)>,
     mut player_query: Query<&mut Player>,
     mut ghost_query: Query<&mut ChargeGhost>,
     renderable_query: Query<&Renderable>,

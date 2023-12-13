@@ -10,7 +10,7 @@ use crate::{
     object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, Charge, player_charge_depletion_system}, player::Player, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable},
+    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::Player, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable},
 };
 
 
@@ -507,7 +507,7 @@ impl GameWorld {
                                 id: None,
                                 triggered_by: HashSet::new(),
                             },
-                            Charge::new(),
+                            ChargeSpawnArea::new(),
                             Invisible,
                         ));
                     }
