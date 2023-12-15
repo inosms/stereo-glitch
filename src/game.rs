@@ -10,7 +10,7 @@ use crate::{
     object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::Player, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable},
+    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input},
 };
 
 
@@ -48,11 +48,6 @@ struct LinearEnemy {
 #[derive(Component)]
 pub struct Invisible;
 
-#[derive(Component)]
-struct PhysicsBody {
-    body: rapier3d::dynamics::RigidBodyHandle,
-}
-
 pub struct GameWorld {
     world: World,
     schedule: Schedule,
@@ -62,75 +57,7 @@ pub struct GameWorld {
     camera_aspect: f32,
 }
 
-#[derive(Resource)]
-struct Input {
-    player_movement: Option<cgmath::Vector3<f32>>, // if consumed  set to None
-    player_paralized_cooldown: f32,
-}
 
-fn move_player_system(
-    // keyboard_input: Res<Input<bevy::input::keyboard::KeyCode>>,
-    mut physics_system: ResMut<PhysicsSystem>,
-    mut input: ResMut<Input>,
-    camera: Res<StereoCamera>,
-    time_keeper: Res<TimeKeeper>,
-    mut query: Query<&PhysicsBody, With<Player>>,
-    physics_body_query: Query<&PhysicsBody>,
-    player_query: Query<&Player>,
-) {
-    // Only move the player if we are in a physics tick
-    // Otherwise the player will be frame rate dependent
-    if !time_keeper.is_in_fixed_tick() {
-        return;
-    }
-
-    if input.player_paralized_cooldown > 0.0 {
-        input.player_paralized_cooldown -= 1.0 / TICKS_PER_SECOND as f32;
-        return;
-    }
-
-    let requested_movement = input
-        .player_movement
-        .take()
-        .unwrap_or(cgmath::Vector3::new(0.0, 0.0, 0.0));
-    let camera_look_direction = camera.get_camera_view_direction_projected_to_ground();
-
-    // Get a matrix that rotates the world y axis to the camera look direction
-    // We need this to transform the requested movement vector so that the player moves in the direction the camera is looking
-    let camera_look_direction_rotation_matrix = cgmath::Matrix3::from_cols(
-        camera_look_direction
-            .cross(cgmath::Vector3::unit_z())
-            .normalize(),
-        camera_look_direction,
-        cgmath::Vector3::unit_z(),
-    );
-
-    let mut direction = requested_movement;
-    if direction.magnitude() > 1.0 {
-        direction = direction.normalize();
-    }
-    let player_max_speed = 9.0;
-    let direction = camera_look_direction_rotation_matrix * direction * player_max_speed;
-
-    for physics_body in &mut query {
-        physics_system.move_body(physics_body.body, direction, true);
-    }
-
-    // get all physics bodies the player is pulling
-    let mut pulled_bodies = Vec::new();
-    for player in &player_query {
-        pulled_bodies = player
-            .pulled_objects
-            .iter()
-            .filter_map(|entity| physics_body_query.get(*entity).ok())
-            .collect();
-    }
-    let player_physics_body = query.iter().next().unwrap();
-    let player_velocity = physics_system.get_velocity(player_physics_body.body);
-    for physics_body in pulled_bodies {
-        physics_system.move_body(physics_body.body, player_velocity, false);
-    }
-}
 
 // Move the camera to always look at the player
 fn move_camera_system(

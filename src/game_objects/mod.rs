@@ -5,4 +5,6 @@ pub mod player;
 pub mod sensor;
 pub mod constants;
 pub mod renderable;
+pub mod physics_body;
 pub mod glitch_area;
+pub mod input;
