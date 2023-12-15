@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use bevy_ecs::prelude::*;
-use cgmath::{EuclideanSpace, InnerSpace, Rotation3, Vector3};
+use cgmath::{EuclideanSpace, InnerSpace, Rotation3, Vector3, One};
 use rapier3d::geometry::ColliderHandle;
 
 use crate::{
@@ -10,7 +10,7 @@ use crate::{
     object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input, movable::{Movable, move_movable_object_with_player_system}},
+    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input, movable::{Movable, move_movable_object_with_player_system, animate_moving_objects_system}},
 };
 
 
@@ -283,6 +283,7 @@ impl GameWorld {
                 player_charge_depletion_system,
                 move_linear_enemy_system,
                 move_charge_ghost_system,
+                animate_moving_objects_system,
             )
                 .chain(),
         );
@@ -351,6 +352,7 @@ impl GameWorld {
                     ),
                     scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
                     grabbed_scale_factor: 1.0,
+                    grabbed_rotation: cgmath::Quaternion::one(),
                 };
 
                 // to prevent the boxes from getting stuck in each other
@@ -506,6 +508,7 @@ impl GameWorld {
                             rotation: position.rotation,
                             scale: position.scale,
                             grabbed_scale_factor: position.grabbed_scale_factor,
+                            grabbed_rotation: cgmath::Quaternion::one(),
                         },
                         Renderable {
                             mesh: self.handle_store[&BlockType::Charge],

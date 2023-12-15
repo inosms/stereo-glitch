@@ -11,6 +11,7 @@ pub struct Position {
     // when grabbing an object, the object is scaled and shakes a bit
     // this transform is done after the normal transform
     pub grabbed_scale_factor: f32,
+    pub grabbed_rotation: cgmath::Quaternion<f32>,
 }
 
 impl Position {
@@ -32,6 +33,10 @@ impl Default for Position {
             ),
             scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
             grabbed_scale_factor: 1.0,
+            grabbed_rotation: cgmath::Quaternion::from_axis_angle(
+                cgmath::Vector3::unit_z(),
+                cgmath::Deg(0.0),
+            ),
         }
     }
 }

@@ -3,7 +3,7 @@ use bevy_ecs::{
     entity::Entity,
     system::{Commands, Query, Res, ResMut},
 };
-use cgmath::{InnerSpace, Vector3};
+use cgmath::{InnerSpace, Vector3, One};
 
 
 use super::{
@@ -213,6 +213,7 @@ pub fn charge_recharge_system(
                     rotation: position.rotation,
                     scale: Vector3::new(0.0, 0.0, 0.0),
                     grabbed_scale_factor: 1.0,
+                    grabbed_rotation: cgmath::Quaternion::one(),
                 },
                 Renderable {
                     mesh: renderable_query.get(sensor_entity).unwrap().mesh.clone(),

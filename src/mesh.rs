@@ -267,7 +267,8 @@ impl From<&Position> for InstanceRaw {
                     position.scale.y * position.grabbed_scale_factor,
                     position.scale.z * position.grabbed_scale_factor,
                 )
-                * cgmath::Matrix4::from(position.rotation))
+                * cgmath::Matrix4::from(position.rotation)
+                * cgmath::Matrix4::from(position.grabbed_rotation))
             .into(),
         }
     }

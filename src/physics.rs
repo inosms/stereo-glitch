@@ -1,5 +1,5 @@
 use bevy_ecs::system::Resource;
-use cgmath::{EuclideanSpace, InnerSpace};
+use cgmath::{EuclideanSpace, InnerSpace, One};
 use rapier3d::{
     crossbeam,
     na::{Point3, Vector3},
@@ -201,6 +201,7 @@ impl PhysicsSystem {
             rotation: cgmath::Quaternion::new(rot.w, rot.i, rot.j, rot.k),
             scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
             grabbed_scale_factor: 1.0,
+            grabbed_rotation: cgmath::Quaternion::one(),
         }
     }
 
