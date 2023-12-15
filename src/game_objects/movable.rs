@@ -79,8 +79,8 @@ pub fn animate_moving_objects_system(
 
         let wobble_scale = (1.0 - position.grabbed_scale_factor) as f64;
         let wobble_speed = 25.0;
-        let x_wobble = (time_keeper.now() * wobble_speed).sin() * wobble_scale * 40.0;
-        let y_wobble = (time_keeper.now() * wobble_speed).cos() * wobble_scale * 40.0;
+        let x_wobble = (TimeKeeper::now() * wobble_speed).sin() * wobble_scale * 40.0;
+        let y_wobble = (TimeKeeper::now() * wobble_speed).cos() * wobble_scale * 40.0;
         position.grabbed_rotation =
             cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0 as f32))
                 * cgmath::Quaternion::from_axis_angle(

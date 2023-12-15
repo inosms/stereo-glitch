@@ -142,7 +142,7 @@ pub fn move_charge_ghost_system(
         // Move the ghost up and down
         let speed = 2.0;
         let amplitude = 0.25;
-        let time = time.now() as f32;
+        let time = TimeKeeper::now() as f32;
         let initial_offset = ghost.center_position.x + ghost.center_position.y;
         let offset = (initial_offset + time * speed).sin() * amplitude;
         let mut ghost_position = position_query.get_mut(entity).unwrap();

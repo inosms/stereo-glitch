@@ -1,4 +1,4 @@
-use game_objects::glitch_area::GlitchAreaVisibilityDTO;
+use game_objects::{glitch_area::GlitchAreaVisibilityDTO, time_keeper::TimeKeeper};
 use level_loader::ParsedLevel;
 use mesh::{InstanceRaw, Vertex};
 use object_types::BlockType;
@@ -317,7 +317,7 @@ impl State {
         let glitch_fragment_data_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Glitch Fragment Data Buffer"),
-                contents: bytemuck::cast_slice(&[GlitchAreaVisibilityDTO::new(0.0)]),
+                contents: bytemuck::cast_slice(&[GlitchAreaVisibilityDTO::new(0.0, 0.0)]),
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             });
 
@@ -325,7 +325,7 @@ impl State {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    visibility: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::VERTEX,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -589,8 +589,7 @@ impl State {
             &self.glitch_fragment_data_buffer,
             0,
             bytemuck::cast_slice(&[glitch_visibility_dto]),
-        );
-        
+        );       
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {

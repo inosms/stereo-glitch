@@ -94,11 +94,11 @@ var t_glitch_area: texture_2d<f32>;
 var s_glitch_area: sampler;
 
 struct GlitchAreaUniform {
+    time: f32,
     visibility: f32,
 
     _padding_0: f32,
     _padding_1: f32,
-    _padding_2: f32,
 };
 @group(3)@binding(0)
 var<uniform> glitch_area: GlitchAreaUniform;
@@ -131,16 +131,16 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 fn not_smooth_random(input: f32) -> f32 {
     return floor(sin(input * 9.410) * 1.2) 
         + floor(sin(input * 2.3489) * 8.1)
-        + floor(sin(input * 4.3489) * 3.1) 
-        + floor(sin(input * 19.3489) * 2.1) 
-        + floor(sin(input * 59.3489) * 1.1) 
+        + floor(sin(input * 4.3489 * fract(floor(glitch_area.time*2.0) / 20.0)) * 3.1) 
+        + floor(sin(input * 19.3489* fract(floor(glitch_area.time*0.02) / 20.0)) * 2.1) 
+        + floor(sin(input * 59.3489 * fract(floor(glitch_area.time*0.1) / 20.0)) * 1.1) 
         + floor(sin(input * 7.123) * 2.2);
 }
 
 fn smooth_random(input: f32) -> f32 {
      return sin(floor(input * 23.410)) * 1.2
-        + sin(floor(input * 17.3489)) * 3.1
-        + sin(floor(input * 3.3489)) * 3.1 
+        + sin(floor(input * 27.3489* fract(floor(glitch_area.time*0.43) / 20.0))) * 1.1
+        + sin(floor(input * 23.3489 * fract(floor(glitch_area.time) / 20.0))) * 1.1 
         + sin(floor(input * 33.3489)) * 2.1 
         + sin(floor(input * 80.3489)) * 1.1;
 }
@@ -149,11 +149,11 @@ fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
     let x = uv.x;
     let y = uv.y;
 
-    let x_offset = not_smooth_random(y*0.4) * 0.04;
+    let x_offset = not_smooth_random(y*0.4 - (glitch_area.time * 0.02)) * 0.04;
 
-    let r = smooth_random(x_offset + x) * 0.3 * min(glitch_area.visibility * 5.0, 1.0);
+    let r = smooth_random(x_offset + x + 0.001 * glitch_area.visibility) * 0.3 * min(glitch_area.visibility * 5.0, 1.0);
     let g = smooth_random(x_offset + x + 0.11 * glitch_area.visibility) * 0.3 * min(glitch_area.visibility * 5.0, 1.0);
-    let b = smooth_random(x_offset + x + 0.13 * glitch_area.visibility) * 0.3 * min(glitch_area.visibility * 5.0, 1.0);
+    let b = smooth_random(x_offset + x + 0.12 * glitch_area.visibility) * 0.3 * min(glitch_area.visibility * 5.0, 1.0);
 
     return vec4<f32>(r, g, b, 1.0);
 }

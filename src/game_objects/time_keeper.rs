@@ -46,7 +46,7 @@ impl TimeKeeper {
     }
 
     // Returns the current time in seconds
-    pub fn now(&self) -> f64 {
+    pub fn now() -> f64 {
         instant::now() / 1000.0
     }
 
