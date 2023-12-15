@@ -66,7 +66,7 @@ fn move_camera_system(
 ) {
     for (position, _) in &mut query {
         let camera_target_goal = position.position;
-        let camera_eye_goal = position.position + cgmath::Vector3::new(-35.0, -35.0, 70.0);
+        let camera_eye_goal = position.position + cgmath::Vector3::new(-11.0, -11.0, 22.0);
 
         camera.smooth_set_target(cgmath::Point3::from_vec(camera_target_goal), 0.04, 3.0);
         camera.smooth_set_eye(cgmath::Point3::from_vec(camera_eye_goal), 0.04, 3.0);
@@ -260,10 +260,10 @@ impl GameWorld {
             (0.0, 0.0, 0.0).into(),
             cgmath::Vector3::unit_z(),
             self.camera_aspect,
-            7.0,
+            20.0,
             0.1,
             50.0,
-            -12.0, // view cross-eyed
+            -5.0, // view cross-eyed
         ));
         self.world
             .insert_resource(TimeKeeper::new(TICKS_PER_SECOND));
