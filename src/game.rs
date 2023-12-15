@@ -10,7 +10,7 @@ use crate::{
     object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input},
+    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input, movable::{Movable, move_movable_object_with_player_system}},
 };
 
 
@@ -276,6 +276,7 @@ impl GameWorld {
             (
                 fixed_update_system,
                 move_player_system,
+                move_movable_object_with_player_system,
                 damage_area_system,
                 physics_system,
                 charge_recharge_system,
@@ -349,6 +350,7 @@ impl GameWorld {
                         cgmath::Deg(0.0),
                     ),
                     scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
+                    grabbed_scale_factor: 1.0,
                 };
 
                 // to prevent the boxes from getting stuck in each other
@@ -416,7 +418,7 @@ impl GameWorld {
                         entity.insert(Floor);
                     }
                     Block::Box(_) => {
-                        entity.insert(Box);
+                        entity.insert((Box, Movable::default()));
                     }
                     Block::Trigger => {
                         entity.insert(Sensor {
@@ -465,6 +467,7 @@ impl GameWorld {
                                 stuck_counter: 0,
                             },
                             DamageArea { damage: 10.0 },
+                            Movable::default(),
                         ));
                     }
                     Block::Empty => {}
@@ -502,6 +505,7 @@ impl GameWorld {
                             ),
                             rotation: position.rotation,
                             scale: position.scale,
+                            grabbed_scale_factor: position.grabbed_scale_factor,
                         },
                         Renderable {
                             mesh: self.handle_store[&BlockType::Charge],
@@ -569,14 +573,14 @@ impl GameWorld {
         // find all Entities that are within [-PULL_AREA_EXTENT, PULL_AREA_EXTENT] of the player in x, y and z
         let query = self
             .world
-            .query_filtered::<(&Position, Entity), With<PhysicsBody>>()
+            .query_filtered::<(&Position, Entity, &PhysicsBody), With<Movable>>()
             .iter(&self.world)
-            .filter(|(position, _)| {
+            .filter(|(position, _, _)| {
                 (position.position.x - player_position.x).abs() < pull_area_extent
                     && (position.position.y - player_position.y).abs() < pull_area_extent
                     && (position.position.z - player_position.z).abs() < pull_area_extent
             })
-            .map(|(_, entity)| entity)
+            .map(|(_, entity, _)| entity)
             .collect::<Vec<_>>();
 
         let mut player = self

@@ -212,6 +212,7 @@ pub fn charge_recharge_system(
                     ),
                     rotation: position.rotation,
                     scale: Vector3::new(0.0, 0.0, 0.0),
+                    grabbed_scale_factor: 1.0,
                 },
                 Renderable {
                     mesh: renderable_query.get(sensor_entity).unwrap().mesh.clone(),

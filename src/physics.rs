@@ -200,6 +200,7 @@ impl PhysicsSystem {
             position: cgmath::Vector3::new(pos.x, pos.y, pos.z),
             rotation: cgmath::Quaternion::new(rot.w, rot.i, rot.j, rot.k),
             scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
+            grabbed_scale_factor: 1.0,
         }
     }
 

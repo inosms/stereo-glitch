@@ -262,7 +262,11 @@ impl From<&Position> for InstanceRaw {
     fn from(position: &Position) -> Self {
         InstanceRaw {
             model: (cgmath::Matrix4::from_translation(position.position)
-                * cgmath::Matrix4::from_nonuniform_scale(position.scale.x, position.scale.y, position.scale.z)
+                * cgmath::Matrix4::from_nonuniform_scale(
+                    position.scale.x * position.grabbed_scale_factor,
+                    position.scale.y * position.grabbed_scale_factor,
+                    position.scale.z * position.grabbed_scale_factor,
+                )
                 * cgmath::Matrix4::from(position.rotation))
             .into(),
         }

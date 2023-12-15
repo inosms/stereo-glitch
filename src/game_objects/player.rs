@@ -63,19 +63,4 @@ pub fn move_player_system(
     for physics_body in &mut query {
         physics_system.move_body(physics_body.body, direction, true);
     }
-
-    // get all physics bodies the player is pulling
-    let mut pulled_bodies = Vec::new();
-    for player in &player_query {
-        pulled_bodies = player
-            .pulled_objects
-            .iter()
-            .filter_map(|entity| physics_body_query.get(*entity).ok())
-            .collect();
-    }
-    let player_physics_body = query.iter().next().unwrap();
-    let player_velocity = physics_system.get_velocity(player_physics_body.body);
-    for physics_body in pulled_bodies {
-        physics_system.move_body(physics_body.body, player_velocity, false);
-    }
 }
