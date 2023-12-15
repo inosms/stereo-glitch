@@ -124,31 +124,36 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     if( glitch_mask_color.r > 0.5 ) {
         return vec4<f32>(in.color, 1.0);
     } else {
-        return glitch_area.visibility * random_pattern(vec2<f32>(in.ndc_space_left_eye.x, in.ndc_space_left_eye.y));
+        return random_pattern(vec2<f32>(in.ndc_space_left_eye.x, in.ndc_space_left_eye.y));
     }
 }
 
+fn not_smooth_random(input: f32) -> f32 {
+    return floor(sin(input * 9.410) * 1.2) 
+        + floor(sin(input * 2.3489) * 8.1)
+        + floor(sin(input * 4.3489) * 3.1) 
+        + floor(sin(input * 19.3489) * 2.1) 
+        + floor(sin(input * 59.3489) * 1.1) 
+        + floor(sin(input * 7.123) * 2.2);
+}
+
+fn smooth_random(input: f32) -> f32 {
+     return sin(floor(input * 23.410)) * 1.2
+        + sin(floor(input * 17.3489)) * 3.1
+        + sin(floor(input * 3.3489)) * 3.1 
+        + sin(floor(input * 33.3489)) * 2.1 
+        + sin(floor(input * 80.3489)) * 1.1;
+}
+
 fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
-    // let value = 0.1*sin(uv.x*0.01) + 0.3*cos(uv.y*0.001+2.1) + 0.01*sin(uv.x*3.0+0.76) + 0.01*sin(uv.y*0.04+1.0) + 0.1*sin(uv.y*8.0+1.0)
-    // + 0.1*sin(uv.x*100.0) + 0.3*cos(uv.y*7.+8.1) + 0.01*sin(uv.x*2.0 + 5.0);
+    let x = uv.x;
+    let y = uv.y;
 
-    let value = noise(uv * 90.0);
-    return vec4<f32>(value, value, value, 1.0);
-}
+    let x_offset = not_smooth_random(y*0.4) * 0.04;
 
+    let r = smooth_random(x_offset + x) * 0.3 * min(glitch_area.visibility * 5.0, 1.0);
+    let g = smooth_random(x_offset + x + 0.11 * glitch_area.visibility) * 0.3 * min(glitch_area.visibility * 5.0, 1.0);
+    let b = smooth_random(x_offset + x + 0.13 * glitch_area.visibility) * 0.3 * min(glitch_area.visibility * 5.0, 1.0);
 
-
-fn rand(n: vec2<f32>) -> f32 { 
-    return fract(sin(dot(n, vec2<f32>(12.9898, 4.1414))) * 43758.5453);
-}
-
-fn noise(p: vec2<f32>) -> f32{
-    let ip = floor(p);
-    var u = fract(p);
-    u = u*u*(3.0-(2.0*u));
-    
-    let res = mix(
-        mix(rand(ip),rand(ip+vec2<f32>(1.0,0.0)),u.x),
-        mix(rand(ip+vec2<f32>(0.0,1.0)),rand(ip+vec2<f32>(1.0,1.0)),u.x),u.y);
-    return res*res;
+    return vec4<f32>(r, g, b, 1.0);
 }

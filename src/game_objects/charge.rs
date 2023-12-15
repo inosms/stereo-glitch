@@ -253,15 +253,15 @@ pub fn player_charge_depletion_system(
             player.charge -= deplete_per_tick;
         }
 
-        let player_charge = if player.charge > 10.0 {
+        let player_charge = if player.charge > 60.0 {
             1.0
         } else if player.charge > 0.0 {
-            0.2
+            player.charge / 60.0
         } else {
             0.0
         };
         // smooth interpolation between 0 and 1
-        let alpha = 0.99;
+        let alpha = 0.96;
         glitch_area_visibility.visibility =
             glitch_area_visibility.visibility * alpha + player_charge * (1.0 - alpha);
     }
