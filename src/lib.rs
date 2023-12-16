@@ -176,7 +176,7 @@ impl State {
         ));
         let box_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
             &device,
-            [0.0, 1.0, 1.0],
+            [0.2, 0.2, 0.2],
             initial_instance_buffer_size as usize,
         ));
         let trigger_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(

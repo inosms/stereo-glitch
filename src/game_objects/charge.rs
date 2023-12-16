@@ -190,7 +190,7 @@ pub fn charge_recharge_system(
             for player_entity in triggering_player_entity {
                 if let Ok(mut player) = player_query.get_mut(*player_entity) {
                     player.charge = (player.charge.max(0.0) + charge_added).min(100.0);
-                    if let Ok(mut ghost) = ghost_query.get_mut(charge.spawned_ghost.unwrap()) {
+                    if let Some(Ok(mut ghost)) = charge.spawned_ghost.map(|g| ghost_query.get_mut(g)) {
                         ghost.initiate_despawn();
                     }
                     charge.spawned_ghost = None;
