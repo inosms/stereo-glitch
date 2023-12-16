@@ -16,6 +16,8 @@ pub struct StereoCamera {
     /// This is the distance between the left and right eye
     /// The left eye is at -eye_distance/2 and the right eye is at eye_distance/2
     eye_distance: f32,
+
+    eye_distance_factor: f32,
 }
 
 #[rustfmt::skip]
@@ -32,8 +34,8 @@ impl StereoCamera {
         let looking_vec = (self.target - self.eye).normalize();
         let eye_displacement_direction = looking_vec.cross(cgmath::Vector3::unit_z());
 
-        let left_eye = self.eye - eye_displacement_direction * self.eye_distance * 0.5;
-        let right_eye = self.eye + eye_displacement_direction * self.eye_distance * 0.5;
+        let left_eye = self.eye - eye_displacement_direction * self.eye_distance * self.eye_distance_factor * 0.5;
+        let right_eye = self.eye + eye_displacement_direction * self.eye_distance * self.eye_distance_factor * 0.5;
 
         let left_view = cgmath::Matrix4::look_at_rh(left_eye, self.target, self.up);
         let right_view = cgmath::Matrix4::look_at_rh(right_eye, self.target, self.up);
@@ -65,7 +67,12 @@ impl StereoCamera {
             znear,
             zfar,
             eye_distance,
+            eye_distance_factor: 0.0,
         }
+    }
+
+    pub fn set_eye_distance_factor(&mut self, eye_distance_factor: f32) {
+        self.eye_distance_factor = eye_distance_factor;
     }
 
     /// Set the eye distance in world space units

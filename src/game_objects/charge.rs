@@ -6,6 +6,8 @@ use bevy_ecs::{
 use cgmath::{InnerSpace, Vector3, One};
 
 
+use crate::stereo_camera::StereoCamera;
+
 use super::{
     player::Player,
     position::{self, Position},
@@ -233,6 +235,7 @@ pub fn player_charge_depletion_system(
     mut time_keeper: ResMut<TimeKeeper>,
     mut player_query: Query<(&mut Player, &Position)>,
     mut glitch_area_visibility: ResMut<GlitchAreaVisibility>,
+    mut stereo_camera: ResMut<StereoCamera>,
 ) {
     // Only deplete charge if we are in a physics tick
     // Otherwise the physics system will be frame rate dependent
@@ -264,5 +267,7 @@ pub fn player_charge_depletion_system(
         let alpha = 0.96;
         glitch_area_visibility.visibility =
             glitch_area_visibility.visibility * alpha + player_charge * (1.0 - alpha);
+
+        stereo_camera.set_eye_distance_factor(glitch_area_visibility.visibility);
     }
 }

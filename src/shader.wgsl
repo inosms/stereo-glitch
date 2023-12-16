@@ -134,7 +134,7 @@ fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
 
     var xy_offset = 0.0;
     for (var i = -2; i < 3; i = i + 1) {
-        xy_offset = xy_offset + simplexNoise2(vec2f(95.5498 + x, y + 95.5498) * pow(2.0, f32(i)) + vec2f(glitch_area.time * 0.08, glitch_area.time * 0.04));
+        xy_offset = xy_offset + simplexNoise2(vec2f(95.5498 + x, y + 95.5498) * pow(2.0, f32(i)) + vec2f(glitch_area.time * 0.005, glitch_area.time * 0.005));
     }
 
     var r = 0.0;
@@ -144,12 +144,12 @@ fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
     // layered noise 
     let steps = 6;
     for (var i = 0; i < steps; i = i + 1) {
-        r = r + (steps(simplexNoise2(vec2f(glitch_area.time * 0.08, glitch_area.time * 0.04) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i))) + 0.2, 64.0)) * pow(2.0, f32(-i) * 0.5) * 0.6;
-        g = g + (steps(simplexNoise2(vec2f(glitch_area.time * 0.08, glitch_area.time * 0.04) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i)) - vec2f(1.0,1.0) * glitch_area.visibility * 0.15) + 0.2, 64.0))* pow(2.0, f32(-i) * 0.5) * 0.4;
-        b = b + (steps(simplexNoise2(vec2f(glitch_area.time * 0.08, glitch_area.time * 0.04) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i)) - vec2f(1.0,1.0) * glitch_area.visibility * 0.3) + 0.2, 64.0))* pow(2.0, f32(-i) * 0.5) * 0.6;
+        r = r + (steps(simplexNoise2(vec2f(glitch_area.time * 0.005, glitch_area.time * 0.005) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i))) + 0.2, 64.0)) * pow(2.0, f32(-i) * 0.5) * 0.6;
+        g = g + (steps(simplexNoise2(vec2f(glitch_area.time * 0.005, glitch_area.time * 0.005) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i)) - vec2f(1.0,1.0) * glitch_area.visibility * 0.15) + 0.2, 64.0))* pow(2.0, f32(-i) * 0.5) * 0.4;
+        b = b + (steps(simplexNoise2(vec2f(glitch_area.time * 0.005, glitch_area.time * 0.005) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i)) - vec2f(1.0,1.0) * glitch_area.visibility * 0.3) + 0.2, 64.0))* pow(2.0, f32(-i) * 0.5) * 0.6;
     }
 
-    return vec4<f32>(r * glitch_area.visibility, g * glitch_area.visibility, b * glitch_area.visibility, 1.0);
+    return vec4<f32>(r, g, b, 1.0);
 }
 
 fn steps(input: f32, steps: f32) -> f32 {
