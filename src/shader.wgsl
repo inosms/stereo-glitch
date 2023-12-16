@@ -128,26 +128,6 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     }
 }
 
-fn not_smooth_random(input: f32) -> f32 {
-    return floor(sin(input * 9.410) * 1.2) 
-        + floor(sin(input * 2.3489) * 8.1)
-        + floor(sin(input * 4.3489  + glitch_area.time*0.01) * 3.1) 
-        + floor(sin(input * 19.3489 + glitch_area.time*0.02) * 2.1) 
-        + floor(sin(input * 59.3489  + glitch_area.time*0.0421) * 1.1) 
-        + floor(sin(input * 7.123) * 2.2);
-}
-
-fn smooth_random(input: f32) -> f32 {
-     return sin(floor(input * 23.410)) * 1.2
-        + sin(floor(input * 27.3489 + glitch_area.time*0.043)) * 1.1
-        + sin(floor(input * 23.3489 + glitch_area.time*0.031)) * 1.1 
-        + sin(floor(input * 33.3489)) * 2.1 
-        + sin(floor(input * 239.3489)) * 0.1
-        + sin(floor(input * 439.3489)) * 0.1  
-        + sin(floor(input * 139.3489)) * 0.1  
-        + sin(floor(input * 80.3489)) * 1.1;
-}
-
 fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
     let x = steps(uv.x, 64.0);
     let y = steps(uv.y, 64.0);
@@ -164,12 +144,12 @@ fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
     // layered noise 
     let steps = 16;
     for (var i = 0; i < steps; i = i + 1) {
-        r = r + (steps(simplexNoise2(vec2f(glitch_area.time * 0.08, glitch_area.time * 0.04) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i))) + 0.2, 64.0)) * pow(2.0, f32(-i) * 0.5) * 0.6; // * (1.0 / f32(steps))
-        g = g + (steps(simplexNoise2(vec2f(glitch_area.time * 0.08, glitch_area.time * 0.04) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i)) - vec2f(1.0,1.0) * glitch_area.visibility * 0.15) + 0.2, 64.0))* pow(2.0, f32(-i) * 0.5) * 0.4; // * (1.0 / f32(steps))
-        b = b + (steps(simplexNoise2(vec2f(glitch_area.time * 0.08, glitch_area.time * 0.04) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i)) - vec2f(1.0,1.0) * glitch_area.visibility * 0.3) + 0.2, 64.0))* pow(2.0, f32(-i) * 0.5) * 0.6; // * (1.0 / f32(ste6s))
+        r = r + (steps(simplexNoise2(vec2f(glitch_area.time * 0.08, glitch_area.time * 0.04) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i))) + 0.2, 64.0)) * pow(2.0, f32(-i) * 0.5) * 0.6;
+        g = g + (steps(simplexNoise2(vec2f(glitch_area.time * 0.08, glitch_area.time * 0.04) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i)) - vec2f(1.0,1.0) * glitch_area.visibility * 0.15) + 0.2, 64.0))* pow(2.0, f32(-i) * 0.5) * 0.4;
+        b = b + (steps(simplexNoise2(vec2f(glitch_area.time * 0.08, glitch_area.time * 0.04) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.05) * pow(2.0, f32(i)) - vec2f(1.0,1.0) * glitch_area.visibility * 0.3) + 0.2, 64.0))* pow(2.0, f32(-i) * 0.5) * 0.6;
     }
 
-    return vec4<f32>(r, g, b, 1.0);
+    return vec4<f32>(r * glitch_area.visibility, g * glitch_area.visibility, b * glitch_area.visibility, 1.0);
 }
 
 fn steps(input: f32, steps: f32) -> f32 {
