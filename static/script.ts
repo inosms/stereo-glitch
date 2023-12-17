@@ -87,8 +87,8 @@ export const INITIAL_LEVEL = "N+W N+W N+W N+W N+W N+W\n" +
     "N+W N     N     N     N     N     N     N  N N+W\n" +
     "N+W N     N     N     N     N     N     N  N N+W\n" +
     "N+W N     N     N     N     N     N     N  N N+W\n" +
-    "N+W N     N     N     N+G     N+G     N     N  N N+W\n" +
-    "N+W N     N     N     N+G     N+G     N     N  N N+W\n" +
+    "N+W N     N     N     N     N     N     N  N N+W\n" +
+    "N+W N     N     N     N+G(GOAL)     N     N     N  N N+W\n" +
     "N+W N+W     N+W     N+W     N+W     N+W     N+W     N+W  N+W N+W\n";
 
 var semi = nipplejs.create({

@@ -117,7 +117,7 @@ impl PhysicsSystem {
             | Block::Trigger
             | Block::Charge
             | Block::StaticEnemy
-            | Block::Goal => RigidBodyBuilder::fixed(),
+            | Block::Goal(_) => RigidBodyBuilder::fixed(),
             Block::Empty => unreachable!(),
             Block::Player => {
                 // make the player heaver to avoid bouncing
@@ -154,7 +154,7 @@ impl PhysicsSystem {
             Block::Player | Block::LinearEnemy(_) => {
                 Some(ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build())
             }
-            Block::Empty | Block::Charge | Block::Trigger | Block::Goal => None,
+            Block::Empty | Block::Charge | Block::Trigger | Block::Goal(_) => None,
         };
         let collider_handle = collider.map(|collider| {
             self.collider_set

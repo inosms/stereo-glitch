@@ -9,3 +9,5 @@ pub mod physics_body;
 pub mod glitch_area;
 pub mod input;
 pub mod movable;
+pub mod goal;
+pub mod game_system_commands;

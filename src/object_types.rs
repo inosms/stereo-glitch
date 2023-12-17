@@ -31,7 +31,7 @@ pub enum Block {
     /// A door can be opened by a trigger with the given ID
     Door(Id),
     Empty,
-    Goal,
+    Goal(String),
     Wall,
     Box(BoxType),
     Trigger,
@@ -77,7 +77,7 @@ impl Block {
             Block::Player => BlockType::Player,
             Block::Door(_) => BlockType::Door,
             Block::Empty => BlockType::Empty,
-            Block::Goal => BlockType::Goal,
+            Block::Goal(_) => BlockType::Goal,
             Block::Wall => BlockType::Wall,
             Block::Box(_) => BlockType::Box,
             Block::Trigger => BlockType::Trigger,
@@ -93,12 +93,12 @@ impl Block {
             Block::Player => 1.0,
             Block::Door(_) => 1.0,
             Block::Empty => 1.0,
-            Block::Goal => 1.0,
+            Block::Goal(_) => 1.0,
             Block::Wall => 1.0,
             Block::Box(_) => 1.0,
             Block::Trigger => 0.0001,
             Block::Charge => 1.0,
-            Block::StaticEnemy => 1.5,
+            Block::StaticEnemy => 1.0,
             Block::LinearEnemy(_) => 1.0,
         }
     }

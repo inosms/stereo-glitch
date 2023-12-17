@@ -10,9 +10,7 @@ use nom::multi::{separated_list0, separated_list1};
 
 use nom::IResult;
 
-use crate::object_types::{Block, Id, LinearEnemyDirection, BoxType};
-
-
+use crate::object_types::{Block, BoxType, Id, LinearEnemyDirection};
 
 #[derive(Debug, PartialEq)]
 pub struct Cell {
@@ -75,13 +73,16 @@ impl ParsedLevel {
         }
 
         // Every door must reference an existing trigger
-        let trigger_ids = level.iter_cells().flat_map(|(_pos, cell)| {
-            cell.block_stack_iter()
-                .filter_map(|(block, id)| match block {
-                    Block::Trigger => id.clone(),
-                    _ => None,
-                })
-        }).collect::<HashSet<_>>();
+        let trigger_ids = level
+            .iter_cells()
+            .flat_map(|(_pos, cell)| {
+                cell.block_stack_iter()
+                    .filter_map(|(block, id)| match block {
+                        Block::Trigger => id.clone(),
+                        _ => None,
+                    })
+            })
+            .collect::<HashSet<_>>();
         for (_pos, cell) in level.iter_cells() {
             for (_block_type, _id) in cell.block_stack_iter() {
                 if let Block::Door(id) = _block_type {
@@ -190,6 +191,19 @@ fn parse_door(input: &str) -> IResult<&str, Block> {
     Ok((rest, Block::Door(id)))
 }
 
+// upper letter (A-Z)*
+fn parse_goal_text(input: &str) -> IResult<&str, String> {
+    let (rest, text) = take_while_m_n(1, 64, |c: char| c.is_ascii_uppercase())(input)?;
+    Ok((rest, text.to_string()))
+}
+
+fn parse_goal(input: &str) -> IResult<&str, Block> {
+    let (rest, _) = tag("G(")(input)?;
+    let (rest, text) = parse_goal_text(rest)?;
+    let (rest, _) = tag(")")(rest)?;
+    Ok((rest, Block::Goal(text)))
+}
+
 // a block is always of the form of a single character and an optional ID
 // e.g. N, P, D, X, G, W, N#abc123, etc.
 fn parse_block(input: &str) -> IResult<&str, (Block, Option<Id>)> {
@@ -198,7 +212,7 @@ fn parse_block(input: &str) -> IResult<&str, (Block, Option<Id>)> {
         value(Block::Player, tag("P")),
         parse_door,
         value(Block::Empty, tag("X")),
-        value(Block::Goal, tag("G")),
+        parse_goal,
         value(Block::Wall, tag("W")),
         value(Block::Box(BoxType::Free), tag("BF")),
         value(Block::Box(BoxType::XAxis), tag("BX")),
@@ -305,10 +319,7 @@ mod tests {
                         },
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![
-                                (Block::FloorNormal, None),
-                                (Block::Player, None)
-                            ]
+                            block_stack: vec![(Block::FloorNormal, None), (Block::Player, None)]
                         },
                         Cell {
                             is_glitch_area: false,
@@ -344,10 +355,7 @@ mod tests {
                         },
                         Cell {
                             is_glitch_area: false,
-                            block_stack: vec![
-                                (Block::FloorNormal, None),
-                                (Block::Player, None)
-                            ]
+                            block_stack: vec![(Block::FloorNormal, None), (Block::Player, None)]
                         },
                         Cell {
                             is_glitch_area: false,

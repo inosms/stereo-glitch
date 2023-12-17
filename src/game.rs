@@ -10,12 +10,9 @@ use crate::{
     object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input, movable::{Movable, move_movable_object_with_player_system, animate_moving_objects_system}},
+    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input, movable::{Movable, move_movable_object_with_player_system, animate_moving_objects_system}, goal::{Goal, check_goal_reached_system}, game_system_commands::{GameSystemCommands, GameSystemCommand}},
 };
 
-
-#[derive(Component)]
-struct Goal;
 
 #[derive(Component)]
 struct Door {
@@ -271,6 +268,9 @@ impl GameWorld {
             visibility: 0.0,
             glitch_cells: HashSet::new(),
         });
+        self.world.insert_resource(
+            GameSystemCommands::new(),
+        );
         // The physics system needs to run after the player system so that the player can move
         self.schedule.add_systems(
             (
@@ -290,6 +290,7 @@ impl GameWorld {
         self.schedule.add_systems(move_camera_system);
         self.schedule.add_systems(check_player_dead_system);
         self.schedule.add_systems(door_system);
+        self.schedule.add_systems(check_goal_reached_system);
     }
 
     pub fn update(&mut self) {
@@ -305,6 +306,14 @@ impl GameWorld {
 
         if dead_player > 0 {
             self.reset_level();
+        }
+
+        while let Some(command) = self.world.get_resource_mut::<GameSystemCommands>().unwrap().commands.pop() {
+            match command {
+                GameSystemCommand::LoadLevel(level) => {
+                    self.load_level(level);
+                }            
+            }
         }
     }
 
@@ -384,7 +393,7 @@ impl GameWorld {
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.25, 0.25, 0.5, 0.0, 0.0, 0.0),
                     ),
-                    BlockType::StaticEnemy | BlockType::LinearEnemy => Some(
+                    BlockType::StaticEnemy | BlockType::LinearEnemy | BlockType::Goal => Some(
                         self.world
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.55, 0.55, 0.55, 0.0, 0.0, 0.0),
@@ -404,8 +413,18 @@ impl GameWorld {
                             charge: 0.0,
                         });
                     }
-                    Block::Goal => {
-                        entity.insert(Goal);
+                    Block::Goal(text) => {
+                        entity.insert((
+                            Goal {
+                                goal_level_text: text.clone(),
+                            },
+                            Sensor {
+                                collider: sensor_trigger.unwrap(),
+                                triggered: false,
+                                id: id.clone(),
+                                triggered_by: HashSet::new(),
+                            },
+                        ));
                     }
                     Block::Door(trigger_id) => {
                         entity.insert(Door {
