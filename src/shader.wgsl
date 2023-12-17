@@ -152,7 +152,7 @@ fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
     r = r * r_visibility;
     g = g * g_visibility;
     b = b * b_visibility;
-    return vec4<f32>(steps(r*r,32.0), steps(g*g,32.0), steps(b*b,32.0), 1.0);
+    return vec4<f32>(r*r, g*g, b*b, 1.0);
 }
 
 // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39
