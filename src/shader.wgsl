@@ -129,88 +129,33 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 }
 
 fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
-    let x = steps(uv.x, 40.0);
-    let y = steps(uv.y, 40.0);
+    let step_num = 24.0;
+    let x = steps(uv.x, step_num) + glitch_area.time * 0.005;
+    var y = steps(uv.y, step_num) + glitch_area.time * 0.005;
+    let y_offset = noise(vec2f(x,y) * 10.0);
+    y = y + y_offset * 0.1;
+ 
+    var r = noise(vec2f(x,y) * 3.0) * 0.8;
+    var g = noise(vec2f(x,y) * 3.0 + vec2f(0.1, 0.1) * glitch_area.visibility * 7.0) * 0.8;
+    var b = noise(vec2f(x,y) * 3.0 + vec2f(0.2, 0.2) * glitch_area.visibility * 7.0) * 0.8;
 
-    let xy_offset = simplexNoise2(vec2f(95.5498 + x, y + 95.5498) * 0.5 + vec2f(glitch_area.time * 0.05, glitch_area.time * 0.05));
-    
-    var r = 0.0;
-    var g = 0.0;
-    var b = 0.0;
+    r = r + noise(vec2f(x,y) * 15.0) * 0.6;
+    g = g + noise(vec2f(x,y) * 15.0 + vec2f(0.1, 0.1) * glitch_area.visibility * 7.0) * 0.6;
+    b = b + noise(vec2f(x,y) * 15.0 + vec2f(0.2, 0.2) * glitch_area.visibility * 7.0) * 0.6;
 
-    // layered noise 
-    let steps = 2;
-    for (var i = 1; i <= steps; i = i + 1) {
-        r = r + (steps(simplexNoise2(vec2f(glitch_area.time * 0.05, glitch_area.time * 0.05) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.1) * pow(3.5, f32(i))) + 0.2, 64.0)) * pow(2.0, f32(-i) * 0.5) * 1.1;
-        g = g + (steps(simplexNoise2(vec2f(glitch_area.time * 0.05, glitch_area.time * 0.05) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.1) * pow(3.5, f32(i)) - vec2f(1.0,1.0) * glitch_area.visibility * 0.15) + 0.2, 64.0))* pow(2.0, f32(-i) * 0.5) * 1.1;
-        b = b + (steps(simplexNoise2(vec2f(glitch_area.time * 0.05, glitch_area.time * 0.05) + vec2f(95.5498 + x, y + 95.5498 + xy_offset * 0.1) * pow(3.5, f32(i)) - vec2f(1.0,1.0) * glitch_area.visibility * 0.3) + 0.2, 64.0))* pow(2.0, f32(-i) * 0.5) * 1.1;
-    }
-
-    return vec4<f32>(r, g, b, 1.0);
-}
-
-fn steps(input: f32, steps: f32) -> f32 {
-    return floor(input * steps) / steps;
+    return vec4<f32>(steps(r*r,32.0), steps(g*g,32.0), steps(b*b,32.0), 1.0);
 }
 
 // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39
-//  MIT License. © Ian McEwan, Stefan Gustavson, Munrocket, Johan Helsing
-//
-fn mod289(x: vec2f) -> vec2f {
-    return x - floor(x * (1. / 289.)) * 289.;
+fn noise(n: vec2f) -> f32 {
+    let d = vec2f(0., 1.);
+    let b = floor(n);
+    let f = smoothstep(vec2f(0.), vec2f(1.), fract(n));
+    return mix(mix(rand22(b), rand22(b + d.yx), f.x), mix(rand22(b + d.xy), rand22(b + d.yy), f.x), f.y) - 0.1;
 }
 
-fn mod289_3(x: vec3f) -> vec3f {
-    return x - floor(x * (1. / 289.)) * 289.;
-}
+fn rand22(n: vec2f) -> f32 { return fract(sin(dot(n, vec2f(12.9898, 4.1414))) * 43758.5453); }
 
-fn permute3(x: vec3f) -> vec3f {
-    return mod289_3(((x * 34.) + 1.) * x);
-}
-
-//  MIT License. © Ian McEwan, Stefan Gustavson, Munrocket
-fn simplexNoise2(v: vec2f) -> f32 {
-    let C = vec4(
-        0.211324865405187, // (3.0-sqrt(3.0))/6.0
-        0.366025403784439, // 0.5*(sqrt(3.0)-1.0)
-        -0.577350269189626, // -1.0 + 2.0 * C.x
-        0.024390243902439 // 1.0 / 41.0
-    );
-
-    // First corner
-    var i = floor(v + dot(v, C.yy));
-    let x0 = v - i + dot(i, C.xx);
-
-    // Other corners
-    var i1 = select(vec2(0., 1.), vec2(1., 0.), x0.x > x0.y);
-
-    // x0 = x0 - 0.0 + 0.0 * C.xx ;
-    // x1 = x0 - i1 + 1.0 * C.xx ;
-    // x2 = x0 - 1.0 + 2.0 * C.xx ;
-    var x12 = x0.xyxy + C.xxzz;
-    x12.x = x12.x - i1.x;
-    x12.y = x12.y - i1.y;
-
-    // Permutations
-    i = mod289(i); // Avoid truncation effects in permutation
-
-    var p = permute3(permute3(i.y + vec3(0., i1.y, 1.)) + i.x + vec3(0., i1.x, 1.));
-    var m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), vec3(0.));
-    m *= m;
-    m *= m;
-
-    // Gradients: 41 points uniformly over a line, mapped onto a diamond.
-    // The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)
-    let x = 2. * fract(p * C.www) - 1.;
-    let h = abs(x) - 0.5;
-    let ox = floor(x + 0.5);
-    let a0 = x - ox;
-
-    // Normalize gradients implicitly by scaling m
-    // Approximation of: m *= inversesqrt( a0*a0 + h*h );
-    m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
-
-    // Compute final noise value at P
-    let g = vec3(a0.x * x0.x + h.x * x0.y, a0.yz * x12.xz + h.yz * x12.yw);
-    return 130. * dot(m, g);
+fn steps(input: f32, steps: f32) -> f32 {
+    return floor(input * steps) / steps;
 }
