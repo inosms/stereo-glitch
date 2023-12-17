@@ -130,6 +130,9 @@ fn check_player_dead_system(mut query: Query<(&Position, &mut Player), With<Play
         if position.position.z < -1.0 {
             player.dead = true;
         }
+        if player.charge < 0.0 {
+            player.dead = true;
+        }
     }
 }
 

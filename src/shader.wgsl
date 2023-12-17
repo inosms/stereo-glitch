@@ -143,6 +143,13 @@ fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
     g = g + noise(vec2f(x,y) * 15.0 + vec2f(0.1, 0.1) * glitch_area.visibility * 7.0) * 0.6;
     b = b + noise(vec2f(x,y) * 15.0 + vec2f(0.2, 0.2) * glitch_area.visibility * 7.0) * 0.6;
 
+    let r_visibility = max(glitch_area.visibility, 0.2);
+    let g_visibility = glitch_area.visibility;
+    let b_visibility = glitch_area.visibility;
+
+    r = r * r_visibility;
+    g = g * g_visibility;
+    b = b * b_visibility;
     return vec4<f32>(steps(r*r,32.0), steps(g*g,32.0), steps(b*b,32.0), 1.0);
 }
 
