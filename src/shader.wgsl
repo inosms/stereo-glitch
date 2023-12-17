@@ -120,11 +120,13 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let u = in.world_space_pos.x / w;
     let v = in.world_space_pos.y * -1.0 / h;
 
-    let glitch_mask_color = textureSample(t_glitch_area, s_glitch_area, vec2<f32>(u,v));
-    if( glitch_mask_color.r > 0.5 ) {
+    var glitch_mask_alpha = textureSample(t_glitch_area, s_glitch_area, vec2<f32>(u,v)).r;
+    glitch_mask_alpha = glitch_mask_alpha * glitch_mask_alpha;
+    if( glitch_mask_alpha > 0.95 ) {
         return vec4<f32>(in.color, 1.0);
     } else {
-        return random_pattern(vec2<f32>(in.ndc_space_left_eye.x, in.ndc_space_left_eye.y));
+        // interpolate 
+        return glitch_mask_alpha * vec4<f32>(in.color, 1.0) + (1.0 - glitch_mask_alpha) * random_pattern(vec2<f32>(in.ndc_space_left_eye.x, in.ndc_space_left_eye.y));
     }
 }
 

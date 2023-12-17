@@ -123,43 +123,31 @@ impl ParsedLevel {
     /// Converts a level into raw RGBA8 data
     pub fn to_glitch_raw_rgba8(&self) -> Vec<u8> {
         // Create a new raw texture with the same dimensions as the level
-        let mut raw_data = vec![
-            255;
-            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT
-                * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT
-                * 4
-        ];
+        let mut image_buffer = image::ImageBuffer::new(
+            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
+            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
+        );
 
+        image_buffer.fill(255);
+        
         for ((x, y), cell) in self.iter_cells() {
-            let index = (x + y * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as i32) as usize * 4;
-
             // Set the glitch area to black and the rest to white
-            let color = if cell.is_glitch_area() { 0 } else { 255 };
+            let color = if cell.is_glitch_area() { 0 } else { 255u8 };
 
-            raw_data[index] = color;
-            raw_data[index + 1] = color;
-            raw_data[index + 2] = color;
-            raw_data[index + 3] = 255;
+            image_buffer.put_pixel(x as u32, y as u32, image::Rgba([color, color, color, 255]));
         }
+       
+        // 4x upscaling
+        let upsized = image::DynamicImage::ImageRgba8(image_buffer).resize(
+            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32 * 4,
+            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32 * 4,
+            image::imageops::FilterType::Nearest,
+        );
 
-        // debug print
-        let (w, h, _d) = self.dimensions();
-        let mut output = String::new();
-        for y in 0..h {
-            for x in 0..w {
-                let index = (x + y * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT) as usize * 4;
-                let color = raw_data[index];
-                if color == 0 {
-                    output.push('X');
-                } else {
-                    output.push('.');
-                }
-            }
-            output.push('\n');
-        }
-        log::info!("Glitch area:\n{}", output);
+        // blur 
+        let blurred = upsized.blur(3.0);
 
-        raw_data
+        blurred.to_rgba8().into_raw()
     }
 }
 

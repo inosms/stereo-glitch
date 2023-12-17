@@ -378,10 +378,10 @@ impl State {
                 0;
                 ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT
                     * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT
-                    * 4
+                    * 4 * 4 * 4
             ],
-            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
-            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
+            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32 * 4,
+            ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32 * 4,
             None,
         );
 
@@ -522,8 +522,8 @@ impl State {
                     self.glitch_area_texture.write_rgba8(
                         &self.queue,
                         &parsed_level.to_glitch_raw_rgba8(),
-                        ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
-                        ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32,
+                        ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32 * 4,
+                        ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32 * 4,
                     );
                     self.game_world.load_level(parsed_level);
                 }
