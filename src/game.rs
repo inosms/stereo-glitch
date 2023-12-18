@@ -10,7 +10,7 @@ use crate::{
     object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input, movable::{Movable, move_movable_object_with_player_system, animate_moving_objects_system}, goal::{Goal, check_goal_reached_system}, game_system_commands::{GameSystemCommands, GameSystemCommand}},
+    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input, movable::{Movable, move_movable_object_with_player_system, animate_moving_objects_system}, goal::{Goal, check_goal_reached_system}, game_system_commands::{GameSystemCommands, GameSystemCommand}, checkpoint::{Checkpoint, self, set_checkpoint_system}},
 };
 
 
@@ -291,6 +291,7 @@ impl GameWorld {
         self.schedule.add_systems(check_player_dead_system);
         self.schedule.add_systems(door_system);
         self.schedule.add_systems(check_goal_reached_system);
+        self.schedule.add_systems(set_checkpoint_system);
     }
 
     pub fn update(&mut self) {
@@ -312,7 +313,13 @@ impl GameWorld {
             match command {
                 GameSystemCommand::LoadLevel(level) => {
                     self.load_level(level);
-                }            
+                }
+                GameSystemCommand::SetCheckpoint(id) => {
+                    log::info!("Set checkpoint {:?}", id);
+                    self.level.as_mut().map(|level|{
+                        level.set_checkpoint(id);
+                    });
+                }
             }
         }
     }
@@ -393,7 +400,7 @@ impl GameWorld {
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.25, 0.25, 0.5, 0.0, 0.0, 0.0),
                     ),
-                    BlockType::StaticEnemy | BlockType::LinearEnemy | BlockType::Goal => Some(
+                    BlockType::StaticEnemy | BlockType::LinearEnemy | BlockType::Goal | BlockType::Checkpoint => Some(
                         self.world
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.55, 0.55, 0.55, 0.0, 0.0, 0.0),
@@ -492,6 +499,17 @@ impl GameWorld {
                         ));
                     }
                     Block::Empty => {}
+                    Block::Checkpoint => {
+                        entity.insert((
+                            Sensor {
+                                collider: sensor_trigger.unwrap(),
+                                triggered: false,
+                                id: id.clone(),
+                                triggered_by: HashSet::new(),
+                            },
+                            Checkpoint::new(id.clone().unwrap()),
+                        ));
+                    }
                 }
                 // we need that later
                 let added_entity_id = entity.id();

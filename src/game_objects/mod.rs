@@ -11,3 +11,4 @@ pub mod input;
 pub mod movable;
 pub mod goal;
 pub mod game_system_commands;
+pub mod checkpoint;

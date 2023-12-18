@@ -1,6 +1,29 @@
+use rand::Rng;
+
 #[derive(Debug, PartialEq, Hash, Eq, Clone)]
 pub struct Id {
     id: String,
+}
+
+impl Id {
+    pub fn new(id: String) -> Self {
+        Self { id }
+    }
+
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn random() -> Self {
+        let mut rng = rand::thread_rng();
+        let id: String = std::iter::repeat(())
+            .map(|()| rng.sample(rand::distributions::Alphanumeric))
+            .take(10)
+            .map(char::from)
+            .collect();
+
+        Self { id }
+    }
 }
 
 impl TryFrom<&str> for Id {
@@ -38,6 +61,7 @@ pub enum Block {
     Charge,
     StaticEnemy,
     LinearEnemy(LinearEnemyDirection),
+    Checkpoint,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
@@ -68,6 +92,7 @@ pub enum BlockType {
     Charge,
     StaticEnemy,
     LinearEnemy,
+    Checkpoint,
 }
 
 impl Block {
@@ -84,6 +109,7 @@ impl Block {
             Block::Charge => BlockType::Charge,
             Block::StaticEnemy => BlockType::StaticEnemy,
             Block::LinearEnemy(_) => BlockType::LinearEnemy,
+            Block::Checkpoint => BlockType::Checkpoint,
         }
     }
 
@@ -100,6 +126,7 @@ impl Block {
             Block::Charge => 1.0,
             Block::StaticEnemy => 1.0,
             Block::LinearEnemy(_) => 1.0,
+            Block::Checkpoint => 1.0,
         }
     }
 }

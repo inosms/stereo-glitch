@@ -24,7 +24,7 @@ export const INITIAL_LEVEL = "N+W N+W N+W N+W N+W N+W\n" +
     "N+W N     N+W     N     N     N     N   N+W\n" +
     "N+W N+T#t2 N+W    N     N     N     N   N+W\n" +
     "N+W N+W   N+W     N+W   N+D(#t2) N+W   N+W N+W\n" +
-    "N+W _N   _N    _N     N+C     N+C     N+C N+W\n" +
+    "N+W _N   _N    _N     N+S     N+C     N+C N+W\n" +
     "N+W _N   _N    _N     N+C     N+C     N+C   N+W\n" +
     "N+W _N   _N    _N    _N+C    _N+C    _N+C   N+W\n" +
     "N+W _N   _N    _N    _N    _N    _N   N+W\n" +
@@ -58,7 +58,7 @@ export const INITIAL_LEVEL = "N+W N+W N+W N+W N+W N+W\n" +
     "N+W N     N     N     N     N     N     N  N+C N+W\n" +
     "N+W N     N     N     N     N     N     N+C  N+C N+W\n" +
     "N+W N+W   N+W     N+W   N+W N+W   N+W N+W N+C N+W\n" +
-    "N+W N     N     N     N     N     N     N  N N+W\n" +
+    "N+W N     N     N     N     N     N+S     N  N N+W\n" +
     "N+W N     N+BY     N     N     N     N     N+E1  N+E1 N+W\n" +
     "N+W N     N     N     N     N     N     N  N N+W\n" +
     "N+W N+E2X N     N     N+W   N     N     N  N N+W\n" +
@@ -71,7 +71,7 @@ export const INITIAL_LEVEL = "N+W N+W N+W N+W N+W N+W\n" +
     "N+W N+E2X N     N     N+W   N     N     N  N N+W\n" +
     "N+W N     N     N     N+W   N     N     N  N N+W\n" +
     "N+W N     N+T#t3 N     N+W  N+W   N+D(#t3)   N+W N+W N+W\n" +
-    "N+W N+W   N+W     N+W   N+W     N+C     N+C     N+C  N N+W\n" +
+    "N+W N+W   N+W     N+W   N+W     N+C     N+S     N+C  N N+W\n" +
     "N+W N+W   N+W     N+W   N+W     N+C     N+C     N+C  N N+W\n" +
     "_N+W _N     _N     _N     _N     _N     _N     _N   _N _N+W\n" +
     "_N+W _N     _N     _N+E2X     _N     _N     _N     _N   _N _N+W\n" +

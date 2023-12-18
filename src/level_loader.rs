@@ -23,6 +23,10 @@ impl Cell {
         self.block_stack.iter()
     }
 
+    pub fn block_stack_iter_mut(&mut self) -> impl Iterator<Item = &mut (Block, Option<Id>)> {
+        self.block_stack.iter_mut()
+    }
+
     pub fn is_glitch_area(&self) -> bool {
         self.is_glitch_area
     }
@@ -106,6 +110,14 @@ impl ParsedLevel {
         })
     }
 
+    pub fn iter_cells_mut(&mut self) -> impl Iterator<Item = ((i32, i32), &mut Cell)> {
+        self.cells.iter_mut().enumerate().flat_map(|(y, row)| {
+            row.iter_mut()
+                .enumerate()
+                .map(move |(x, cell)| ((x as i32, y as i32), cell))
+        })
+    }
+
     /// Returns the dimensions of the level in the form of (x, y, z)
     pub fn dimensions(&self) -> (usize, usize, usize) {
         let y = self.cells.len();
@@ -129,14 +141,14 @@ impl ParsedLevel {
         );
 
         image_buffer.fill(255);
-        
+
         for ((x, y), cell) in self.iter_cells() {
             // Set the glitch area to black and the rest to white
             let color = if cell.is_glitch_area() { 0 } else { 255u8 };
 
             image_buffer.put_pixel(x as u32, y as u32, image::Rgba([color, color, color, 255]));
         }
-       
+
         // 4x upscaling
         let upsized = image::DynamicImage::ImageRgba8(image_buffer).resize(
             ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32 * 4,
@@ -144,10 +156,25 @@ impl ParsedLevel {
             image::imageops::FilterType::Nearest,
         );
 
-        // blur 
+        // blur
         let blurred = upsized.blur(3.0);
 
         blurred.to_rgba8().into_raw()
+    }
+
+    /// Converts the given block to a player block and the given player block to a Checkpoint block
+    pub(crate) fn set_checkpoint(&mut self, id: Id) {
+        for (_pos, cell) in self.iter_cells_mut() {
+            for (block, block_id_opt) in cell.block_stack_iter_mut() {
+                if let Some(block_id) = block_id_opt {
+                    if *block_id == id {
+                        *block = Block::Player;
+                    } else if *block == Block::Player {
+                        *block = Block::Checkpoint;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -211,10 +238,11 @@ fn parse_block(input: &str) -> IResult<&str, (Block, Option<Id>)> {
         value(Block::StaticEnemy, tag("E1")),
         value(Block::LinearEnemy(LinearEnemyDirection::XAxis), tag("E2X")),
         value(Block::LinearEnemy(LinearEnemyDirection::YAxis), tag("E2Y")),
+        value(Block::Checkpoint, tag("S")),
     ))(input)?;
 
     let (rest, id) = opt(parse_id)(rest)?;
-    Ok((rest, (block, id)))
+    Ok((rest, (block, id.or_else(|| Some(Id::random())))))
 }
 
 // A cell is of the form [_](N|P|D|X|G|W|...)(#[a-zA-Z0-9]{1,10})?

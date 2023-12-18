@@ -1,4 +1,4 @@
-use game_objects::{glitch_area::GlitchAreaVisibilityDTO, time_keeper::TimeKeeper};
+use game_objects::{glitch_area::GlitchAreaVisibilityDTO, time_keeper::TimeKeeper, checkpoint};
 use level_loader::ParsedLevel;
 use mesh::{InstanceRaw, Vertex};
 use object_types::BlockType;
@@ -211,6 +211,14 @@ impl State {
             1.0,
             initial_instance_buffer_size as usize,
         ));
+        let checkpoint_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
+            &device,
+            [0.0, 1.0, 1.0],
+            0.4,
+            0.4,
+            0.4,
+            initial_instance_buffer_size as usize,
+        ));
 
         let handle_store = HashMap::from_iter(vec![
             (BlockType::Wall, wall_mesh),
@@ -223,6 +231,7 @@ impl State {
             (BlockType::Charge, charge_mesh),
             (BlockType::StaticEnemy, static_enemy_mesh),
             (BlockType::LinearEnemy, linear_enemy_mesh),
+            (BlockType::Checkpoint, checkpoint_mesh),
         ]);
 
         let game_world = game::GameWorld::new(handle_store);
