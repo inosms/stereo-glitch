@@ -174,8 +174,8 @@ impl State {
         let player_model_texture_raw = include_bytes!("../models/player/player.png");
         let wall_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                include_bytes!("../models/wall/wall.obj"),
+                include_bytes!("../models/wall/wall.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -184,8 +184,8 @@ impl State {
         );
         let floor_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                include_bytes!("../models/floor1/floor1.obj"),
+                include_bytes!("../models/floor1/floor1.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
