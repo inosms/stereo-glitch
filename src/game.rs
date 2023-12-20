@@ -6,11 +6,10 @@ use rapier3d::geometry::ColliderHandle;
 
 use crate::{
     level_loader::{Cell, ParsedLevel},
-    mesh::Handle,
     object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input, movable::{Movable, move_movable_object_with_player_system, animate_moving_objects_system}, goal::{Goal, check_goal_reached_system}, game_system_commands::{GameSystemCommands, GameSystemCommand}, checkpoint::{Checkpoint, self, set_checkpoint_system}},
+    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input, movable::{Movable, move_movable_object_with_player_system, animate_moving_objects_system}, goal::{Goal, check_goal_reached_system}, game_system_commands::{GameSystemCommands, GameSystemCommand}, checkpoint::{Checkpoint, self, set_checkpoint_system}}, model::ModelHandle,
 };
 
 
@@ -49,7 +48,7 @@ pub struct GameWorld {
     world: World,
     schedule: Schedule,
 
-    handle_store: HashMap<BlockType, Handle>,
+    handle_store: HashMap<BlockType, ModelHandle>,
     level: Option<ParsedLevel>,
     camera_aspect: f32,
 }
@@ -234,7 +233,7 @@ fn move_linear_enemy_system(
 }
 
 impl GameWorld {
-    pub fn new(handle_store: HashMap<BlockType, Handle>) -> Self {
+    pub fn new(handle_store: HashMap<BlockType, ModelHandle>) -> Self {
         let mut game_world = Self {
             world: World::default(),
             schedule: Schedule::default(),
@@ -570,13 +569,13 @@ impl GameWorld {
             .player_movement = Some(direction);
     }
 
-    pub(crate) fn iter_instances(&mut self, mesh_handle: Handle) -> Vec<&Position> {
+    pub(crate) fn iter_instances(&mut self, model_handle: ModelHandle) -> Vec<&Position> {
         let mut query = self
             .world
             .query_filtered::<(&Position, &Renderable), Without<Invisible>>();
         query
             .iter(&self.world)
-            .filter(move |(_, renderable)| renderable.mesh == mesh_handle)
+            .filter(move |(_, renderable)| renderable.mesh == model_handle)
             .map(|(position, _)| position)
             .collect()
     }

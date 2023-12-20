@@ -1,3 +1,6 @@
+use cgmath::num_traits::ops::bytes;
+use image::GenericImageView;
+
 
 
 pub struct Texture {
@@ -10,6 +13,25 @@ pub struct Texture {
 
 impl Texture {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+
+    pub fn from_raw(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        bytes: &[u8],
+        label: Option<&str>,
+    ) -> Self {
+        let img = image::load_from_memory(bytes).unwrap();
+        let rgba = img.to_rgba8().into_raw();
+        let dimensions = img.dimensions();
+        Self::from_raw_rgba8(
+            device,
+            queue,
+            &rgba,
+            dimensions.0,
+            dimensions.1,
+            label,
+        )
+    }
 
     pub fn from_raw_rgba8(
         device: &wgpu::Device,

@@ -1,8 +1,8 @@
 use bevy_ecs::component::Component;
 
-use crate::mesh::Handle;
+use crate::{model::ModelHandle};
 
 #[derive(Component)]
 pub struct Renderable {
-    pub mesh: Handle,
+    pub mesh: ModelHandle,
 }

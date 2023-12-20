@@ -21,7 +21,7 @@ var<uniform> render_eye_target: RenderEyeTarget;
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
-    @location(1) color: vec3<f32>,
+    @location(1) tex_pos: vec2<f32>,
 };
 
 struct InstanceInput {
@@ -34,7 +34,7 @@ struct InstanceInput {
 
 struct VertexOutput {
     @builtin(position) clip_space_target_eye: vec4<f32>,
-    @location(0) color: vec3<f32>,
+    @location(0) tex_pos: vec2<f32>,
     @location(1) ndc_space_target_eye: vec3<f32>,
     // -1 for left eye, 1 for right eye
     @location(2) eye_target: f32,
@@ -65,7 +65,7 @@ fn vs_main(
 
     var out: VertexOutput;
     // COPY ==============================
-    out.color = model.color;
+    out.tex_pos = model.tex_pos;
     out.eye_target = f32(render_eye_target.eye_target);
 
     // DO TRANSFORM ==============================
@@ -103,6 +103,11 @@ struct GlitchAreaUniform {
 @group(3)@binding(0)
 var<uniform> glitch_area: GlitchAreaUniform;
 
+@group(4)@binding(0)
+var t_model: texture_2d<f32>;
+@group(4)@binding(1)
+var s_model: sampler;
+
 
 // Fragment shader
 @fragment
@@ -120,13 +125,14 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let u = in.world_space_pos.x / w;
     let v = in.world_space_pos.y * -1.0 / h;
 
+    let sampled_texture = textureSample(t_model, s_model, in.tex_pos);
     var glitch_mask_alpha = textureSample(t_glitch_area, s_glitch_area, vec2<f32>(u,v)).r;
     glitch_mask_alpha = glitch_mask_alpha * glitch_mask_alpha;
     if( glitch_mask_alpha > 0.95 ) {
-        return vec4<f32>(in.color, 1.0);
+        return sampled_texture;
     } else {
         // interpolate 
-        return glitch_mask_alpha * vec4<f32>(in.color, 1.0) + (1.0 - glitch_mask_alpha) * random_pattern(vec2<f32>(in.ndc_space_left_eye.x, in.ndc_space_left_eye.y));
+        return glitch_mask_alpha * sampled_texture + (1.0 - glitch_mask_alpha) * random_pattern(vec2<f32>(in.ndc_space_left_eye.x, in.ndc_space_left_eye.y));
     }
 }
 

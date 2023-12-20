@@ -1,6 +1,7 @@
-use game_objects::{glitch_area::GlitchAreaVisibilityDTO, time_keeper::TimeKeeper, checkpoint};
+use game_objects::{checkpoint, glitch_area::GlitchAreaVisibilityDTO, time_keeper::TimeKeeper};
 use level_loader::ParsedLevel;
-use mesh::{InstanceRaw, Vertex};
+use mesh::{InstanceRaw};
+use model::{load_model, ModelStore, ModelVertex};
 use object_types::BlockType;
 use rapier3d::na::ComplexField;
 use std::{
@@ -20,14 +21,15 @@ use winit::{
 
 mod command;
 mod game;
+mod game_objects;
+mod level_compressor;
 mod level_loader;
 mod mesh;
+mod model;
 mod object_types;
 mod physics;
 mod stereo_camera;
 mod texture;
-mod level_compressor;
-mod game_objects;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -62,7 +64,7 @@ struct State {
     glitch_area_texture: texture::Texture,
 
     game_world: game::GameWorld,
-    mesh_store: mesh::MeshStore,
+    model_store: ModelStore,
 
     _clear_color: wgpu::Color,
 
@@ -96,20 +98,23 @@ impl State {
             .await
             .unwrap();
 
+        // WebGL doesn't support all of wgpu's features, so if
+        // we're building for the web we'll have to disable some.
+        let mut limits = if cfg!(target_arch = "wasm32") {
+            wgpu::Limits::downlevel_webgl2_defaults()
+        } else {
+            wgpu::Limits::default()
+        };
+
+        limits.max_bind_groups = 5;
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
                     features: wgpu::Features::empty(),
-                    // WebGL doesn't support all of wgpu's features, so if
-                    // we're building for the web we'll have to disable some.
-                    limits: if cfg!(target_arch = "wasm32") {
-                        wgpu::Limits::downlevel_webgl2_defaults()
-                    } else {
-                        wgpu::Limits::default()
-                    },
+
+                    limits,
                 },
-                // Some(&std::path::Path::new("trace")), // Trace path
                 None,
             )
             .await
@@ -141,84 +146,142 @@ impl State {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
         });
 
-        let mut mesh_store = mesh::MeshStore::new();
-        let initial_instance_buffer_size: i32 = 1;
-        let wall_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
-            &device,
-            [0.0, 0.5, 0.0],
-            initial_instance_buffer_size as usize,
-        ));
-        let floor_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
-            &device,
-            [0.0, 1.0, 0.0],
-            1.0,
-            1.0,
-            8.0,
-            initial_instance_buffer_size as usize,
-        ));
-        let player_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
-            &device,
-            [0.0, 0.0, 1.0],
-            0.8,
-            0.8,
-            1.0,
-            initial_instance_buffer_size as usize,
-        ));
-        let goal_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
-            &device,
-            [1.0, 1.0, 0.0],
-            initial_instance_buffer_size as usize,
-        ));
-        let door_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
-            &device,
-            [1.0, 0.0, 1.0],
-            initial_instance_buffer_size as usize,
-        ));
-        let box_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color(
-            &device,
-            [0.2, 0.2, 0.2],
-            initial_instance_buffer_size as usize,
-        ));
-        let trigger_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
-            &device,
-            [0.3, 0.3, 0.3],
-            1.0,
-            1.0,
-            0.1,
-            initial_instance_buffer_size as usize,
-        ));
-        let charge_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
-            &device,
-            [1.0, 1.0, 1.0],
-            1.0,
-            1.0,
-            1.0,
-            initial_instance_buffer_size as usize,
-        ));
-        let static_enemy_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
-            &device,
-            [1.0, 0.0, 0.0],
-            1.0,
-            1.0,
-            1.5,
-            initial_instance_buffer_size as usize,
-        ));
-        let linear_enemy_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
-            &device,
-            [1.0, 0.5, 0.0],
-            1.0,
-            1.0,
-            1.0,
-            initial_instance_buffer_size as usize,
-        ));
-        let checkpoint_mesh = mesh_store.add_mesh(mesh::Mesh::new_cube_with_color_and_scale(
-            &device,
-            [0.0, 1.0, 1.0],
-            0.4,
-            0.4,
-            0.4,
-            initial_instance_buffer_size as usize,
-        ));
+        let model_texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+                label: Some("model_texture_bind_group_layout"),
+            });
+
+        let mut model_store = model::ModelStore::new();
+        let player_model_obj_raw = include_bytes!("../models/player/player.obj");
+        let player_model_texture_raw = include_bytes!("../models/player/player.png");
+        let wall_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let floor_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let player_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let goal_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let door_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let box_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let trigger_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let charge_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let static_enemy_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let linear_enemy_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let checkpoint_mesh = model_store.add_model(
+            load_model(
+                player_model_obj_raw,
+                player_model_texture_raw,
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
 
         let handle_store = HashMap::from_iter(vec![
             (BlockType::Wall, wall_mesh),
@@ -345,14 +408,15 @@ impl State {
                 label: Some("glitch_fragment_data_bind_group_layout"),
             });
 
-        let glitch_fragment_data_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &glitch_fragment_data_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: glitch_fragment_data_buffer.as_entire_binding(),
-            }],
-            label: Some("glitch_fragment_data_bind_group"),
-        });
+        let glitch_fragment_data_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &glitch_fragment_data_bind_group_layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: glitch_fragment_data_buffer.as_entire_binding(),
+                }],
+                label: Some("glitch_fragment_data_bind_group"),
+            });
 
         let glitch_area_texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -387,7 +451,9 @@ impl State {
                 0;
                 ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT
                     * ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT
-                    * 4 * 4 * 4
+                    * 4
+                    * 4
+                    * 4
             ],
             ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32 * 4,
             ParsedLevel::MAX_LEVEL_WIDTH_AND_HEIGHT as u32 * 4,
@@ -417,6 +483,7 @@ impl State {
                     &stereo_camera_target_group_layout,
                     &glitch_area_texture_bind_group_layout,
                     &glitch_fragment_data_bind_group_layout,
+                    &model_texture_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -427,7 +494,7 @@ impl State {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Vertex::desc(), InstanceRaw::desc()],
+                buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -445,7 +512,7 @@ impl State {
                 topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: None, //Some(wgpu::Face::Back),
+                cull_mode: Some(wgpu::Face::Back),
                 // Setting this to anything other than Fill requires Features::POLYGON_MODE_LINE
                 // or Features::POLYGON_MODE_POINT
                 polygon_mode: wgpu::PolygonMode::Fill,
@@ -500,7 +567,7 @@ impl State {
             },
             glitch_area_texture_bind_group,
             glitch_area_texture,
-            mesh_store,
+            model_store,
             game_world,
             key_pressed: Default::default(),
         }
@@ -540,7 +607,10 @@ impl State {
                     self.game_world.set_eye_distance(distance);
                 }
                 command::Command::SetSize(width, height, scale_factor) => {
-                    self.resize(winit::dpi::LogicalSize::new(width, height).to_physical(scale_factor as f64));
+                    self.resize(
+                        winit::dpi::LogicalSize::new(width, height)
+                            .to_physical(scale_factor as f64),
+                    );
                 }
                 command::Command::JoystickInput(x, y) => {
                     self.game_world.move_player(cgmath::vec3(x, y, 0.0));
@@ -578,11 +648,13 @@ impl State {
 
         self.game_world.update();
 
-        for mesh_handle in self.mesh_store.iter_handles() {
+        for mesh_handle in self.model_store.iter_handles() {
             let instances = self.game_world.iter_instances(mesh_handle);
-            self.mesh_store.get_mut(mesh_handle).map(|mesh| {
-                mesh.update_instance_buffer(&self.device, &self.queue, &instances);
-            });
+            self.model_store
+                .get_mut(mesh_handle)
+                .map(|model: &mut model::Model| {
+                    model.update_instance_buffer(&self.device, &self.queue, &instances);
+                });
         }
 
         self.stereo_camera_uniform
@@ -593,12 +665,13 @@ impl State {
             bytemuck::cast_slice(&[self.stereo_camera_uniform]),
         );
 
-        let glitch_visibility_dto: GlitchAreaVisibilityDTO = self.game_world.ref_glitch_area_visibility().into();
+        let glitch_visibility_dto: GlitchAreaVisibilityDTO =
+            self.game_world.ref_glitch_area_visibility().into();
         self.queue.write_buffer(
             &self.glitch_fragment_data_buffer,
             0,
             bytemuck::cast_slice(&[glitch_visibility_dto]),
-        );       
+        );
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -645,8 +718,8 @@ impl State {
                 render_pass.set_bind_group(1, stereo_camera_target, &[]);
                 render_pass.set_bind_group(2, &self.glitch_area_texture_bind_group, &[]);
                 render_pass.set_bind_group(3, &self.glitch_fragment_data_bind_group, &[]);
-                for mesh_handle in self.mesh_store.iter_handles() {
-                    self.mesh_store.get(mesh_handle).map(|mesh| {
+                for mesh_handle in self.model_store.iter_handles() {
+                    self.model_store.get(mesh_handle).map(|mesh| {
                         mesh.render_instances(&mut render_pass);
                     });
                 }
