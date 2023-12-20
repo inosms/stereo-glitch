@@ -115,7 +115,7 @@ impl Block {
 
     pub fn block_height(&self) -> f32 {
         match self {
-            Block::FloorNormal => 8.0,
+            Block::FloorNormal => 1.0,
             Block::Player => 1.0,
             Block::Door(_) => 1.0,
             Block::Empty => 1.0,

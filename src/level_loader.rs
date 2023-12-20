@@ -219,9 +219,17 @@ fn parse_goal(input: &str) -> IResult<&str, Block> {
     Ok((rest, Block::Goal(text)))
 }
 
+// a block can be multiplicated in the z direction by adding x<amount> to the end
+// e.g. Nx2, Px3, etc.
+fn parse_multiplicator(input: &str) -> IResult<&str, usize> {
+    let (rest, _) = tag("x")(input)?;
+    let (rest, multiplicator) = take_while_m_n(1, 2, |c: char| c.is_ascii_digit())(rest)?;
+    Ok((rest, multiplicator.parse::<usize>().unwrap()))
+}
+
 // a block is always of the form of a single character and an optional ID
 // e.g. N, P, D, X, G, W, N#abc123, etc.
-fn parse_block(input: &str) -> IResult<&str, (Block, Option<Id>)> {
+fn parse_block(input: &str) -> IResult<&str, Vec<(Block, Option<Id>)>> {
     let (rest, block) = alt((
         value(Block::FloorNormal, tag("N")),
         value(Block::Player, tag("P")),
@@ -241,8 +249,21 @@ fn parse_block(input: &str) -> IResult<&str, (Block, Option<Id>)> {
         value(Block::Checkpoint, tag("S")),
     ))(input)?;
 
-    let (rest, id) = opt(parse_id)(rest)?;
-    Ok((rest, (block, id.or_else(|| Some(Id::random())))))
+    let (rest, multiplicator) = opt(parse_multiplicator)(rest)?;
+    // can only specify id if multiplicator is 1
+    let (rest, id) = if multiplicator.is_none() || multiplicator.unwrap() == 1 {
+        opt(parse_id)(rest)?
+    } else {
+        (rest, None)
+    };
+    
+    // duplicate the block if multiplicator is specified
+    let mut block_stack = Vec::new();
+    for _ in 0..multiplicator.unwrap_or(1) {
+        block_stack.push((block.clone(), id.clone().or_else(|| Some(Id::random()))));
+    }
+    
+    Ok((rest, block_stack))
 }
 
 // A cell is of the form [_](N|P|D|X|G|W|...)(#[a-zA-Z0-9]{1,10})?
@@ -256,7 +277,7 @@ fn parse_cell(input: &str) -> IResult<&str, Cell> {
         rest,
         Cell {
             is_glitch_area,
-            block_stack,
+            block_stack: block_stack.into_iter().flatten().collect(),
         },
     ))
 }
