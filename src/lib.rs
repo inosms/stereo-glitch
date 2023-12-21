@@ -252,8 +252,8 @@ impl State {
         );
         let static_enemy_model = model_store.add_model(
             load_model(
-                  include_bytes!("../models/todo/todo.obj"),
-                include_bytes!("../models/todo/todo.png"),
+                  include_bytes!("../models/enemy_static/enemy_static.obj"),
+                include_bytes!("../models/enemy_static/enemy_static.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
