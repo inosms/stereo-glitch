@@ -1,9 +1,9 @@
 use bevy_ecs::{component::Component, entity::Entity, system::{ResMut, Query, Res}, query::With};
-use cgmath::InnerSpace;
+use cgmath::{InnerSpace, Rotation3};
 
 use crate::{physics::PhysicsSystem, stereo_camera::StereoCamera};
 
-use super::{time_keeper::TimeKeeper, constants::TICKS_PER_SECOND, input::Input, physics_body::PhysicsBody};
+use super::{time_keeper::TimeKeeper, constants::TICKS_PER_SECOND, input::Input, physics_body::PhysicsBody, position::Position};
 
 #[derive(Component)]
 pub struct Player {
@@ -17,14 +17,11 @@ pub struct Player {
 
 
 pub fn move_player_system(
-    // keyboard_input: Res<Input<bevy::input::keyboard::KeyCode>>,
     mut physics_system: ResMut<PhysicsSystem>,
     mut input: ResMut<Input>,
     camera: Res<StereoCamera>,
     time_keeper: Res<TimeKeeper>,
-    mut query: Query<&PhysicsBody, With<Player>>,
-    physics_body_query: Query<&PhysicsBody>,
-    player_query: Query<&Player>,
+    mut query: Query<(&mut Position, &PhysicsBody), With<Player>>,
 ) {
     // Only move the player if we are in a physics tick
     // Otherwise the player will be frame rate dependent
@@ -60,7 +57,23 @@ pub fn move_player_system(
     let player_max_speed = 9.0;
     let direction = camera_look_direction_rotation_matrix * direction * player_max_speed;
 
-    for physics_body in &mut query {
+    for (mut position, physics_body) in &mut query {
         physics_system.move_body(physics_body.body, direction, true);
+
+        let player_velocity_magnitude = physics_system.get_velocity_magnitude(physics_body.body);
+        let wobble_scale = player_velocity_magnitude.sqrt() as f64 / player_max_speed as f64;
+        let wobble_speed = 25.0;
+        let x_wobble = (TimeKeeper::now() * wobble_speed).sin() * wobble_scale * 50.0;
+        let y_wobble = (TimeKeeper::now() * wobble_speed).cos() * wobble_scale * 50.0;
+        position.grabbed_rotation =
+            cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0 as f32))
+                * cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_x(),
+                    cgmath::Deg(x_wobble as f32),
+                )
+                * cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_y(),
+                    cgmath::Deg(y_wobble as f32),
+                );
     }
 }
