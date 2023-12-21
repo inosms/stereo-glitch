@@ -262,8 +262,8 @@ impl State {
         );
         let linear_enemy_model = model_store.add_model(
             load_model(
-                  include_bytes!("../models/todo/todo.obj"),
-                include_bytes!("../models/todo/todo.png"),
+                  include_bytes!("../models/enemy_linear/enemy_linear.obj"),
+                include_bytes!("../models/enemy_linear/enemy_linear.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
