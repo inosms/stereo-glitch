@@ -222,8 +222,8 @@ impl State {
         );
         let box_model = model_store.add_model(
             load_model(
-                  include_bytes!("../models/todo/todo.obj"),
-                include_bytes!("../models/todo/todo.png"),
+                  include_bytes!("../models/box/box.obj"),
+                include_bytes!("../models/box/box.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -232,8 +232,8 @@ impl State {
         );
         let trigger_model = model_store.add_model(
             load_model(
-                  include_bytes!("../models/todo/todo.obj"),
-                include_bytes!("../models/todo/todo.png"),
+                  include_bytes!("../models/trigger/trigger.obj"),
+                include_bytes!("../models/trigger/trigger.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
