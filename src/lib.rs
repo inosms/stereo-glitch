@@ -170,7 +170,7 @@ impl State {
             });
 
         let mut model_store = model::ModelStore::new();
-        let wall_mesh = model_store.add_model(
+        let wall_model = model_store.add_model(
             load_model(
                 include_bytes!("../models/wall/wall.obj"),
                 include_bytes!("../models/wall/wall.png"),
@@ -180,7 +180,7 @@ impl State {
             )
             .expect("failed to load model"),
         );
-        let floor_mesh = model_store.add_model(
+        let floor_model = model_store.add_model(
             load_model(
                 include_bytes!("../models/floor1/floor1.obj"),
                 include_bytes!("../models/floor1/floor1.png"),
@@ -190,7 +190,7 @@ impl State {
             )
             .expect("failed to load model"),
         );
-        let player_mesh = model_store.add_model(
+        let player_model = model_store.add_model(
             load_model(
                   include_bytes!("../models/player/player.obj"),
                 include_bytes!("../models/player/player.png"),
@@ -200,7 +200,7 @@ impl State {
             )
             .expect("failed to load model"),
         );
-        let goal_mesh = model_store.add_model(
+        let goal_model = model_store.add_model(
             load_model(
                   include_bytes!("../models/todo/todo.obj"),
                 include_bytes!("../models/todo/todo.png"),
@@ -210,7 +210,7 @@ impl State {
             )
             .expect("failed to load model"),
         );
-        let door_mesh = model_store.add_model(
+        let door_model = model_store.add_model(
             load_model(
                   include_bytes!("../models/todo/todo.obj"),
                 include_bytes!("../models/todo/todo.png"),
@@ -220,7 +220,7 @@ impl State {
             )
             .expect("failed to load model"),
         );
-        let box_mesh = model_store.add_model(
+        let box_model = model_store.add_model(
             load_model(
                   include_bytes!("../models/todo/todo.obj"),
                 include_bytes!("../models/todo/todo.png"),
@@ -230,7 +230,7 @@ impl State {
             )
             .expect("failed to load model"),
         );
-        let trigger_mesh = model_store.add_model(
+        let trigger_model = model_store.add_model(
             load_model(
                   include_bytes!("../models/todo/todo.obj"),
                 include_bytes!("../models/todo/todo.png"),
@@ -240,7 +240,7 @@ impl State {
             )
             .expect("failed to load model"),
         );
-        let charge_mesh = model_store.add_model(
+        let charge_model = model_store.add_model(
             load_model(
                   include_bytes!("../models/todo/todo.obj"),
                 include_bytes!("../models/todo/todo.png"),
@@ -250,7 +250,7 @@ impl State {
             )
             .expect("failed to load model"),
         );
-        let static_enemy_mesh = model_store.add_model(
+        let static_enemy_model = model_store.add_model(
             load_model(
                   include_bytes!("../models/todo/todo.obj"),
                 include_bytes!("../models/todo/todo.png"),
@@ -260,7 +260,7 @@ impl State {
             )
             .expect("failed to load model"),
         );
-        let linear_enemy_mesh = model_store.add_model(
+        let linear_enemy_model = model_store.add_model(
             load_model(
                   include_bytes!("../models/todo/todo.obj"),
                 include_bytes!("../models/todo/todo.png"),
@@ -270,7 +270,7 @@ impl State {
             )
             .expect("failed to load model"),
         );
-        let checkpoint_mesh = model_store.add_model(
+        let checkpoint_model = model_store.add_model(
             load_model(
                   include_bytes!("../models/todo/todo.obj"),
                 include_bytes!("../models/todo/todo.png"),
@@ -282,17 +282,17 @@ impl State {
         );
 
         let handle_store = HashMap::from_iter(vec![
-            (BlockType::Wall, wall_mesh),
-            (BlockType::FloorNormal, floor_mesh),
-            (BlockType::Player, player_mesh),
-            (BlockType::Goal, goal_mesh),
-            (BlockType::Door, door_mesh),
-            (BlockType::Box, box_mesh),
-            (BlockType::Trigger, trigger_mesh),
-            (BlockType::Charge, charge_mesh),
-            (BlockType::StaticEnemy, static_enemy_mesh),
-            (BlockType::LinearEnemy, linear_enemy_mesh),
-            (BlockType::Checkpoint, checkpoint_mesh),
+            (BlockType::Wall, wall_model),
+            (BlockType::FloorNormal, floor_model),
+            (BlockType::Player, player_model),
+            (BlockType::Goal, goal_model),
+            (BlockType::Door, door_model),
+            (BlockType::Box, box_model),
+            (BlockType::Trigger, trigger_model),
+            (BlockType::Charge, charge_model),
+            (BlockType::StaticEnemy, static_enemy_model),
+            (BlockType::LinearEnemy, linear_enemy_model),
+            (BlockType::Checkpoint, checkpoint_model),
         ]);
 
         let game_world = game::GameWorld::new(handle_store);
