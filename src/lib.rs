@@ -170,8 +170,6 @@ impl State {
             });
 
         let mut model_store = model::ModelStore::new();
-        let player_model_obj_raw = include_bytes!("../models/player/player.obj");
-        let player_model_texture_raw = include_bytes!("../models/player/player.png");
         let wall_mesh = model_store.add_model(
             load_model(
                 include_bytes!("../models/wall/wall.obj"),
@@ -194,8 +192,8 @@ impl State {
         );
         let player_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                  include_bytes!("../models/player/player.obj"),
+                include_bytes!("../models/player/player.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -204,8 +202,8 @@ impl State {
         );
         let goal_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                  include_bytes!("../models/todo/todo.obj"),
+                include_bytes!("../models/todo/todo.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -214,8 +212,8 @@ impl State {
         );
         let door_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                  include_bytes!("../models/todo/todo.obj"),
+                include_bytes!("../models/todo/todo.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -224,8 +222,8 @@ impl State {
         );
         let box_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                  include_bytes!("../models/todo/todo.obj"),
+                include_bytes!("../models/todo/todo.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -234,8 +232,8 @@ impl State {
         );
         let trigger_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                  include_bytes!("../models/todo/todo.obj"),
+                include_bytes!("../models/todo/todo.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -244,8 +242,8 @@ impl State {
         );
         let charge_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                  include_bytes!("../models/todo/todo.obj"),
+                include_bytes!("../models/todo/todo.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -254,8 +252,8 @@ impl State {
         );
         let static_enemy_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                  include_bytes!("../models/todo/todo.obj"),
+                include_bytes!("../models/todo/todo.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -264,8 +262,8 @@ impl State {
         );
         let linear_enemy_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                  include_bytes!("../models/todo/todo.obj"),
+                include_bytes!("../models/todo/todo.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -274,8 +272,8 @@ impl State {
         );
         let checkpoint_mesh = model_store.add_model(
             load_model(
-                player_model_obj_raw,
-                player_model_texture_raw,
+                  include_bytes!("../models/todo/todo.obj"),
+                include_bytes!("../models/todo/todo.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
