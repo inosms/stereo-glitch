@@ -212,8 +212,8 @@ impl State {
         );
         let door_model = model_store.add_model(
             load_model(
-                  include_bytes!("../models/todo/todo.obj"),
-                include_bytes!("../models/todo/todo.png"),
+                  include_bytes!("../models/door/door.obj"),
+                include_bytes!("../models/door/door.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
