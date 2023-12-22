@@ -11,70 +11,27 @@ window.set_eye_distance = set_eye_distance;
 window.compress_level_to_url = compress_level_to_url;
 window.decompress_level_from_url = decompress_level_from_url;
 
-export const INITIAL_LEVEL = "Nx3+Wx3 Nx3+Wx3 Nx3+Wx3 Nx3+Wx3 Nx3+Wx3 Nx3+Wx3\n" +
-    "Nx3+W Nx3   Nx3   Nx3   Nx3   Nx3+Wx3\n" +
-    "Nx3+W Nx3   Nx3+P Nx3   Nx3   Nx3+Wx3\n" +
-    "Nx3+W Nx3   Nx3   Nx3   Nx3   Nx3+Wx3   Nx3+Wx3   Nx3+Wx3\n" +
-    "Nx3+W Nx3   Nx3   Nx3   Nx3   Nx3+BX  Nx3+T#t   Nx3+Wx3\n" +
-    "Nx3+W Nx3+W Nx3+W Nx3+W Nx3+W Nx3+D(#t)   Nx3+W   Nx3+Wx3\n" +
-    "Nx3+W Nx3     Nx3+W     Nx3     Nx3     Nx3     Nx3   Nx3+Wx3\n" +
-    "Nx3+W Nx3+BY  Nx3+W     Nx3     Nx3     Nx3     Nx3   Nx3+Wx3\n" +
-    "Nx3+W Nx3     Nx3+W     Nx3     Nx3     Nx3     Nx3   Nx3+Wx3\n" +
-    "Nx3+W Nx3+T#t2 Nx3+W    Nx3     Nx3     Nx3     Nx3   Nx3+Wx3\n" +
-    "Nx3+W Nx3+W   Nx3+W     Nx3+W   Nx3+D(#t2) Nx3+W   Nx3+W Nx3+Wx3\n" +
-    "Nx3+W _Nx3   _Nx3    _Nx3     Nx3+S     Nx3+C     Nx3+C Nx3+Wx3\n" +
-    "Nx3+W _Nx3   _Nx3    _Nx3     Nx3+C     Nx3+C     Nx3+C   Nx3+Wx3\n" +
-    "Nx3+W _Nx3   _Nx3    _Nx3    _Nx3+C    _Nx3+C    _Nx3+C   Nx3+Wx3\n" +
-    "Nx3+W _Nx3   _Nx3    _Nx3    _Nx3    _Nx3    _Nx3   Nx3+Wx3\n" +
-    "Nx3+W _Nx3   _Nx3    _Nx3    _Nx3    _Nx3    _Nx3   Nx3+Wx3\n" +
-    "_Nx3+W _Nx3   _Nx3    _Nx3    _Nx3    _Nx3    _Nx3   _Nx3+Wx3\n" +
-    "_Nx3+W _Nx3   _Nx3    _Nx3    _Nx3    _Nx3    _Nx3   _Nx3+Wx3\n" +
-    "_Nx3+W _Nx3   _Nx3    _Nx3    _Nx3    _Nx3    _Nx3   _Nx3+Wx3\n" +
-    "_Nx3+W _X   _X    _Nx3    _Nx3    _X    _X   _Nx3+Wx3\n" +
-    "_Nx3+W _X   _X    _Nx3    _Nx3    _X    _X   _Nx3+Wx3\n" +
-    "_Nx3+W _Nx3   _Nx3    _Nx3    _Nx3    _Nx3    _Nx3   _Nx3+Wx3\n" +
-    "_Nx3+W _Nx3   _Nx3    _Nx3    _Nx3    _Nx3    _Nx3   _Nx3+Wx3\n" +
-    "_Nx3+W _Nx3   _Nx3    _X    _X    _X    X   Nx3+Wx3\n" +
-    "_Nx3+W _Nx3   _Nx3    _X    _X    _X    X   Nx3+Wx3\n" +
-    "_Nx3+W _Nx3   _Nx3    _Nx3    _Nx3    _Nx3    _Nx3   _Nx3+Wx3\n" +
-    "_Nx3+W _Nx3   _Nx3    _Nx3    _Nx3    _Nx3    _Nx3   _Nx3+Wx3\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3     Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3     Nx3     Nx3     Nx3  Nx3+C Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3     Nx3     Nx3     Nx3+C  Nx3+C Nx3+W\n" +
-    "Nx3+W Nx3+W   Nx3+W     Nx3+W   Nx3+W Nx3+W   Nx3+W Nx3+W Nx3+C Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3     Nx3     Nx3+S     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3+BY     Nx3     Nx3     Nx3     Nx3     Nx3+E1  Nx3+E1 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3     Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3+E2X Nx3     Nx3     Nx3+W   Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3+W   Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3+E2X Nx3+W   Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3+W   Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3+E2X Nx3     Nx3     Nx3+W   Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3+W   Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3+E2X Nx3+W   Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3+W   Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3+W   Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3+T#t3 Nx3     Nx3+W  Nx3+W   Nx3+D(#t3)   Nx3+W Nx3+W Nx3+W\n" +
-    "Nx3+W Nx3+W   Nx3+W     Nx3+W   Nx3+W     Nx3+C     Nx3+S     Nx3+C  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3+W   Nx3+W     Nx3+W   Nx3+W     Nx3+C     Nx3+C     Nx3+C  Nx3 Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3     _Nx3+E2X     _Nx3     _Nx3     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3     _Nx3     _Nx3     _Nx3+E2X     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3+E2X     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3     _Nx3     _Nx3     _Nx3+E2X     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3     _Nx3     _Nx3+E2X     _Nx3     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3+E2X     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "_Nx3+W _Nx3     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3     _Nx3   _Nx3 _Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3     Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3     Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3     Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3     Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3     Nx3     Nx3     Nx3+G(GOAL)     Nx3     Nx3     Nx3  Nx3 Nx3+W\n" +
-    "Nx3+W Nx3+W     Nx3+W     Nx3+W     Nx3+W     Nx3+W     Nx3+W     Nx3+W  Nx3+W Nx3+W\n";
-
+export const INITIAL_LEVEL = "N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3\n" +
+    "N+W N   N   N   N   N+Wx3\n" +
+    "N+W N   N   N   N   N+Wx3\n" +
+    "N+W N   N   N   N   N+Wx3   N+Wx3   N+Wx3\n" +
+    "N+W N   N   N   N   N+BX  N+T#t   N+Wx3\n" +
+    "N+W N+W N+W N+W N+W N+D(#t)   N+W   N+Wx3  N+Wx3 N+Wx3     N+Wx3 N+Wx3  N+Wx3\n" +
+    "N+W N+T#t2     N+W     N     N     N     N   N+Wx3                  N N     N N N+Wx3\n" +
+    "N+W N  N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N+S   N N N+Wx3\n" +
+    "N+W N     N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N     N N N+Wx3\n" +
+    "N+W N+BY N+W    N     N     N     N   N+Wx3                  N+C N+C N+C N+C N+Wx3\n" +
+    "N+W N+W   N+W     N+W   N+W   N+W   N+W N+Wx3                  N+C N+C N+C N+C N+Wx3\n" +
+    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx3\n" +
+    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx3\n" +
+    "_N+Wx3    _N+Wx3      _N+Wx3       _N+Wx3     _N    _N    _N+Wx3   _N+Wx3                      _N+Wx3 _N+Wx3     _N+Wx3 _N+Wx3 _N+Wx3\n" +
+    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx3\n" +
+    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx3\n" +
+    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx3\n" +
+    "_N+Wx3    _N+Wx3      _N+Wx3       _N+Wx3     _N+Wx3      _N+Wx3      _N+Wx3   _N+Wx3                      _N+Wx3 _N+Wx3     _N _N _N+Wx3\n" +
+    "N+Wx3   N     N     N     N     N     N+P     N     N     N     N     N    N+Wx3\n" +
+    "N+Wx3   N     N     N     N     N     N     N     N     N     N     N    N+Wx3\n";
+ 
 var semi = nipplejs.create({
     zone: document.getElementById('game-controller-joystick'),
     mode: 'static',

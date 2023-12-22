@@ -127,7 +127,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     let sampled_texture = textureSample(t_model, s_model, in.tex_pos);
     var glitch_mask_alpha = textureSample(t_glitch_area, s_glitch_area, vec2<f32>(u,v)).r;
-    glitch_mask_alpha = glitch_mask_alpha * glitch_mask_alpha;
+    glitch_mask_alpha = pow(glitch_mask_alpha, 6.0);
     if( glitch_mask_alpha > 0.95 ) {
         return sampled_texture;
     } else {
@@ -137,28 +137,36 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 }
 
 fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
-    let step_num = 24.0;
-    let x = steps(uv.x, step_num) + glitch_area.time * 0.005;
-    var y = steps(uv.y, step_num) + glitch_area.time * 0.005;
-    let y_offset = noise(vec2f(x,y) * 10.0);
-    y = y + y_offset * 0.1;
+    let step_num = 256.0;
+    let x = steps(uv.x, step_num) + glitch_area.time * 0.01;
+    let y = steps(uv.y, step_num) + glitch_area.time * 0.01;
  
-    var r = noise(vec2f(x,y) * 3.0) * 0.8;
-    var g = noise(vec2f(x,y) * 3.0 + vec2f(0.1, 0.1) * glitch_area.visibility * 7.0) * 0.8;
-    var b = noise(vec2f(x,y) * 3.0 + vec2f(0.2, 0.2) * glitch_area.visibility * 7.0) * 0.8;
+    let darken = 0.9;
+    let time_noise = (noise(vec2f(glitch_area.time * 0.1, 0.0) + vec2f(x,y) * 5.0) - 0.5) * 0.1;
+    var random = min(max(0.0, (time_noise + noise(vec2f(x,y) * 80.0)) - darken) * 1.0 / (1.0 - darken), glitch_area.visibility);
+    var r = 0.0;
+    var g = 0.0;
+    var b = 0.0;
 
-    r = r + noise(vec2f(x,y) * 15.0) * 0.6;
-    g = g + noise(vec2f(x,y) * 15.0 + vec2f(0.1, 0.1) * glitch_area.visibility * 7.0) * 0.6;
-    b = b + noise(vec2f(x,y) * 15.0 + vec2f(0.2, 0.2) * glitch_area.visibility * 7.0) * 0.6;
+    if (random < 0.2) {
+        r = mix(0.0, 2.0, random * 5.0);
+        g = mix(0.0, 23.0, random * 5.0);
+        b = mix(0.0, 79.0, random * 5.0);
+    } else if (random < 0.4) {
+        r = mix(2.0, 230.0, (random - 0.2) * 5.0);
+        g = mix(23.0, 110.0, (random - 0.2) * 5.0);
+        b = mix(79.0, 11.0, (random - 0.2) * 5.0);
+    } else if (random < 0.6) {
+        r = mix(230.0, 24.0, (random - 0.4) * 5.0);
+        g = mix(110.0, 210.0, (random - 0.4) * 5.0);
+        b = mix(11.0, 242.0, (random - 0.4) * 5.0);
+    } else {
+        r = mix(24.0, 255.0, (random - 0.6) * 2.5);
+        g = mix(210.0, 255.0, (random - 0.6) * 2.5);
+        b = mix(242.0, 255.0, (random - 0.6) * 2.5);
+    }
 
-    let r_visibility = max(glitch_area.visibility, 0.2);
-    let g_visibility = glitch_area.visibility;
-    let b_visibility = glitch_area.visibility;
-
-    r = r * r_visibility;
-    g = g * g_visibility;
-    b = b * b_visibility;
-    return vec4<f32>(r*r, g*g, b*b, 1.0);
+    return vec4<f32>(r / 255.0, g / 255.0, b / 255.0, 1.0);
 }
 
 // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39
@@ -166,7 +174,7 @@ fn noise(n: vec2f) -> f32 {
     let d = vec2f(0., 1.);
     let b = floor(n);
     let f = smoothstep(vec2f(0.), vec2f(1.), fract(n));
-    return mix(mix(rand22(b), rand22(b + d.yx), f.x), mix(rand22(b + d.xy), rand22(b + d.yy), f.x), f.y) - 0.1;
+    return mix(mix(rand22(b), rand22(b + d.yx), f.x), mix(rand22(b + d.xy), rand22(b + d.yy), f.x), f.y);
 }
 
 fn rand22(n: vec2f) -> f32 { return fract(sin(dot(n, vec2f(12.9898, 4.1414))) * 43758.5453); }
