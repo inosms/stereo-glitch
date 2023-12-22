@@ -260,7 +260,7 @@ impl GameWorld {
             20.0,
             0.1,
             50.0,
-            -5.0, // view cross-eyed
+            -3.0, // view cross-eyed
         ));
         self.world
             .insert_resource(TimeKeeper::new(TICKS_PER_SECOND));

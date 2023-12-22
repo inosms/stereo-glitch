@@ -38,7 +38,7 @@ impl PhysicsSystem {
         let rigid_body_set = RigidBodySet::new();
         let collider_set = ColliderSet::new();
 
-        let gravity = vector![0.0, 0.0, -30.81];
+        let gravity = vector![0.0, 0.0, -9.81];
         let integration_parameters = IntegrationParameters::default();
         let physics_pipeline = PhysicsPipeline::new();
         let island_manager = IslandManager::new();
@@ -124,22 +124,22 @@ impl PhysicsSystem {
                 // make the player heaver to avoid bouncing
                 RigidBodyBuilder::dynamic()
                     .locked_axes(LockedAxes::ROTATION_LOCKED)
-                    .gravity_scale(3.0)
+                    .gravity_scale(1.2)
             }
             Block::LinearEnemy(LinearEnemyDirection::XAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED),
             Block::LinearEnemy(LinearEnemyDirection::YAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED),
-            Block::Box(BoxType::Free) => RigidBodyBuilder::dynamic().gravity_scale(3.0),
+            Block::Box(BoxType::Free) => RigidBodyBuilder::dynamic().gravity_scale(1.2).additional_mass(10.0),
             Block::Box(BoxType::XAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED)
-                .gravity_scale(3.0),
+                .gravity_scale(1.2).additional_mass(10.0),
             Block::Box(BoxType::YAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED)
-                .gravity_scale(3.0),
+                .gravity_scale(1.2).additional_mass(10.0),
             Block::Box(BoxType::RotationFixed) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::ROTATION_LOCKED)
-                .gravity_scale(3.0),
+                .gravity_scale(1.2).additional_mass(10.0),
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])

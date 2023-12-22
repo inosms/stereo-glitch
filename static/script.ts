@@ -11,26 +11,42 @@ window.set_eye_distance = set_eye_distance;
 window.compress_level_to_url = compress_level_to_url;
 window.decompress_level_from_url = decompress_level_from_url;
 
-export const INITIAL_LEVEL = "N+Wx4 N+Wx4 N+Wx4 N+Wx4 N+Wx4 N+Wx4\n" +
-    "N+W N   N   N   N   N+Wx4\n" +
-    "N+W N   N   N   N   N+Wx4\n" +
-    "N+W N   N   N   N   N+Wx4   N+Wx4   N+Wx4\n" +
-    "N+W N   N   N   N   N+BX  N+T#t   N+Wx4\n" +
-    "N+W N+W N+W N+W N+W N+D(#t)   N+W   N+Wx4  N+Wx4 N+Wx4     N+Wx4 N+Wx4  N+Wx4\n" +
-    "N+W N+T#t2     N+W     N     N     N     N   N+Wx4                  N N     N N N+Wx4\n" +
-    "N+W N  N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N+S   N N N+Wx4\n" +
-    "N+W N     N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N     N N N+Wx4\n" +
-    "N+W N+BY N+W    N     N     N     N   N+Wx4                  N+C N+C N+C N+C N+Wx4\n" +
-    "N+W N+W   N+W     N+W   N+W   N+W   N+W N+Wx4                  N+C N+C N+C N+C N+Wx4\n" +
-    "_N+Wx4   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx4\n" +
-    "_N+Wx4   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx4\n" +
-    "_N+Wx4    _N+Wx4      _N+Wx4       _N+Wx4     _N    _N    _N+Wx4   _N+Wx4                      _N+Wx4 _N+Wx4     _N+Wx4 _N+Wx4 _N+Wx4\n" +
-    "_N+Wx4   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx4\n" +
-    "_N+Wx4   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx4\n" +
-    "_N+Wx4   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx4\n" +
-    "_N+Wx4    _N+Wx4      _N+Wx4       _N+Wx4     _N+Wx4      _N+Wx4      _N+Wx4   _N+Wx4                      _N+Wx4 _N+Wx4     _N _N _N+Wx4\n" +
-    "N+Wx4   N     N     N     N     N     N+P     N+C     N+C     N+C     N+C     N    N+Wx4\n" +
-    "N+Wx4   N     N     N     N     N     N     N     N     N     N     N    N+Wx4\n";
+export const INITIAL_LEVEL = "N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3\n" +
+    "N+W N   N   N   N   N+Wx3\n" +
+    "N+W N   N+P  N   N   N+Wx3\n" +
+    "N+W N   N   N   N   N+Wx3   N+Wx3   N+Wx3\n" +
+    "N+W N   N   N   N   N+BX  N+T#t   N+Wx3\n" +
+    "N+W N+W N+W N+W N+W N+D(#t)   N+W   N+Wx3  N+Wx3 N+Wx3     N+Wx3 N+Wx3  N+Wx3\n" +
+    "N+W N+T#t2     N+W     N     N     N     N   N+Wx3                  N N     N N+E1 N+Wx3\n" +
+    "N+W N  N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N+S   N N N+Wx3\n" +
+    "N+W N     N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N     N N N+Wx3\n" +
+    "N+W N+BY N+W    N     N     N     N   N+Wx3                  N+C N+C N+C N+C N+Wx3\n" +
+    "N+W N+W   N+W     N+W   N+W   N+W   N+W N+Wx3                  N+C N+C N+C N+C N+Wx3\n" +
+    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx3\n" +
+    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx3\n" +
+    "_N+Wx3    _N+Wx3      _N+Wx3       _N+Wx3     _N    _N    _N+Wx3   _N+Wx3                      _N+Wx3 _N+Wx3     _N+Wx3 _N+Wx3 _N+Wx3\n" +
+    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx3\n" +
+    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx3\n" +
+    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx3\n" +
+    "_N+Wx3    _N+Wx3      _N+Wx3       _N+Wx3     _N+Wx3      _N+Wx3      _N+Wx3   _N+Wx3                      _N+Wx3 _N+Wx3     _N _N _N+Wx3\n" +
+    "N+Wx3   N+Wx3     N+Wx3     N+Wx3     N+Wx3     N+Wx3     N+Wx3     N+Wx3     N+Wx3     N+Wx3     N+C     N+C    N+Wx3\n" +
+    "N+Wx2   N+E1     N     N+E1     N     N     N+BRF     N+BRF     N+Wx3     N    N+C     N+C    N+Wx3\n" + 
+    "N+Wx2   N     N+E1     N     N     N     N     N    N+Wx3     N     N     N    N+Wx3\n" + 
+    "N+Wx2   N+Wx2     N+Wx2     N+D(#t3)+D(#t3)     N+D(#t3)+D(#t3)     N+Wx2     N+Wx2     N+Wx2     N+Wx2     N+Wx1     N     N+W  N+Wx3\n" + 
+    "N+W   N     N+T#g1     N     N     N     N+T#g2     N     N+E1  N+Wx1     N     N+T#t4  N+Wx3\n" + 
+    "N+W   N     N     N     N     N     N     N     N     N+Wx1     N     N  N+Wx3\n" + 
+    "N+W   N     N     N     N     N     N     N     N     N+Wx1     N     N  N+Wx3\n" + 
+    "N+W   N     N     N     N     N     N     N     N     N+Wx1     N     N+BY  N+Wx3\n" + 
+    "N+W   N+E2X     N     N     N     N     N     N     N     N+D(#t4)     N+T#t3     N  N+Wx3\n" + 
+    "N+W   N     N     N     N     N     N     N     N     N+Wx1     N     N  N+Wx3\n" + 
+    "N+W   N+W     N+W     N+W     N+D(#g1)     N+W     N+W     N+W     N+W     N+Wx1     N     N  N+Wx3\n" + 
+    "N+W   N+W     N+W     N+W     N+D(#g2)     N+W     N+W     N+W     N+W     N+Wx1     N     N  N+Wx3\n" + 
+    "N+W   N     N     N     N     N     N     N     N     N+Wx1     N+Wx1      N+Wx1   N+Wx3\n" + 
+    "N+W   N     N     N     N     N     N     N     N     N+Wx1\n" + 
+    "N+W   N     N     N     N+G(END)     N     N     N     N     N+Wx1\n" + 
+    "N+W   N+W     N+W     N+W     N+W     N+W     N+W     N+W     N+W     N+Wx1\n" + 
+    
+    "\n";
  
 var semi = nipplejs.create({
     zone: document.getElementById('game-controller-joystick'),
