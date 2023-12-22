@@ -180,6 +180,26 @@ impl State {
             )
             .expect("failed to load model"),
         );
+        let wall_model2 = model_store.add_model(
+            load_model(
+                include_bytes!("../models/wall2/wall2.obj"),
+                include_bytes!("../models/wall2/wall2.png"),
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let wall_model3 = model_store.add_model(
+            load_model(
+                include_bytes!("../models/wall3/wall3.obj"),
+                include_bytes!("../models/wall3/wall3.png"),
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
         let floor_model = model_store.add_model(
             load_model(
                 include_bytes!("../models/floor1/floor1.obj"),
@@ -304,6 +324,8 @@ impl State {
         // a map of block type -> Vec of model handles
         let handle_store: HashMap<BlockType, Vec<model::ModelHandle>> = vec![
             (BlockType::Wall, wall_model),
+            (BlockType::Wall, wall_model2),
+            (BlockType::Wall, wall_model3),
             (BlockType::FloorNormal, floor_model),
             (BlockType::FloorNormal, floor_model_2),
             (BlockType::FloorNormal, floor_model_3),
