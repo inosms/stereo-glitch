@@ -58,9 +58,12 @@ pub fn move_player_system(
     let direction = camera_look_direction_rotation_matrix * direction * player_max_speed;
 
     for (mut position, physics_body) in &mut query {
+        
+        // get the player speed before applying the impulse so that we don't wiggle when running into a wall
+        let player_velocity_magnitude = physics_system.get_velocity_magnitude(physics_body.body);
+
         physics_system.move_body(physics_body.body, direction, true);
 
-        let player_velocity_magnitude = physics_system.get_velocity_magnitude(physics_body.body);
         let wobble_scale = player_velocity_magnitude.sqrt() as f64 / player_max_speed as f64;
         let wobble_speed = 25.0;
         let x_wobble = (TimeKeeper::now() * wobble_speed).sin() * wobble_scale * 50.0;
