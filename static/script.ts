@@ -11,26 +11,26 @@ window.set_eye_distance = set_eye_distance;
 window.compress_level_to_url = compress_level_to_url;
 window.decompress_level_from_url = decompress_level_from_url;
 
-export const INITIAL_LEVEL = "N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3\n" +
-    "N+W N   N   N   N   N+Wx3\n" +
-    "N+W N   N   N   N   N+Wx3\n" +
-    "N+W N   N   N   N   N+Wx3   N+Wx3   N+Wx3\n" +
-    "N+W N   N   N   N   N+BX  N+T#t   N+Wx3\n" +
-    "N+W N+W N+W N+W N+W N+D(#t)   N+W   N+Wx3  N+Wx3 N+Wx3     N+Wx3 N+Wx3  N+Wx3\n" +
-    "N+W N+T#t2     N+W     N     N     N     N   N+Wx3                  N N     N N N+Wx3\n" +
-    "N+W N  N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N+S   N N N+Wx3\n" +
-    "N+W N     N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N     N N N+Wx3\n" +
-    "N+W N+BY N+W    N     N     N     N   N+Wx3                  N+C N+C N+C N+C N+Wx3\n" +
-    "N+W N+W   N+W     N+W   N+W   N+W   N+W N+Wx3                  N+C N+C N+C N+C N+Wx3\n" +
-    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx3\n" +
-    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx3\n" +
-    "_N+Wx3    _N+Wx3      _N+Wx3       _N+Wx3     _N    _N    _N+Wx3   _N+Wx3                      _N+Wx3 _N+Wx3     _N+Wx3 _N+Wx3 _N+Wx3\n" +
-    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx3\n" +
-    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx3\n" +
-    "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx3\n" +
-    "_N+Wx3    _N+Wx3      _N+Wx3       _N+Wx3     _N+Wx3      _N+Wx3      _N+Wx3   _N+Wx3                      _N+Wx3 _N+Wx3     _N _N _N+Wx3\n" +
-    "N+Wx3   N     N     N     N     N     N+P     N     N     N     N     N    N+Wx3\n" +
-    "N+Wx3   N     N     N     N     N     N     N     N     N     N     N    N+Wx3\n";
+export const INITIAL_LEVEL = "N+Wx4 N+Wx4 N+Wx4 N+Wx4 N+Wx4 N+Wx4\n" +
+    "N+W N   N   N   N   N+Wx4\n" +
+    "N+W N   N   N   N   N+Wx4\n" +
+    "N+W N   N   N   N   N+Wx4   N+Wx4   N+Wx4\n" +
+    "N+W N   N   N   N   N+BX  N+T#t   N+Wx4\n" +
+    "N+W N+W N+W N+W N+W N+D(#t)   N+W   N+Wx4  N+Wx4 N+Wx4     N+Wx4 N+Wx4  N+Wx4\n" +
+    "N+W N+T#t2     N+W     N     N     N     N   N+Wx4                  N N     N N N+Wx4\n" +
+    "N+W N  N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N+S   N N N+Wx4\n" +
+    "N+W N     N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N     N N N+Wx4\n" +
+    "N+W N+BY N+W    N     N     N     N   N+Wx4                  N+C N+C N+C N+C N+Wx4\n" +
+    "N+W N+W   N+W     N+W   N+W   N+W   N+W N+Wx4                  N+C N+C N+C N+C N+Wx4\n" +
+    "_N+Wx4   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx4\n" +
+    "_N+Wx4   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx4\n" +
+    "_N+Wx4    _N+Wx4      _N+Wx4       _N+Wx4     _N    _N    _N+Wx4   _N+Wx4                      _N+Wx4 _N+Wx4     _N+Wx4 _N+Wx4 _N+Wx4\n" +
+    "_N+Wx4   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx4\n" +
+    "_N+Wx4   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx4\n" +
+    "_N+Wx4   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N  _N+Wx4\n" +
+    "_N+Wx4    _N+Wx4      _N+Wx4       _N+Wx4     _N+Wx4      _N+Wx4      _N+Wx4   _N+Wx4                      _N+Wx4 _N+Wx4     _N _N _N+Wx4\n" +
+    "N+Wx4   N     N     N     N     N     N+P     N+C     N+C     N+C     N+C     N    N+Wx4\n" +
+    "N+Wx4   N     N     N     N     N     N     N     N     N     N     N    N+Wx4\n";
  
 var semi = nipplejs.create({
     zone: document.getElementById('game-controller-joystick'),

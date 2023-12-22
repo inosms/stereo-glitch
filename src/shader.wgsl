@@ -141,7 +141,7 @@ fn random_pattern(uv: vec2<f32>) -> vec4<f32> {
     let x = steps(uv.x, step_num) + glitch_area.time * 0.01;
     let y = steps(uv.y, step_num) + glitch_area.time * 0.01;
  
-    let darken = 0.9;
+    let darken = 0.75;
     let time_noise = (noise(vec2f(glitch_area.time * 0.1, 0.0) + vec2f(x,y) * 5.0) - 0.5) * 0.1;
     var random = min(max(0.0, (time_noise + noise(vec2f(x,y) * 80.0)) - darken) * 1.0 / (1.0 - darken), glitch_area.visibility);
     var r = 0.0;
