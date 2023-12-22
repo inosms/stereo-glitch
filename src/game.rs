@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use bevy_ecs::prelude::*;
 use cgmath::{EuclideanSpace, InnerSpace, Rotation3, Vector3, One};
+use rand::seq::IteratorRandom;
 use rapier3d::geometry::ColliderHandle;
 
 use crate::{
@@ -48,7 +49,7 @@ pub struct GameWorld {
     world: World,
     schedule: Schedule,
 
-    handle_store: HashMap<BlockType, ModelHandle>,
+    handle_store: HashMap<BlockType, Vec<ModelHandle>>,
     level: Option<ParsedLevel>,
     camera_aspect: f32,
 }
@@ -233,7 +234,7 @@ fn move_linear_enemy_system(
 }
 
 impl GameWorld {
-    pub fn new(handle_store: HashMap<BlockType, ModelHandle>) -> Self {
+    pub fn new(handle_store: HashMap<BlockType, Vec<ModelHandle>>) -> Self {
         let mut game_world = Self {
             world: World::default(),
             schedule: Schedule::default(),
@@ -514,8 +515,14 @@ impl GameWorld {
                 let added_entity_id = entity.id();
 
                 match self.handle_store.get(&block.get_block_type()) {
-                    Some(handle) => {
-                        entity.insert(Renderable { mesh: *handle });
+                    Some(handles) => {
+                        // get random mesh from the set
+                        let handle = handles
+                            .iter()
+                            .choose(&mut rand::thread_rng())
+                            .unwrap()
+                            .clone();
+                        entity.insert(Renderable { mesh: handle });
                     }
                     None => {
                         log::warn!("No mesh for block type {:?}", block.get_block_type());
@@ -547,7 +554,7 @@ impl GameWorld {
                             grabbed_rotation: cgmath::Quaternion::one(),
                         },
                         Renderable {
-                            mesh: self.handle_store[&BlockType::Charge],
+                            mesh: self.handle_store[&BlockType::Charge].iter().next().unwrap().clone(),
                         },
                         ChargeGhost::new_following(
                             added_entity_id,

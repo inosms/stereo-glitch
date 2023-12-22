@@ -227,7 +227,7 @@ impl ModelStore {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct ModelHandle {
     index: usize,
 }

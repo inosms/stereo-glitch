@@ -190,6 +190,26 @@ impl State {
             )
             .expect("failed to load model"),
         );
+        let floor_model_2 = model_store.add_model(
+            load_model(
+                include_bytes!("../models/floor2/floor2.obj"),
+                include_bytes!("../models/floor2/floor2.png"),
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
+        let floor_model_3 = model_store.add_model(
+            load_model(
+                include_bytes!("../models/floor3/floor3.obj"),
+                include_bytes!("../models/floor3/floor3.png"),
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
         let player_model = model_store.add_model(
             load_model(
                   include_bytes!("../models/player/player.obj"),
@@ -281,9 +301,12 @@ impl State {
             .expect("failed to load model"),
         );
 
-        let handle_store = HashMap::from_iter(vec![
+        // a map of block type -> Vec of model handles
+        let handle_store: HashMap<BlockType, Vec<model::ModelHandle>> = vec![
             (BlockType::Wall, wall_model),
             (BlockType::FloorNormal, floor_model),
+            (BlockType::FloorNormal, floor_model_2),
+            (BlockType::FloorNormal, floor_model_3),
             (BlockType::Player, player_model),
             (BlockType::Goal, goal_model),
             (BlockType::Door, door_model),
@@ -293,7 +316,10 @@ impl State {
             (BlockType::StaticEnemy, static_enemy_model),
             (BlockType::LinearEnemy, linear_enemy_model),
             (BlockType::Checkpoint, checkpoint_model),
-        ]);
+        ].into_iter().fold(HashMap::new(), |mut acc, (block_type, model_handle)| {
+            acc.entry(block_type).or_insert_with(Vec::new).push(model_handle);
+            acc
+        });
 
         let game_world = game::GameWorld::new(handle_store);
 
