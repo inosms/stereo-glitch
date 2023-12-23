@@ -1,18 +1,36 @@
 use std::collections::{HashMap, HashSet};
 
 use bevy_ecs::prelude::*;
-use cgmath::{EuclideanSpace, InnerSpace, Rotation3, Vector3, One};
+use cgmath::{EuclideanSpace, InnerSpace, One, Rotation3, Vector3};
 use rand::seq::IteratorRandom;
 use rapier3d::geometry::ColliderHandle;
 
 use crate::{
+    game_objects::{
+        charge::{
+            charge_recharge_system, move_charge_ghost_system, player_charge_depletion_system,
+            ChargeGhost, ChargeSpawnArea,
+        },
+        checkpoint::{self, set_checkpoint_system, Checkpoint, spawn_checkpoint_particle_system, animate_checkpoint_particles_system},
+        constants::TICKS_PER_SECOND,
+        game_system_commands::{GameSystemCommand, GameSystemCommands},
+        glitch_area::GlitchAreaVisibility,
+        goal::{check_goal_reached_system, Goal},
+        input::Input,
+        movable::{animate_moving_objects_system, move_movable_object_with_player_system, Movable},
+        physics_body::PhysicsBody,
+        player::{move_player_system, Player},
+        position::Position,
+        renderable::Renderable,
+        sensor::Sensor,
+        time_keeper::TimeKeeper, model_manager::ModelManager,
+    },
     level_loader::{Cell, ParsedLevel},
+    model::ModelHandle,
     object_types::{Block, BlockType, Id, LinearEnemyDirection},
     physics::PhysicsSystem,
     stereo_camera::StereoCamera,
-    game_objects::{time_keeper::TimeKeeper, position::Position, charge::{move_charge_ghost_system, ChargeGhost, charge_recharge_system, ChargeSpawnArea, player_charge_depletion_system}, player::{Player, move_player_system}, constants::TICKS_PER_SECOND, sensor::Sensor, glitch_area::GlitchAreaVisibility, renderable::Renderable, physics_body::PhysicsBody, input::Input, movable::{Movable, move_movable_object_with_player_system, animate_moving_objects_system}, goal::{Goal, check_goal_reached_system}, game_system_commands::{GameSystemCommands, GameSystemCommand}, checkpoint::{Checkpoint, self, set_checkpoint_system}}, model::ModelHandle,
 };
-
 
 #[derive(Component)]
 struct Door {
@@ -22,7 +40,6 @@ struct Door {
 
 #[derive(Component)]
 struct Wall;
-
 
 #[derive(Component)]
 struct Floor;
@@ -49,12 +66,10 @@ pub struct GameWorld {
     world: World,
     schedule: Schedule,
 
-    handle_store: HashMap<BlockType, Vec<ModelHandle>>,
+    model_manager: ModelManager,
     level: Option<ParsedLevel>,
     camera_aspect: f32,
 }
-
-
 
 // Move the camera to always look at the player
 fn move_camera_system(
@@ -238,7 +253,7 @@ impl GameWorld {
         let mut game_world = Self {
             world: World::default(),
             schedule: Schedule::default(),
-            handle_store,
+            model_manager: ModelManager::new(handle_store),
             level: None,
             camera_aspect: 1.0,
         };
@@ -262,15 +277,14 @@ impl GameWorld {
             50.0,
             -3.0, // view cross-eyed
         ));
+        self.world.insert_resource(self.model_manager.clone());
         self.world
             .insert_resource(TimeKeeper::new(TICKS_PER_SECOND));
         self.world.insert_resource(GlitchAreaVisibility {
             visibility: 0.0,
             glitch_cells: HashSet::new(),
         });
-        self.world.insert_resource(
-            GameSystemCommands::new(),
-        );
+        self.world.insert_resource(GameSystemCommands::new());
         // The physics system needs to run after the player system so that the player can move
         self.schedule.add_systems(
             (
@@ -287,6 +301,8 @@ impl GameWorld {
             )
                 .chain(),
         );
+        self.schedule.add_systems(spawn_checkpoint_particle_system);
+        self.schedule.add_systems(animate_checkpoint_particles_system);
         self.schedule.add_systems(move_camera_system);
         self.schedule.add_systems(check_player_dead_system);
         self.schedule.add_systems(door_system);
@@ -309,14 +325,20 @@ impl GameWorld {
             self.reset_level();
         }
 
-        while let Some(command) = self.world.get_resource_mut::<GameSystemCommands>().unwrap().commands.pop() {
+        while let Some(command) = self
+            .world
+            .get_resource_mut::<GameSystemCommands>()
+            .unwrap()
+            .commands
+            .pop()
+        {
             match command {
                 GameSystemCommand::LoadLevel(level) => {
                     self.load_level(level);
                 }
                 GameSystemCommand::SetCheckpoint(id) => {
                     log::info!("Set checkpoint {:?}", id);
-                    self.level.as_mut().map(|level|{
+                    self.level.as_mut().map(|level| {
                         level.set_checkpoint(id);
                     });
                 }
@@ -401,7 +423,10 @@ impl GameWorld {
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.25, 0.25, 0.5, 0.0, 0.0, 0.0),
                     ),
-                    BlockType::StaticEnemy | BlockType::LinearEnemy | BlockType::Goal | BlockType::Checkpoint => Some(
+                    BlockType::StaticEnemy
+                    | BlockType::LinearEnemy
+                    | BlockType::Goal
+                    | BlockType::Checkpoint => Some(
                         self.world
                             .resource_mut::<PhysicsSystem>()
                             .add_sensor_collider(body_handle, 0.55, 0.55, 0.55, 0.0, 0.0, 0.0),
@@ -515,18 +540,15 @@ impl GameWorld {
                 // we need that later
                 let added_entity_id = entity.id();
 
-                match self.handle_store.get(&block.get_block_type()) {
-                    Some(handles) => {
-                        // get random mesh from the set
-                        let handle = handles
-                            .iter()
-                            .choose(&mut rand::thread_rng())
-                            .unwrap()
-                            .clone();
-                        entity.insert(Renderable { mesh: handle });
-                    }
-                    None => {
-                        log::warn!("No mesh for block type {:?}", block.get_block_type());
+                if block.get_block_type() != BlockType::Checkpoint {
+                    // TODO: refactor
+                    match self.model_manager.get_handle(&block.get_block_type()) {
+                        Some(handle) => {
+                            entity.insert(Renderable { mesh: handle });
+                        }
+                        None => {
+                            log::warn!("No mesh for block type {:?}", block.get_block_type());
+                        }
                     }
                 }
 
@@ -541,7 +563,7 @@ impl GameWorld {
                 }
 
                 if block.get_block_type() == BlockType::Player {
-                    // spawn a ghost following the player 
+                    // spawn a ghost following the player
                     self.world.spawn((
                         Position {
                             position: Vector3::new(
@@ -556,13 +578,9 @@ impl GameWorld {
                             grabbed_rotation: cgmath::Quaternion::one(),
                         },
                         Renderable {
-                            mesh: self.handle_store[&BlockType::Ghost].iter().next().unwrap().clone(),
+                            mesh: self.model_manager.get_handle(&BlockType::Ghost).unwrap(),
                         },
-                        ChargeGhost::new_following(
-                            added_entity_id,
-                            1.4,
-                            position.position,
-                        ),
+                        ChargeGhost::new_following(added_entity_id, 1.4, position.position),
                     ));
                 }
             }

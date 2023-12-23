@@ -312,8 +312,8 @@ impl State {
         );
         let checkpoint_model = model_store.add_model(
             load_model(
-                  include_bytes!("../models/todo/todo.obj"),
-                include_bytes!("../models/todo/todo.png"),
+                  include_bytes!("../models/checkpoint/checkpoint.obj"),
+                include_bytes!("../models/checkpoint/checkpoint.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
