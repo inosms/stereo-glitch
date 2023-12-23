@@ -4,14 +4,16 @@ use bevy_ecs::{
     component::Component,
     entity::Entity,
     query::With,
-    system::{Query, Res, ResMut},
+    system::{Commands, Query, Res, ResMut},
 };
 use cgmath::Rotation3;
+use rand::Rng;
 
-use crate::physics::PhysicsSystem;
+use crate::{object_types::BlockType, physics::PhysicsSystem};
 
 use super::{
-    physics_body::PhysicsBody, player::Player, position::Position, time_keeper::TimeKeeper,
+    dust::DustParticle, model_manager::ModelManager, physics_body::PhysicsBody, player::Player,
+    position::Position, renderable::Renderable, time_keeper::TimeKeeper,
 };
 
 #[derive(Component)]
@@ -91,5 +93,68 @@ pub fn animate_moving_objects_system(
                     cgmath::Vector3::unit_y(),
                     cgmath::Deg(y_wobble as f32),
                 );
+    }
+}
+
+pub fn spawn_dust_on_moving_objects_system(
+    mut commands: Commands,
+    time_keeper: Res<TimeKeeper>,
+    physics_system: Res<PhysicsSystem>,
+    query: Query<(&Position, &PhysicsBody), With<Movable>>,
+    model_manager: Res<ModelManager>,
+) {
+    // Only move the player if we are in a physics tick
+    // Otherwise the player will be frame rate dependent
+    if !time_keeper.is_in_fixed_tick() {
+        return;
+    }
+
+    // randomly only spawn every 3th tick
+    if rand::thread_rng().gen_range(0..3) != 0 {
+        return;
+    }
+
+    for (position, physics_body) in &query {
+        // get the player speed before applying the impulse so that we don't wiggle when running into a wall
+        let player_velocity_magnitude = physics_system.get_velocity_magnitude(physics_body.body);
+
+        if player_velocity_magnitude > 2.0 {
+            let mut rng = rand::thread_rng();
+            let player_position = position.position;
+            let range = 0.25;
+            let random_point =
+                cgmath::Vector3::new(rng.gen_range(0.0..range), rng.gen_range(0.0..range), -0.5);
+
+            let random_velocity = cgmath::Vector3::new(0.0, 0.0, 0.2);
+
+            let random_color = cgmath::Vector3::new(
+                rng.gen_range(0.8..1.0),
+                rng.gen_range(0.8..1.0),
+                rng.gen_range(0.8..1.0),
+            );
+
+            let pos = Position {
+                position: player_position + random_point,
+                rotation: cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_z(),
+                    cgmath::Deg(0.0),
+                ),
+                scale: cgmath::Vector3::new(0.0, 0.0, 0.0),
+                color: cgmath::Vector4::new(1.0, 1.0, 1.0, 1.0),
+                grabbed_scale_factor: 1.0,
+                grabbed_rotation: cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_z(),
+                    cgmath::Deg(0.0),
+                ),
+            };
+
+            commands.spawn((
+                DustParticle::new(random_velocity, random_color, 0.1, 1.5),
+                pos,
+                Renderable {
+                    mesh: model_manager.get_handle(&BlockType::Cube).unwrap(),
+                },
+            ));
+        }
     }
 }

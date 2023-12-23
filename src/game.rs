@@ -22,7 +22,7 @@ use crate::{
         goal::{check_goal_reached_system, Goal},
         input::Input,
         model_manager::ModelManager,
-        movable::{animate_moving_objects_system, move_movable_object_with_player_system, Movable},
+        movable::{animate_moving_objects_system, move_movable_object_with_player_system, Movable, spawn_dust_on_moving_objects_system},
         physics_body::PhysicsBody,
         player::{move_player_system, spawn_dust_on_move_player_system, Player},
         position::Position,
@@ -307,6 +307,7 @@ impl GameWorld {
                 animate_checkpoint_particles_system,
                 animate_dust_particle_system,
                 spawn_dust_on_move_player_system,
+                spawn_dust_on_moving_objects_system,
             )
                 .chain(),
         );
