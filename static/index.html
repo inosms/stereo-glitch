@@ -45,10 +45,22 @@
 
             /* disable double tap zoom */
             touch-action: manipulation;
+
+            font-family: "Roboto Regular";
         }
 
-        .details {
-            background-color: hsl(254, 10%, 15%);
+        .below-game-container {
+            background-color: hsl(220, 20%, 10%);
+
+            >.details {
+                padding-left: 3%;
+                padding-right: 3%;
+
+                @media all and (min-width: 800px) {
+                    padding-left: 10%;
+                    padding-right: 10%;
+                }
+            }
         }
 
         #center-container {
@@ -123,6 +135,41 @@
             /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
         }
+
+        .fade {
+            height: 100px;
+            width: 100%;
+            background: rgb(0, 0, 0);
+            background: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+        }
+
+        h1 {
+            font-size: 20px;
+            text-align: center;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+
+        kbd {
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            padding: 0.1em 0.5em;
+            margin: 0 0.2em;
+            box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.05) inset;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1em;
+            margin-top: 0;
+            margin-bottom: 0.5em;
+        }
+
+        a {
+            color: hsl(220, 90%, 80%);
+        }
     </style>
 </head>
 
@@ -135,10 +182,17 @@
             <div id="game-controller-action-button"></div>
         </div>
     </div>
-    <div class="details">
-        <h1>STEREO GLITCH</h1>
-        <button id="load-button">Load</button>
-        <div id="editor"></div>
+    <div class="below-game-container">
+        <div class="fade">
+            <h1>STEREO GLITCH</h1>
+        </div>
+        <div class="details">
+            <p>Experimental game written in <a href="https://www.rust-lang.org/">Rust</a> with <a href="https://wgpu.rs/">wgpu</a> compiled to WASM.</p>
+            <p>Move with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> and grab with <kbd>Space</kbd>. On mobile use
+                the left and right joystick.</p>
+            <button id="load-button">Load</button>
+            <div id="editor"></div>
+        </div>
     </div>
 </body>
 
