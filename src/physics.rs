@@ -122,24 +122,27 @@ impl PhysicsSystem {
             Block::Empty => unreachable!(),
             Block::Player => {
                 // make the player heaver to avoid bouncing
-                RigidBodyBuilder::dynamic()
-                    .locked_axes(LockedAxes::ROTATION_LOCKED)
-                    .gravity_scale(1.2)
+                RigidBodyBuilder::dynamic().locked_axes(LockedAxes::ROTATION_LOCKED)
             }
             Block::LinearEnemy(LinearEnemyDirection::XAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED),
             Block::LinearEnemy(LinearEnemyDirection::YAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED),
-            Block::Box(BoxType::Free) => RigidBodyBuilder::dynamic().gravity_scale(1.2).additional_mass(10.0),
+            Block::Box(BoxType::Free) => RigidBodyBuilder::dynamic()
+                .additional_mass(5.0)
+                .linear_damping(0.5),
             Block::Box(BoxType::XAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED)
-                .gravity_scale(1.2).additional_mass(10.0),
+                .additional_mass(5.0)
+                .linear_damping(0.5),
             Block::Box(BoxType::YAxis) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::TRANSLATION_LOCKED_X | LockedAxes::ROTATION_LOCKED)
-                .gravity_scale(1.2).additional_mass(10.0),
+                .additional_mass(5.0)
+                .linear_damping(0.5),
             Block::Box(BoxType::RotationFixed) => RigidBodyBuilder::dynamic()
                 .locked_axes(LockedAxes::ROTATION_LOCKED)
-                .gravity_scale(1.2).additional_mass(10.0),
+                .additional_mass(5.0)
+                .linear_damping(0.5),
         }
         .ccd_enabled(true)
         .translation(vector![x, y, z])
@@ -155,7 +158,9 @@ impl PhysicsSystem {
             Block::Player | Block::LinearEnemy(_) => {
                 Some(ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build())
             }
-            Block::Empty | Block::Charge | Block::Trigger | Block::Goal(_) | Block::Checkpoint => None,
+            Block::Empty | Block::Charge | Block::Trigger | Block::Goal(_) | Block::Checkpoint => {
+                None
+            }
         };
         let collider_handle = collider.map(|collider| {
             self.collider_set
