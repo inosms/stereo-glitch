@@ -52,6 +52,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: black;
         }
 
         #game {
@@ -59,11 +60,17 @@
             display: grid;
             width: 100%;
             max-width: 800px;
-            background-color: black;
 
-            grid-template-columns: 12% 76% 12%;
             max-height: 100%;
             aspect-ratio: 2/1;
+
+            &.is-mobile {
+                grid-template-columns: 12% 76% 12%;
+            }
+
+            &:not(.is-mobile) {
+                grid-template-columns: 100%;
+            }
 
             >#game-controller-joystick {
                 position: relative;
