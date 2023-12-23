@@ -41,18 +41,20 @@
             height: 100%;
 
             color: hsl(254, 10%, 80%);
-
-            background-color: hsl(254, 10%, 15%);
+            background-color: black;
 
             /* disable double tap zoom */
             touch-action: manipulation;
+        }
+
+        .details {
+            background-color: hsl(254, 10%, 15%);
         }
 
         #center-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: black;
         }
 
         #game {
@@ -133,8 +135,11 @@
             <div id="game-controller-action-button"></div>
         </div>
     </div>
-    <button id="load-button">Load</button>
-    <div id="editor"></div>
+    <div class="details">
+        <h1>STEREO GLITCH</h1>
+        <button id="load-button">Load</button>
+        <div id="editor"></div>
+    </div>
 </body>
 
 </html>
