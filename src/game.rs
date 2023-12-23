@@ -11,19 +11,24 @@ use crate::{
             charge_recharge_system, move_charge_ghost_system, player_charge_depletion_system,
             ChargeGhost, ChargeSpawnArea,
         },
-        checkpoint::{self, set_checkpoint_system, Checkpoint, spawn_checkpoint_particle_system, animate_checkpoint_particles_system},
+        checkpoint::{
+            self, animate_checkpoint_particles_system, set_checkpoint_system,
+            spawn_checkpoint_particle_system, Checkpoint,
+        },
         constants::TICKS_PER_SECOND,
+        dust::animate_dust_particle_system,
         game_system_commands::{GameSystemCommand, GameSystemCommands},
         glitch_area::GlitchAreaVisibility,
         goal::{check_goal_reached_system, Goal},
         input::Input,
+        model_manager::ModelManager,
         movable::{animate_moving_objects_system, move_movable_object_with_player_system, Movable},
         physics_body::PhysicsBody,
-        player::{move_player_system, Player},
+        player::{move_player_system, spawn_dust_on_move_player_system, Player},
         position::Position,
         renderable::Renderable,
         sensor::Sensor,
-        time_keeper::TimeKeeper, model_manager::ModelManager,
+        time_keeper::TimeKeeper,
     },
     level_loader::{Cell, ParsedLevel},
     model::ModelHandle,
@@ -298,11 +303,13 @@ impl GameWorld {
                 move_linear_enemy_system,
                 move_charge_ghost_system,
                 animate_moving_objects_system,
+                spawn_checkpoint_particle_system,
+                animate_checkpoint_particles_system,
+                animate_dust_particle_system,
+                spawn_dust_on_move_player_system,
             )
                 .chain(),
         );
-        self.schedule.add_systems(spawn_checkpoint_particle_system);
-        self.schedule.add_systems(animate_checkpoint_particles_system);
         self.schedule.add_systems(move_camera_system);
         self.schedule.add_systems(check_player_dead_system);
         self.schedule.add_systems(door_system);

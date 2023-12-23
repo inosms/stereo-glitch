@@ -128,6 +128,11 @@ impl StereoCamera {
 
         camera_look_vec_projected_to_ground
     }
+
+    /// Get the camera eye
+    pub fn get_eye(&self) -> cgmath::Point3<f32> {
+        self.eye
+    }
 }
 
 /// A uniform struct to hold the view projection matrix (needed for WGSL)

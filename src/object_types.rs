@@ -94,6 +94,7 @@ pub enum BlockType {
     LinearEnemy,
     Checkpoint,
     Ghost,
+    Cube,
 }
 
 impl Block {

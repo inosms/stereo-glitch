@@ -330,6 +330,16 @@ impl State {
             )
             .expect("failed to load model"),
         );
+        let cube_model = model_store.add_model(
+            load_model(
+                  include_bytes!("../models/cube/cube.obj"),
+                include_bytes!("../models/cube/cube.png"),
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
 
         // a map of block type -> Vec of model handles
         let handle_store: HashMap<BlockType, Vec<model::ModelHandle>> = vec![
@@ -349,6 +359,7 @@ impl State {
             (BlockType::LinearEnemy, linear_enemy_model),
             (BlockType::Checkpoint, checkpoint_model),
             (BlockType::Ghost, ghost_model),
+            (BlockType::Cube, cube_model),
         ].into_iter().fold(HashMap::new(), |mut acc, (block_type, model_handle)| {
             acc.entry(block_type).or_insert_with(Vec::new).push(model_handle);
             acc
