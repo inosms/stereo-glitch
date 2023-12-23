@@ -66,8 +66,8 @@ pub fn move_player_system(
 
         let wobble_scale = player_velocity_magnitude.sqrt() as f64 / player_max_speed as f64;
         let wobble_speed = 25.0;
-        let x_wobble = (TimeKeeper::now() * wobble_speed).sin() * wobble_scale * 50.0;
-        let y_wobble = (TimeKeeper::now() * wobble_speed).cos() * wobble_scale * 50.0;
+        let x_wobble = (TimeKeeper::now() * wobble_speed).sin() * wobble_scale * 45.0;
+        let y_wobble = (TimeKeeper::now() * wobble_speed).cos() * wobble_scale * 25.0;
         position.grabbed_rotation =
             cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0 as f32))
                 * cgmath::Quaternion::from_axis_angle(

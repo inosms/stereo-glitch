@@ -282,8 +282,8 @@ impl State {
         );
         let charge_model = model_store.add_model(
             load_model(
-                  include_bytes!("../models/todo/todo.obj"),
-                include_bytes!("../models/todo/todo.png"),
+                  include_bytes!("../models/charge/charge.obj"),
+                include_bytes!("../models/charge/charge.png"),
                 &device,
                 &queue,
                 &model_texture_bind_group_layout,
@@ -320,6 +320,16 @@ impl State {
             )
             .expect("failed to load model"),
         );
+        let ghost_model = model_store.add_model(
+            load_model(
+                  include_bytes!("../models/ghost/ghost.obj"),
+                include_bytes!("../models/ghost/ghost.png"),
+                &device,
+                &queue,
+                &model_texture_bind_group_layout,
+            )
+            .expect("failed to load model"),
+        );
 
         // a map of block type -> Vec of model handles
         let handle_store: HashMap<BlockType, Vec<model::ModelHandle>> = vec![
@@ -338,6 +348,7 @@ impl State {
             (BlockType::StaticEnemy, static_enemy_model),
             (BlockType::LinearEnemy, linear_enemy_model),
             (BlockType::Checkpoint, checkpoint_model),
+            (BlockType::Ghost, ghost_model),
         ].into_iter().fold(HashMap::new(), |mut acc, (block_type, model_handle)| {
             acc.entry(block_type).or_insert_with(Vec::new).push(model_handle);
             acc

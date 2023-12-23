@@ -3,15 +3,18 @@ use bevy_ecs::{
     entity::Entity,
     system::{Commands, Query, Res, ResMut},
 };
-use cgmath::{InnerSpace, Vector3, One};
-
+use cgmath::{InnerSpace, One, Rotation3, Vector3, VectorSpace};
 
 use crate::stereo_camera::StereoCamera;
 
 use super::{
+    constants::TICKS_PER_SECOND,
+    glitch_area::GlitchAreaVisibility,
     player::Player,
     position::{self, Position},
-    time_keeper::TimeKeeper, sensor::Sensor, constants::TICKS_PER_SECOND, renderable::Renderable, glitch_area::GlitchAreaVisibility,
+    renderable::Renderable,
+    sensor::Sensor,
+    time_keeper::TimeKeeper,
 };
 
 #[derive(Component)]
@@ -50,6 +53,7 @@ pub struct ChargeGhost {
     // The current center position of the ghost
     // The ghost if floating up and down around this position
     center_position: cgmath::Vector3<f32>,
+    center_rotation: cgmath::Quaternion<f32>,
 
     // When in stationary state the ghost despawns after it has been picked up
     is_despawning: bool,
@@ -68,6 +72,7 @@ impl ChargeGhost {
             follow_entity: Some(follow_entity),
             following_distance,
             center_position: initial_position,
+            center_rotation: cgmath::Quaternion::one(),
             is_despawning: false,
         }
     }
@@ -80,6 +85,7 @@ impl ChargeGhost {
             follow_entity: None,
             following_distance: 0.0,
             center_position: initial_position,
+            center_rotation: cgmath::Quaternion::one(),
             is_despawning: false,
         }
     }
@@ -126,18 +132,27 @@ pub fn move_charge_ghost_system(
             let player = player_query.get(follow_entity).unwrap();
             ghost.charge = player.charge;
 
-            let follow_position = position_query.get(follow_entity).unwrap();
-            let distance_vec = follow_position.position - ghost.center_position;
+            let follow_position = position_query.get(follow_entity).unwrap().position;
+            let distance_vec = follow_position - ghost.center_position;
             let distance = distance_vec.magnitude();
             let direction: cgmath::Vector3<f32> = distance_vec.normalize();
             let follow_distance = ghost.following_distance;
             if distance > follow_distance {
-                let speed = 2.0;
+                let speed = 1.8;
                 ghost.center_position +=
                     direction * time.delta_seconds() * speed * (distance / follow_distance);
             } else if distance.is_normal() {
                 // keep the ghost at the same distance from the player
-                ghost.center_position = follow_position.position - direction * follow_distance;
+                ghost.center_position = follow_position - direction * follow_distance;
+            }
+
+            if distance.is_normal() {
+                // get rotation from direction vector
+                let rotation = cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_z(),
+                    cgmath::Rad(direction.y.atan2(direction.x) + std::f32::consts::FRAC_PI_2),
+                );
+                ghost.center_rotation = rotation;
             }
         }
 
@@ -160,6 +175,17 @@ pub fn move_charge_ghost_system(
         let max_charge = 100.0;
         ghost_position.scale = cgmath::Vector3::new(1.0, 1.0, 1.0)
             * ((ghost.animation_charge_value / max_charge).sqrt() * max_scale).max(min_scale);
+
+        if is_in_following_mode {
+            ghost_position.rotation = ghost.center_rotation;
+        } else {
+            // slowly rotate
+            let rotation_speed = 2.0;
+            ghost_position.rotation = cgmath::Quaternion::from_axis_angle(
+                cgmath::Vector3::unit_z(),
+                cgmath::Rad(initial_offset + time * rotation_speed),
+            );
+        }
     }
 }
 
@@ -192,7 +218,9 @@ pub fn charge_recharge_system(
             for player_entity in triggering_player_entity {
                 if let Ok(mut player) = player_query.get_mut(*player_entity) {
                     player.charge = (player.charge.max(0.0) + charge_added).min(100.0);
-                    if let Some(Ok(mut ghost)) = charge.spawned_ghost.map(|g| ghost_query.get_mut(g)) {
+                    if let Some(Ok(mut ghost)) =
+                        charge.spawned_ghost.map(|g| ghost_query.get_mut(g))
+                    {
                         ghost.initiate_despawn();
                     }
                     charge.spawned_ghost = None;
@@ -226,8 +254,6 @@ pub fn charge_recharge_system(
         }
     }
 }
-
-
 
 // When the player is in a glitch area deplete the charge over time
 // If the charge reaches 0 the player dies

@@ -22,6 +22,7 @@ export const INITIAL_LEVEL = "N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3\n" +
     "N+W N     N+W     N     N     N     N   N+D(#t2)+D(#t2)+Wx1    N N     N N N+Wx3\n" +
     "N+W N+BY N+W    N     N     N     N   N+Wx3                  N+C N+C N+C N+C N+Wx3\n" +
     "N+W N+W   N+W     N+W   N+W   N+W   N+W N+Wx3                  N+C N+C N+C N+C N+Wx3\n" +
+    "N+W N+W   N+W     N+W   N+W   N+W   N+W N+Wx3                  N+C N+C N+C N+C N+Wx3\n" +
     "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx3\n" +
     "_N+Wx3   _N     _N       _N     _N     _N     _N   _N                      _N _N     _N _N _N+Wx3\n" +
     "_N+Wx3    _N+Wx3      _N+Wx3       _N+Wx3     _N    _N    _N+Wx3   _N+Wx3                      _N+Wx3 _N+Wx3     _N+Wx3 _N+Wx3 _N+Wx3\n" +

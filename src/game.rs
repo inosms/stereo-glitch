@@ -372,9 +372,9 @@ impl GameWorld {
                 };
 
                 // to prevent the boxes from getting stuck in each other
-                let offset = 0.95;
+                let offset = 0.94;
                 let xy_size = match block.get_block_type() {
-                    BlockType::Player => 0.5 * 0.8,
+                    BlockType::Player => 0.5 * 0.99,
                     _ => 0.5,
                 };
                 let (body_handle, collider_handle) =
@@ -554,11 +554,11 @@ impl GameWorld {
                             grabbed_rotation: cgmath::Quaternion::one(),
                         },
                         Renderable {
-                            mesh: self.handle_store[&BlockType::Charge].iter().next().unwrap().clone(),
+                            mesh: self.handle_store[&BlockType::Ghost].iter().next().unwrap().clone(),
                         },
                         ChargeGhost::new_following(
                             added_entity_id,
-                            1.0,
+                            1.4,
                             position.position,
                         ),
                     ));
