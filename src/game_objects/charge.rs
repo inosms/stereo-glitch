@@ -3,7 +3,7 @@ use bevy_ecs::{
     entity::Entity,
     system::{Commands, Query, Res, ResMut},
 };
-use cgmath::{InnerSpace, One, Rotation3, Vector3, VectorSpace};
+use cgmath::{InnerSpace, One, Rotation3, Vector3, VectorSpace, Vector4};
 
 use crate::stereo_camera::StereoCamera;
 
@@ -242,6 +242,7 @@ pub fn charge_recharge_system(
                     ),
                     rotation: position.rotation,
                     scale: Vector3::new(0.0, 0.0, 0.0),
+                    color: Vector4::new(1.0, 1.0, 1.0, 1.0),
                     grabbed_scale_factor: 1.0,
                     grabbed_rotation: cgmath::Quaternion::one(),
                 },

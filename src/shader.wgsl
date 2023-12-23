@@ -29,6 +29,7 @@ struct InstanceInput {
     @location(6) model_matrix_1: vec4<f32>,
     @location(7) model_matrix_2: vec4<f32>,
     @location(8) model_matrix_3: vec4<f32>,
+    @location(9) color: vec4<f32>,
 };
  
 
@@ -40,6 +41,7 @@ struct VertexOutput {
     @location(2) eye_target: f32,
     @location(3) world_space_pos: vec4<f32>,
     @location(4) ndc_space_left_eye: vec3<f32>,
+    @location(5) color: vec4<f32>,
 };
 
 @vertex
@@ -67,6 +69,7 @@ fn vs_main(
     // COPY ==============================
     out.tex_pos = model.tex_pos;
     out.eye_target = f32(render_eye_target.eye_target);
+    out.color = instance.color;
 
     // DO TRANSFORM ==============================
     out.world_space_pos = model_matrix * vec4<f32>(model.position, 1.0);
@@ -128,11 +131,16 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let sampled_texture = textureSample(t_model, s_model, in.tex_pos);
     var glitch_mask_alpha = textureSample(t_glitch_area, s_glitch_area, vec2<f32>(u,v)).r;
     glitch_mask_alpha = pow(glitch_mask_alpha, 6.0);
+    let r = sampled_texture.r * in.color.r;
+    let g = sampled_texture.g * in.color.g;
+    let b = sampled_texture.b * in.color.b;
+    let a = sampled_texture.a * in.color.a;
+    let color = vec4<f32>(r,g,b,a);
     if( glitch_mask_alpha > 0.95 ) {
-        return sampled_texture;
+        return color;
     } else {
         // interpolate 
-        return glitch_mask_alpha * sampled_texture + (1.0 - glitch_mask_alpha) * random_pattern(vec2<f32>(in.ndc_space_left_eye.x, in.ndc_space_left_eye.y));
+        return glitch_mask_alpha * color + (1.0 - glitch_mask_alpha) * random_pattern(vec2<f32>(in.ndc_space_left_eye.x, in.ndc_space_left_eye.y));
     }
 }
 

@@ -4,6 +4,7 @@ use crate::game_objects::position::Position;
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct InstanceRaw {
     model: [[f32; 4]; 4],
+    color: [f32; 4],
 }
 
 impl From<&Position> for InstanceRaw {
@@ -18,6 +19,7 @@ impl From<&Position> for InstanceRaw {
                 * cgmath::Matrix4::from(position.rotation)
                 * cgmath::Matrix4::from(position.grabbed_rotation))
             .into(),
+            color: position.color.into(),
         }
     }
 }
@@ -54,6 +56,11 @@ impl InstanceRaw {
                 wgpu::VertexAttribute {
                     offset: mem::size_of::<[f32; 12]>() as wgpu::BufferAddress,
                     shader_location: 8,
+                    format: wgpu::VertexFormat::Float32x4,
+                },
+                wgpu::VertexAttribute {
+                    offset: mem::size_of::<[f32; 16]>() as wgpu::BufferAddress,
+                    shader_location: 9,
                     format: wgpu::VertexFormat::Float32x4,
                 },
             ],
