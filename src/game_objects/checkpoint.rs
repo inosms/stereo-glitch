@@ -55,7 +55,7 @@ pub fn set_checkpoint_system(
 
 #[derive(Component)]
 pub struct CheckpointParticle {
-    start_time: f32,
+    start_time: f64,
     lifetime: f32,
     start_z: f32,
 }
@@ -91,7 +91,7 @@ pub fn spawn_checkpoint_particle_system(
         }
         commands.spawn((
             CheckpointParticle {
-                start_time: TimeKeeper::now() as f32,
+                start_time: TimeKeeper::now(),
                 lifetime: 2.0 + rng.gen::<f32>() * 1.0,
                 start_z: pos.position.z,
             },
@@ -112,7 +112,7 @@ pub fn animate_checkpoint_particles_system(
     }
 
     for (mut checkpoint_particle, mut position, entity) in &mut query {
-        let diff_time = TimeKeeper::now() as f32 - checkpoint_particle.start_time;
+        let diff_time = (TimeKeeper::now() - checkpoint_particle.start_time) as f32;
         let t = diff_time / checkpoint_particle.lifetime;
         if t > 1.0 {
             commands.entity(entity).despawn();
