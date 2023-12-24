@@ -40,12 +40,22 @@
                 border-right: 1px solid hsl(220, 20%, 20%);
 
                 .cm-activeLineGutter {
-                    background-color: hsl(220, 20%, 20%);
+                    background-color: rgba(41, 48, 61, 0.5);
                 }
             }
 
             .cm-content {
                 font-family: RobotoMonoRegular;
+            }
+
+
+
+            .cm-selectionBackground {
+                background-color: hsl(220, 20%, 30%);
+            }
+
+            .cm-activeLine {
+                background-color: rgba(41, 48, 61, 0.5);
             }
         }
 
@@ -167,6 +177,14 @@
             padding-bottom: 20px;
         }
 
+        h2 {
+            font-family: RobotoMonoRegular;
+            font-size: 16px;
+            text-align: left;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+
         kbd {
             font-family: RobotoMonoRegular;
             display: inline-block;
@@ -178,6 +196,14 @@
             background-color: rgba(255, 255, 255, 0.1);
         }
 
+        code {
+            font-family: RobotoMonoRegular;
+            display: inline-block;
+            padding: 0.1em 0.4em;
+            margin: 0 0.2em;
+            color: hsl(143, 67%, 62%);
+        }
+
         p {
             font-size: 16px;
             line-height: 1.5em;
@@ -187,6 +213,32 @@
 
         a {
             color: hsl(220, 90%, 80%);
+        }
+
+        .editor-container {
+            >.top-bar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+
+                button {
+                    font-family: RobotoMonoRegular;
+                    font-size: 16px;
+                    background-color: rgba(0, 255, 110, 0.2);
+                    color: hsl(254, 10%, 80%);
+                    border: 2px solid rgba(0, 255, 110, 0.4);
+                    border-radius: 8px;
+                    padding: 4px 8px;
+                    cursor: pointer;
+
+                    &:hover {
+                        background-color: rgba(0, 255, 110, 0.4);
+                    }
+                }
+            }
+
+            padding-top: 20px;
+            padding-bottom: 20px;
         }
     </style>
 </head>
@@ -209,8 +261,55 @@
                     href="https://wgpu.rs/">wgpu</a> compiled to WASM.</p>
             <p>Move with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> and grab with <kbd>Space</kbd>. On mobile use
                 the left and right joystick.</p>
-            <button id="load-button">Load</button>
-            <div id="editor"></div>
+            <div class="editor-container">
+                <div class="top-bar">
+                    <h2>Level Editor</h2>
+                    <button id="load-button">Load</button>
+                </div>
+
+                <div id="editor"></div>
+                <div class="explanation">
+                    <p>
+                        You can write your own levels here. In order to load your level you have to press the Load
+                        button.
+                        When successfully loaded your level file will be compressed and added to your URL.
+                        If you share this URL you can share the level you created with your friends.
+                    </p>
+                    <p>
+                        The level file is simply a text file describing the level map as seen from above.
+                    </p>
+                    <p>
+                        For stacking blocks on top of each other you can use the <code>+</code> character.
+                        For example <code>N+P</code> will create a stack of a normal floor tile with a player on top of
+                        it.
+                    </p>
+                    <p>
+                        In order to stack the same block multiple times you can use the <code>x</code> character.
+                        For example <code>Nx3</code> will create a stack of 3 normal floor tiles.
+                    </p>
+                    <p>
+                        Creating a glitch area is done by prepending the <code>_</code> character to a stack.
+                        For example <code>_N+P</code> will create a glitch area with a normal floor tile and a player on
+                        top of it.
+                    </p>
+                    <p>
+                        Every block can be assigned an id by appending the <code>#</code> character followed by an
+                        alphanumeric string.
+                        These ids can then be referenced by doors by using parentheses.
+                        For example <code>T#1</code> will create a trigger with the id <code>1</code>.
+                        Using that <code>D(#1)</code> will create a door that opens when the trigger with the id
+                        <code>1</code> is activated.
+                    </p>
+                    <p>
+                        There are several restrictions on the level file:
+                        <ul>
+                            <li>There must only be one player</li>
+                            <li>Every id must be unique</li>
+                            <li>The level file can not exceed 256 in x, y and z direction</li>
+                        </ul>
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 </body>
