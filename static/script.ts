@@ -1,5 +1,5 @@
 import nipplejs from 'nipplejs';
-import init, { load_level, set_eye_distance, set_size, joystick_input, action_button_pressed, action_button_released, compress_level_to_url, decompress_level_from_url } from "../pkg/stereo_glitch.js";
+import init, { load_level, set_eye_distance, set_size, joystick_input, action_button_pressed, action_button_released, compress_level_to_url, decompress_level_from_url, check_level } from "../pkg/stereo_glitch.js";
 import { basicSetup, EditorView } from "codemirror"
 
 // export the functions 
@@ -18,8 +18,8 @@ window.mobileCheck = function () {
     return check;
 };
 
-export const INITIAL_LEVEL = `
-N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3
+export const INITIAL_LEVEL = 
+`N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3
 N+W	N	N	N	N	N+Wx3
 N+W	N	N+P	N	N	N+Wx3
 N+W	N	N	N	N	N+Wx3	N+Wx3	N+Wx3
@@ -53,8 +53,7 @@ N+W	N+W	N+W	N+W	N+D(#g2)	N+W	N+W	N+W	N+W	N+W	N	N	N+Wx3
 N+W	N	N	N	N	N	N	N	N	N+W	N+W	N+W	N+Wx3
 N+W	N	N	N	N	N	N	N	N	N+W
 N+W	N	N	N	N+G(END)	N	N	N	N	N+W
-N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W
-`;
+N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W`;
 
 // split the level into blocks by whitespace
 function split_level(level: string): string[] {
@@ -167,12 +166,62 @@ let parserWithMetadata = parser.configure({
     ]
 });
 
-import { LRLanguage, indentUnit } from "@codemirror/language"
+import { LRLanguage } from "@codemirror/language"
 import { EditorState, StateEffect } from "@codemirror/state"
+import { linter, Diagnostic } from "@codemirror/lint"
+
 
 export const levelfileLanguage = LRLanguage.define({
     parser: parserWithMetadata,
 })
+
+const levelLinter = linter(view => {
+    let level = view.state.doc.toString();
+    let check_result = check_level(level);
+    let diagnostics: Diagnostic[] = []
+    let json = JSON.parse(check_result);
+
+    if (json.result === "error") {
+        let loadButton = document.getElementById("load-button")!;
+        loadButton.classList.remove("is-active");
+
+        let parsedFailedRest = json.contents?.ParseFailed?.rest;
+        let validationError = json.contents?.ValidationError?.message;
+
+        if (parsedFailedRest !== undefined) {
+
+            // Find the start position in the edit buffer
+            let startPos = level.indexOf(parsedFailedRest);
+            // The end position is for now just one character after the start position
+            let endPos = startPos + 1;
+
+            diagnostics.push({
+                from: startPos,
+                to: endPos,
+                severity: "error",
+                message: "Failed to parse level",
+                actions: [],
+            })
+        }
+
+        if (validationError !== undefined) {
+            let startPos = 0;
+            let endPos = level.length;
+
+            diagnostics.push({
+                from: startPos,
+                to: endPos,
+                severity: "warning",
+                message: validationError,
+                actions: [],
+            })
+        }
+    } else if (json.result === "ok") {
+        let loadButton = document.getElementById("load-button")!;
+        loadButton.classList.add("is-active");
+    }
+    return diagnostics
+});
 
 function update_listener(e: any) {
     if (e.docChanged === true) {
@@ -184,6 +233,7 @@ function update_listener(e: any) {
 let extensions = [
     basicSetup,
     levelfileLanguage,
+    levelLinter,
     EditorView.updateListener.of(update_listener),
 ]
 
@@ -203,15 +253,15 @@ document.getElementById("load-button")!.addEventListener("click", () => {
     window.history.replaceState({}, "", "?level=" + url);
 });
 
-function clean_and_set_level(level: string) {
+function clean_and_set_level(level: string): string {
     let cleaned_level = replace_consecutive_whitespace_with_tabs(level);
 
     // set the tab size to the width of the longest line in the level
     let tab_size = get_max_width(cleaned_level) + 1;
 
-    if (cleaned_level == level && view.state.doc.toString() == level && view.state.tabSize == tab_size) {
+    if (cleaned_level == level && view.state.doc.toString() == cleaned_level && view.state.tabSize == tab_size) {
         // the level is already clean
-        return;
+        return cleaned_level;
     }
 
     view.dispatch({
@@ -224,6 +274,8 @@ function clean_and_set_level(level: string) {
             ...extensions,
         ]),
     });
+
+    return cleaned_level;
 }
 
 init().then(() => {

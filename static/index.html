@@ -48,14 +48,20 @@
                 font-family: RobotoMonoRegular;
             }
 
-
-
             .cm-selectionBackground {
                 background-color: hsl(220, 20%, 30%);
             }
 
             .cm-activeLine {
                 background-color: rgba(41, 48, 61, 0.5);
+            }
+
+            .cm-diagnostic {
+                background-color: hsl(220, 20%, 30%);
+            }
+
+            .cm-tooltip {
+                border-color: hsl(220, 20%, 40%);
             }
         }
 
@@ -224,15 +230,27 @@
                 button {
                     font-family: RobotoMonoRegular;
                     font-size: 16px;
-                    background-color: rgba(0, 255, 110, 0.2);
                     color: hsl(254, 10%, 80%);
-                    border: 2px solid rgba(0, 255, 110, 0.4);
                     border-radius: 8px;
                     padding: 4px 8px;
                     cursor: pointer;
 
-                    &:hover {
-                        background-color: rgba(0, 255, 110, 0.4);
+                    &.is-active {
+                        background-color: rgba(0, 255, 110, 0.2);
+                        border: 2px solid rgba(0, 255, 110, 0.4);
+
+                        &:hover {
+                            background-color: rgba(0, 255, 110, 0.4);
+                        }
+                    }
+
+                    &:not(.is-active) {
+                        background-color: rgba(187, 107, 107, 0.2);
+                        border: 2px solid rgba(187, 107, 107, 0.4);
+
+                        &:hover {
+                            background-color: rgba(187, 107, 107, 0.4);
+                        }
                     }
                 }
             }
@@ -302,11 +320,11 @@
                     </p>
                     <p>
                         There are several restrictions on the level file:
-                        <ul>
-                            <li>There must only be one player</li>
-                            <li>Every id must be unique</li>
-                            <li>The level file can not exceed 256 in x, y and z direction</li>
-                        </ul>
+                    <ul>
+                        <li>There must only be one player</li>
+                        <li>Every id must be unique</li>
+                        <li>The level file can not exceed 256 in x, y and z direction</li>
+                    </ul>
                     </p>
                 </div>
             </div>

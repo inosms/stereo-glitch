@@ -1,8 +1,8 @@
-use std::{sync::Mutex, collections::VecDeque};
+use std::{collections::VecDeque, sync::Mutex};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-use crate::{level_loader, level_compressor};
+use crate::{level_compressor, level_loader};
 
 #[derive(Debug)]
 pub enum Command {
@@ -40,15 +40,30 @@ lazy_static::lazy_static! {
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn load_level(level: &str) -> Result<(), String>{
+pub fn load_level(level: &str) -> Result<(), String> {
     match level_loader::parse_level(level) {
         Ok(parsed) => {
             COMMANDS.push(Command::LoadLevel(parsed));
             return Ok(());
-        },
+        }
         Err(e) => {
             log::info!("Error: {:?}", e);
             return Err(e.to_string());
+        }
+    }
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn check_level(level: &str) -> String {
+    match level_loader::parse_level(level) {
+        Ok(_) => {
+            return String::from("{ \"result\": \"ok\" }");
+        }
+        Err(e) => {
+            return format!(
+                "{{ \"result\": \"error\", \"contents\": {} }}",
+                e.to_string()
+            );
         }
     }
 }
@@ -79,11 +94,11 @@ pub fn action_button_released() {
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn compress_level_to_url(level: &str) -> String{
+pub fn compress_level_to_url(level: &str) -> String {
     level_compressor::compress_level(level)
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn decompress_level_from_url(level: &str) -> Result<String, String>{
+pub fn decompress_level_from_url(level: &str) -> Result<String, String> {
     level_compressor::decompress_level(level)
 }

@@ -27,7 +27,8 @@ image = "0.24.7"
 tobj = { version = "3.2.1", features = [
     "async",
 ]}
- 
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"

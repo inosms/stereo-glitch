@@ -10,6 +10,8 @@ use nom::multi::{separated_list0, separated_list1};
 
 use nom::IResult;
 
+use serde::{Deserialize, Serialize};
+
 use crate::object_types::{Block, BoxType, Id, LinearEnemyDirection};
 
 #[derive(Debug, PartialEq)]
@@ -256,13 +258,13 @@ fn parse_block(input: &str) -> IResult<&str, Vec<(Block, Option<Id>)>> {
     } else {
         (rest, None)
     };
-    
+
     // duplicate the block if multiplicator is specified
     let mut block_stack = Vec::new();
     for _ in 0..multiplicator.unwrap_or(1) {
         block_stack.push((block.clone(), id.clone().or_else(|| Some(Id::random()))));
     }
-    
+
     Ok((rest, block_stack))
 }
 
@@ -286,15 +288,37 @@ fn parse_level_line(input: &str) -> IResult<&str, Vec<Cell>> {
     separated_list1(space1, parse_cell)(input.trim())
 }
 
-pub fn parse_level(input: &str) -> anyhow::Result<ParsedLevel> {
-    let (rest, parsed) =
-        separated_list0(newline, parse_level_line)(input).map_err(|e| e.to_owned())?;
+pub fn parse_level(input: &str) -> Result<ParsedLevel, LevelParseError> {
+    let (rest, parsed) = separated_list0(newline, parse_level_line)(input)
+        .map_err(|e| LevelParseError::ParseFailed {
+            rest: input.to_string(),
+        })?;
 
     if rest.len() > 0 {
-        return Err(anyhow::anyhow!("Failed to parse level. Rest: {}", rest));
+        return Err(LevelParseError::ParseFailed {
+            rest: rest.to_string(),
+        });
     }
 
-    Ok(ParsedLevel::from(parsed)?)
+    match ParsedLevel::from(parsed) {
+        Ok(level) => Ok(level),
+        Err(e) => Err(LevelParseError::ValidationError {
+            message: e.to_string(),
+        }),
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum LevelParseError {
+    ParseFailed { rest: String },
+    ValidationError { message: String },
+}
+
+impl std::fmt::Display for LevelParseError {
+    // displays as JSON
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serde_json::to_string(self).unwrap())
+    }
 }
 
 // test
