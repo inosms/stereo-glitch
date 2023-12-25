@@ -18,8 +18,8 @@ window.mobileCheck = function () {
     return check;
 };
 
-export const INITIAL_LEVEL = "N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3\n" +
-    "N+W N   N   N   N   N+Wx3\n" +
+export const INITIAL_LEVEL = "N+Wx3\tN+Wx3\tN+Wx3\tN+Wx3\tN+Wx3\tN+Wx3\n" +
+    "N+W\tN\tN\tN\tN\tN+Wx3\n" +
     "N+W N   N+P  N   N   N+Wx3\n" +
     "N+W N   N   N   N   N+Wx3   N+Wx3   N+Wx3\n" +
     "N+W N   N   N   N   N+BX  N+T#t   N+Wx3\n" +
@@ -55,6 +55,28 @@ export const INITIAL_LEVEL = "N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3 N+Wx3\n" +
     "N+W   N+W     N+W     N+W     N+W     N+W     N+W     N+W     N+W     N+Wx1\n" +
 
     "\n";
+
+// split the level into blocks by whitespace
+function split_level(level: string): string[] {
+    return level.split(/\s+/);
+}
+
+// get the width of the longest block in the level
+function get_max_width(level: string): number {
+    return Math.max(...split_level(level).map((line) => line.length));
+}
+
+// replace consecutive whitespace with tabs
+// do not replace newlines
+function replace_consecutive_whitespace_with_tabs(level: string): string {
+    // split the level into lines
+    let lines = level.split("\n");
+    // replace consecutive whitespace with tabs
+    lines = lines.map((line) => line.replace(/\s+/g, "\t"));
+    // join the lines back together
+    return lines.join("\n");
+}
+
 
 if (window.mobileCheck()) {
     document.getElementById("game")!.classList.add("is-mobile");
@@ -145,18 +167,29 @@ let parserWithMetadata = parser.configure({
     ]
 });
 
-import { LRLanguage } from "@codemirror/language"
+import { LRLanguage, indentUnit } from "@codemirror/language"
+import { EditorState, StateEffect } from "@codemirror/state"
 
 export const levelfileLanguage = LRLanguage.define({
     parser: parserWithMetadata,
 })
 
+function update_listener(e: any) {
+    if (e.docChanged === true) {
+        let level = e.state.doc.toString();
+        clean_and_set_level(level);
+    }
+}
+
+let extensions = [
+    basicSetup,
+    levelfileLanguage,
+    EditorView.updateListener.of(update_listener),
+]
+
 let view = new EditorView({
     doc: "", // level
-    extensions: [
-        basicSetup,
-        levelfileLanguage,
-    ],
+    extensions: extensions,
     parent: document.getElementById("editor")!,
 });
 
@@ -169,6 +202,29 @@ document.getElementById("load-button")!.addEventListener("click", () => {
     const url = compress_level_to_url(level)
     window.history.replaceState({}, "", "?level=" + url);
 });
+
+function clean_and_set_level(level: string) {
+    let cleaned_level = replace_consecutive_whitespace_with_tabs(level);
+
+    // set the tab size to the width of the longest line in the level
+    let tab_size = get_max_width(cleaned_level) + 1;
+
+    if (cleaned_level == level && view.state.doc.toString() == level && view.state.tabSize == tab_size) {
+        // the level is already clean
+        return;
+    }
+
+    view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: cleaned_level },
+        // Do not reset the selection when cleaning the level
+        // as this will cause the cursor to jump to the start of the level
+        selection: view.state.selection,
+        effects: StateEffect.reconfigure.of([
+            EditorState.tabSize.of(tab_size),
+            ...extensions,
+        ]),
+    });
+}
 
 init().then(() => {
     console.log("WASM Loaded");
@@ -183,12 +239,10 @@ init().then(() => {
     catch (e) {
         console.log("Could not decompress level from url: " + e);
     }
+    level = replace_consecutive_whitespace_with_tabs(level);
     load_level(level);
 
-    // set the level to the editor
-    view.dispatch({
-        changes: { from: 0, to: view.state.doc.length, insert: level },
-    });
+    clean_and_set_level(level);
 
     // set the size of the canvas to the size of the game-container
     const gameContainer = document.getElementById("game-container");
