@@ -185,10 +185,10 @@
 
         h2 {
             font-family: RobotoMonoRegular;
-            font-size: 16px;
+            font-size: 20px;
             text-align: left;
-            padding-top: 20px;
-            padding-bottom: 20px;
+            padding-top: 25px;
+            padding-bottom: 5px;
         }
 
         kbd {
@@ -302,6 +302,22 @@
                 }
             }
         }
+
+
+        .things-to-improve {
+            @media screen and (min-width: 800px) {
+                display: grid;
+                grid-template-columns: 70% auto;
+                grid-gap: 20px;
+
+                align-items: center;
+            }
+
+            img {
+                width: 100%;
+                filter: invert(0.9);
+            }
+        }
     </style>
 </head>
 
@@ -374,6 +390,7 @@
                 </div>
             </div>
             <div class="game-objects">
+                <h2>Game Object Overview</h2>
                 <div class="game-object-tile">
                     <div class="game-object-image-tile">
                         <img src="../models/player/rendered.png" alt="rendered player model" />
@@ -398,7 +415,12 @@
                             <p>A box is a simple object that can be pushed around.It can be pushed by the player,
                                 enemies and other boxes.</p>
                             <p>
-                                There are four types of boxes: A <span class="object-code">BX</span> is a box that can only move in the x direction, while a <span class="object-code">BY</span> is a box that can only move in the y direction. A <span class="object-code">BRF</span> is a box that can move in all directions freely but can not rotate and finally <span class="object-code">BF</span> is a box that can move in all directions freely and can rotate.
+                                There are four types of boxes: A <span class="object-code">BX</span> is a box that can
+                                only move in the x direction, while a <span class="object-code">BY</span> is a box that
+                                can only move in the y direction. A <span class="object-code">BRF</span> is a box that
+                                can move in all directions freely but can not rotate and finally <span
+                                    class="object-code">BF</span> is a box that can move in all directions freely and
+                                can rotate.
                             </p>
                         </div>
                     </div>
@@ -410,7 +432,8 @@
                     <div class="object-details">
                         <div class="object-name">Trigger <span class="object-code">T</span></div>
                         <div class="object-description">
-                            <p>A trigger is an object that can be activated by placing some other object on top of it. It can be used to open doors.</p>
+                            <p>A trigger is an object that can be activated by placing some other object on top of it.
+                                It can be used to open doors.</p>
                         </div>
                     </div>
                 </div>
@@ -432,7 +455,9 @@
                     <div class="object-details">
                         <div class="object-name">Charge <span class="object-code">C</span></div>
                         <div class="object-description">
-                            <p>A Charge Area spawns charge particles that can be used to replenish the players charge. The more charge you have the more damage you can take. Also charge is needed to make the 3D area visible.</p>
+                            <p>A Charge Area spawns charge particles that can be used to replenish the players charge.
+                                The more charge you have the more damage you can take. Also charge is needed to make the
+                                3D area visible.</p>
                         </div>
                     </div>
                 </div>
@@ -441,10 +466,14 @@
                         <img src="../models/enemy_linear/rendered.png" alt="rendered linear enemy model" />
                     </div>
                     <div class="object-details">
-                        <div class="object-name">Linear Enemy <span class="object-code">E2X</span> <span class="object-code">E2Y</span></div>
+                        <div class="object-name">Linear Enemy <span class="object-code">E2X</span> <span
+                                class="object-code">E2Y</span></div>
                         <div class="object-description">
-                            <p>An enemy that moves in a straight line. If the player collides with the enemy the player will take damage.</p>
-                            <p>There are two types of linear enemies: A <span class="object-code">E2X</span> is an enemy that moves in the x direction, while a <span class="object-code">E2Y</span> is an enemy that moves in the y direction.</p>
+                            <p>An enemy that moves in a straight line. If the player collides with the enemy the player
+                                will take damage.</p>
+                            <p>There are two types of linear enemies: A <span class="object-code">E2X</span> is an enemy
+                                that moves in the x direction, while a <span class="object-code">E2Y</span> is an enemy
+                                that moves in the y direction.</p>
                         </div>
                     </div>
                 </div>
@@ -455,7 +484,8 @@
                     <div class="object-details">
                         <div class="object-name">Static Enemy <span class="object-code">E1</span></div>
                         <div class="object-description">
-                            <p>An enemy that does not move. If the player collides with the enemy the player will take damage.</p>
+                            <p>An enemy that does not move. If the player collides with the enemy the player will take
+                                damage.</p>
                         </div>
                     </div>
                 </div>
@@ -488,10 +518,117 @@
                     <div class="object-details">
                         <div class="object-name">Goal <span class="object-code">G</span></div>
                         <div class="object-description">
-                            <p>The goal is the end of the level. If the player reaches the goal the level is completed.</p>
+                            <p>The goal is the end of the level. If the player reaches the goal the level is completed.
+                            </p>
                         </div>
                     </div>
                 </div>
+            </div>
+            <div>
+                <h2>Source Code</h2>
+                <p>
+                    (dirty) source code is available on <a href="https://github.com/inosms/stereo-glitch">GitHub</a>.
+                </p>
+            </div>
+            <div>
+                <h2>Credits</h2>
+                <p>
+                    Many thanks to Takeryo for input on the design and early feedback!
+                </p>
+                <p>
+                    Also many thanks to sothr from <a href="https://sotrh.github.io/learn-wgpu">Learn Wgpu</a> for the
+                    great tutorial!
+                </p>
+                <p>
+                    For physics I used the awesome <a href="https://rapier.rs/">rapier crate</a>.
+                    The editor uses <a href="https://codemirror.net/">codemirror</a> under the hood.
+                    After going crazy trying to learn Blender for voxel art I was very happy to find <a
+                        href="https://ephtracy.github.io/">MagicaVoxel</a>.
+                    Packaging and everything is done with <a href="https://parceljs.org/">parcel</a> which worked out of
+                    the box like a charm.
+                </p>
+            </div>
+            <div>
+                <h2>Dear (future) self: Things learnt from the project</h2>
+                <p>The goal of this project was to get a better understanding of Rust, WGPU and WASM. This was (mostly)
+                    achieved and I am happy with the result. However I am not satisfied with the overall code quality
+                    and the way the project was managed. Here are some things I learnt during the project:</p>
+
+                <h3>Things that went well</h3>
+                <p>Setting up automatic deployment early on and targeting the web made the whole development experience
+                    way more enjoyable than the last time where I tried to target Steam.</p>
+                <p>Also I was absolutely astonished how easy it is to simply use rust crates on WASM and then how games
+                    just work in the browser without any additional work. Need an ECS system? Just use bevy_ecs! Need a
+                    physics engine? Just import rapier3d! This is really amazing! I still remember when
+                    I tried to get C++ to cross compile to different platforms and it was a nightmare - especially the
+                    graphics part. What a time to be alive!</p>
+
+
+                <h3>Things to improve</h3>
+                <div class="things-to-improve">
+                    <div>
+                        <p>Leaving things dirty and moving fast while thinking "I will clean this up later" does not
+                            realistically work. Maybe setup clippy early on in the project to be forced to clean up the
+                            codebase
+                            or cleanly separate prototyping and actual development (and not use the prototype codebase
+                            as
+                            base
+                            for an actual project).
+                            Overall things I would like to improve in the future:
+                        <ul>
+                            <li>Overall code quality</li>
+                            <li>Use more idiomatic Rust</li>
+                            <li>Use more idiomatic JS/TS</li>
+                            <li>Better linting / Better editor</li>
+                            <li>Refactor the bind groups in WGPU to only use 4</li>
+                        </ul>
+
+                        </p>
+                        <p>From a performance perspective the current implementation is also quite unsatisfying. For
+                            example
+                            the
+                            whole state is rendered every frame regardless of how far away it is from the camera. Doing
+                            some
+                            frustum culling and selective updating would probably increase performance (especially on
+                            mobile).
+                            Also particles are implemented as entities which seems like a bad idea.
+                        </p>
+                        <p>Also doing the last 10% of polishing would really take a lot more time. The boxes sometimes
+                            get stuck in the ground and there are some weird other bugs too.
+                            Also the level editor is quite bare bones and could use some more love.
+
+                        </p>
+                        <p>Regardless from the programming part, picking a game project for learning libraries turned
+                            out
+                            the be
+                            not that easy. Especially when you start to get all perfectionist about game design and art.
+                            This
+                            got me stuck for longer than I would like to admit. What helped me this time was to search
+                            for
+                            similar games and to talk with ChatGPT to get some ideas to make it at least passable.
+                            However for an actual game the game mechanics, player controller and level design would need
+                            a lot improvement.
+                            For this project the focus was to learn Rust, WGPU and WASM I decided to draw the
+                            line here.
+                        </p>
+                    </div>
+                    <div>
+                        <img src="https://imgs.xkcd.com/comics/good_code.png" alt="xkcd good code" />
+                        <div>XKCD 844: Good Code</div>
+                    </div>
+                </div>
+                <h2>Overall</h2>
+                <p>So many things left to do! But also a fun practice project. I am looking forward to the next one!</p>
+            </div>
+            <div>
+                <h2>Feedback Form</h2>
+                <p>
+                    There are probably many more things that could be improved. If you have any feedback feel free to
+                    use the form below.
+                </p>
+                <iframe
+                    src="https://docs.google.com/forms/d/e/1FAIpQLSfqJW1vrx5ArqTgxihPg86IliBDlstn8Gx4Zay42HqCl3thow/viewform?embedded=true"
+                    width="100%" height="500px" frameborder="0" marginheight="0" marginwidth="0">Loading...</iframe>
             </div>
         </div>
     </div>
