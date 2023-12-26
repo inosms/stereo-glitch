@@ -89,7 +89,7 @@ fn letter_to_level_block(c: char) -> String {
         'K' => "N+W N+N N+N N+W\nN+W N+N N+W N+N\nN+W N+W N+N N+N\nN+W N+N N+W N+N\nN+W N+N N+N N+W".to_string(),
         'L' => "N+W N+N N+N N+N\nN+W N+N N+N N+N\nN+W N+N N+N N+N\nN+W N+N N+N N+N\nN+W N+W N+W N+W".to_string(),
         'M' => "N+W N+N N+N N+N N+W\nN+W N+W N+N N+W N+W\nN+W N+N N+W N+N N+W\nN+W N+N N+N N+N N+W\nN+W N+N N+N N+N N+W".to_string(),
-        'N' => "N+W N+N N+N N+W\nN+W N+W N+N N+W\nN+W N+W N+W N+W\nN+W N+N N+N N+W\nN+W N+N N+N N+W".to_string(),
+        'N' => "N+W N+N N+N N+W\nN+W N+W N+N N+W\nN+W N+W N+W N+W\nN+W N+N N+W N+W\nN+W N+N N+N N+W".to_string(),
         'O' => "N+N N+W N+W N+N\nN+W N+N N+N N+W\nN+W N+N N+N N+W\nN+W N+N N+N N+W\nN+N N+W N+W N+N".to_string(),
         'P' => "N+W N+W N+W N+W\nN+W N+N N+N N+W\nN+W N+W N+W N+W\nN+W N+N N+N N+N\nN+W N+N N+N N+N".to_string(),
         'Q' => "N+N N+W N+W N+N\nN+W N+N N+N N+W\nN+W N+N N+N N+W\nN+W N+W N+W N+W\nN+N N+W N+W N+W".to_string(),
