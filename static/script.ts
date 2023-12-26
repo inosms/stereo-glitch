@@ -19,11 +19,11 @@ window.mobileCheck = function () {
 };
 
 export const INITIAL_LEVEL = 
-`N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3
-N+W	N	N	N	N	N+Wx3
-N+W	N	N+P	N	N	N+Wx3
-N+W	N	N	N	N	N+Wx3	N+Wx3	N+Wx3
-N+W	N	N	N	N	N+BX	N+T#t	N+Wx3
+`N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	
+N+W	N	N	N	N+Wx3
+N+W	N	N+P	N	N+Wx3
+N+W	N	N	N	N+Wx3	N+Wx3	N+Wx3	N+Wx3
+N+W	N	N	N	N+BX	N	N+T#t	N+Wx3
 N+W	N+W	N+W	N+W	N+W	N+D(#t)	N+W	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3
 N+W	N+T#t2	N+W	N	N	N	N	N+Wx3	N	N	N	N+E1	N+Wx3
 N+W	N	N+W	N	N	N	N	N+D(#t2)x2+W	N	N+S	N	N	N+Wx3

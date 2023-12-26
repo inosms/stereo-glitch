@@ -258,6 +258,50 @@
             padding-top: 20px;
             padding-bottom: 20px;
         }
+
+        .game-object-tile {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            grid-gap: 20px;
+
+            padding-top: 20px;
+
+            >.game-object-image-tile {
+                width: 120px;
+                height: 120px;
+                overflow: hidden;
+
+                >img {
+                    width: 120px;
+                    height: 120px;
+                    background-position: center;
+                    -webkit-transform: scale(2);
+                    transform: scale(2);
+                }
+
+                border: 4px solid hsl(143, 67%, 62%);
+                border-radius: 8px;
+            }
+
+            >.object-details {
+                >.object-name {
+                    font-family: RobotoMonoRegular;
+                    font-size: 20px;
+                    color: hsl(254, 10%, 80%);
+                    margin-bottom: 4px;
+                }
+
+                .object-code {
+                    font-family: RobotoMonoRegular;
+                    font-size: 15px;
+                    color: hsl(143, 67%, 62%);
+                    border: 2px solid hsl(143, 67%, 62%);
+                    border-radius: 3px;
+                    padding: 0 4px;
+                    margin-left: 4px;
+                }
+            }
+        }
     </style>
 </head>
 
@@ -326,6 +370,127 @@
                         <li>The level file can not exceed 256 in x, y and z direction</li>
                     </ul>
                     </p>
+                </div>
+            </div>
+            <div class="game-objects">
+                <div class="game-object-tile">
+                    <div class="game-object-image-tile">
+                        <img src="../models/player/rendered.png" alt="rendered player model" />
+                    </div>
+                    <div class="object-details">
+                        <div class="object-name">Player <span class="object-code">P</span></div>
+                        <div class="object-description">
+                            <p>The player is the main character of the game.</p>
+                            <p>It can be controlled by the user and can interact with other objects.</p>
+                            <p>There can only be one player in a level.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-object-tile">
+                    <div class="game-object-image-tile">
+                        <img src="../models/box/rendered.png" alt="rendered box model" />
+                    </div>
+                    <div class="object-details">
+                        <div class="object-name">Box <span class="object-code">BX</span> <span
+                                class="object-code">BY</span> <span class="object-code">BF</span> <span
+                                class="object-code">BRF</span></div>
+                        <div class="object-description">
+                            <p>A box is a simple object that can be pushed around.It can be pushed by the player,
+                                enemies and other boxes.</p>
+                            <p>
+                                There are four types of boxes: A <span class="object-code">BX</span> is a box that can only move in the x direction, while a <span class="object-code">BY</span> is a box that can only move in the y direction. A <span class="object-code">BRF</span> is a box that can move in all directions freely but can not rotate and finally <span class="object-code">BF</span> is a box that can move in all directions freely and can rotate.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-object-tile">
+                    <div class="game-object-image-tile">
+                        <img src="../models/trigger/rendered.png" alt="rendered trigger model" />
+                    </div>
+                    <div class="object-details">
+                        <div class="object-name">Trigger <span class="object-code">T</span></div>
+                        <div class="object-description">
+                            <p>A trigger is an object that can be activated by placing some other object on top of it. It can be used to open doors.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-object-tile">
+                    <div class="game-object-image-tile">
+                        <img src="../models/door/rendered.png" alt="rendered door model" />
+                    </div>
+                    <div class="object-details">
+                        <div class="object-name">Door <span class="object-code">D</span></div>
+                        <div class="object-description">
+                            <p>A Door can be opened and closed using Triggers.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-object-tile">
+                    <div class="game-object-image-tile">
+                        <img src="../models/charge/rendered.png" alt="rendered charge model" />
+                    </div>
+                    <div class="object-details">
+                        <div class="object-name">Charge <span class="object-code">C</span></div>
+                        <div class="object-description">
+                            <p>A Charge Area spawns charge particles that can be used to replenish the players charge. The more charge you have the more damage you can take. Also charge is needed to make the 3D area visible.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-object-tile">
+                    <div class="game-object-image-tile">
+                        <img src="../models/enemy_linear/rendered.png" alt="rendered linear enemy model" />
+                    </div>
+                    <div class="object-details">
+                        <div class="object-name">Linear Enemy <span class="object-code">E2X</span> <span class="object-code">E2Y</span></div>
+                        <div class="object-description">
+                            <p>An enemy that moves in a straight line. If the player collides with the enemy the player will take damage.</p>
+                            <p>There are two types of linear enemies: A <span class="object-code">E2X</span> is an enemy that moves in the x direction, while a <span class="object-code">E2Y</span> is an enemy that moves in the y direction.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-object-tile">
+                    <div class="game-object-image-tile">
+                        <img src="../models/enemy_static/rendered.png" alt="rendered static enemy model" />
+                    </div>
+                    <div class="object-details">
+                        <div class="object-name">Static Enemy <span class="object-code">E1</span></div>
+                        <div class="object-description">
+                            <p>An enemy that does not move. If the player collides with the enemy the player will take damage.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-object-tile">
+                    <div class="game-object-image-tile">
+                        <img src="../models/floor1/rendered.png" alt="rendered floor model" />
+                    </div>
+                    <div class="object-details">
+                        <div class="object-name">Floor <span class="object-code">N</span></div>
+                        <div class="object-description">
+                            <p>A normal floor tile. The player can walk on it.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-object-tile">
+                    <div class="game-object-image-tile">
+                        <img src="../models/wall3/rendered.png" alt="rendered wall model" />
+                    </div>
+                    <div class="object-details">
+                        <div class="object-name">Wall <span class="object-code">W</span></div>
+                        <div class="object-description">
+                            <p>A normal wall tile.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-object-tile">
+                    <div class="game-object-image-tile">
+                        <img src="../models/todo/rendered.png" alt="rendered goal model" />
+                    </div>
+                    <div class="object-details">
+                        <div class="object-name">Goal <span class="object-code">G</span></div>
+                        <div class="object-description">
+                            <p>The goal is the end of the level. If the player reaches the goal the level is completed.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
