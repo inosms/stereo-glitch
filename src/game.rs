@@ -209,7 +209,7 @@ fn damage_area_system(
                 // push the player away from the damage area
                 let player_position = player_position.position;
                 let damage_area_position = sensor_position.position;
-                let direction = (player_position - damage_area_position).normalize() * 10.0;
+                let direction = (player_position - damage_area_position).normalize() * 5.0;
                 physics_system.move_body(player_physics_body.body, direction, false);
                 // otherwise the player might get stuck in the damage area
                 input.player_paralized_cooldown = 0.2;
