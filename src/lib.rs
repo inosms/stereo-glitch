@@ -684,10 +684,10 @@ impl State {
                     self.game_world.move_player(cgmath::vec3(x, y, 0.0));
                 }
                 command::Command::ActionButtonPressed => {
-                    self.game_world.player_pull_action();
+                    self.game_world.player_grab_action();
                 }
                 command::Command::ActionButtonReleased => {
-                    self.game_world.release_player_pull_action();
+                    self.game_world.release_player_grab_action();
                 }
             }
         }
@@ -867,10 +867,10 @@ pub async fn run() {
                         } => match &physical_key {
                             PhysicalKey::Code(key_code) => {
                                 if state.key_pressed.insert(*key_code)
-                                    && key_code == &KeyCode::Enter
-                                    || key_code == &KeyCode::Space
+                                    && (key_code == &KeyCode::Enter
+                                    || key_code == &KeyCode::Space)
                                 {
-                                    state.game_world.player_pull_action()
+                                    state.game_world.player_grab_action()
                                 }
                             }
                             _ => {}
@@ -885,10 +885,10 @@ pub async fn run() {
                             ..
                         } => match &physical_key {
                             PhysicalKey::Code(key_code) => {
-                                if state.key_pressed.remove(key_code) && key_code == &KeyCode::Enter
-                                    || key_code == &KeyCode::Space
+                                if state.key_pressed.remove(key_code) && (key_code == &KeyCode::Enter
+                                    || key_code == &KeyCode::Space)
                                 {
-                                    state.game_world.release_player_pull_action()
+                                    state.game_world.release_player_grab_action()
                                 }
                             }
                             _ => {}

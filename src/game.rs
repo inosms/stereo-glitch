@@ -634,7 +634,7 @@ impl GameWorld {
         self.world.resource::<StereoCamera>()
     }
 
-    pub fn player_pull_action(&mut self) {
+    pub fn player_grab_action(&mut self) {
         let player_position = self
             .world
             .query_filtered::<&Position, With<Player>>()
@@ -643,16 +643,16 @@ impl GameWorld {
             .unwrap()
             .position;
 
-        let pull_area_extent = 3.0;
+        let grab_area_extent = 3.0;
         // find all Entities that are within [-PULL_AREA_EXTENT, PULL_AREA_EXTENT] of the player in x, y and z
         let query = self
             .world
             .query_filtered::<(&Position, Entity, &PhysicsBody), With<Movable>>()
             .iter(&self.world)
             .filter(|(position, _, _)| {
-                (position.position.x - player_position.x).abs() < pull_area_extent
-                    && (position.position.y - player_position.y).abs() < pull_area_extent
-                    && (position.position.z - player_position.z).abs() < pull_area_extent
+                (position.position.x - player_position.x).abs() < grab_area_extent
+                    && (position.position.y - player_position.y).abs() < grab_area_extent
+                    && (position.position.z - player_position.z).abs() < grab_area_extent
             })
             .map(|(_, entity, _)| entity)
             .collect::<Vec<_>>();
@@ -666,7 +666,7 @@ impl GameWorld {
         player.pulled_objects = query;
     }
 
-    pub fn release_player_pull_action(&mut self) {
+    pub fn release_player_grab_action(&mut self) {
         self.world
             .query_filtered::<&mut Player, With<Player>>()
             .iter_mut(&mut self.world)
