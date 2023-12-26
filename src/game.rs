@@ -689,7 +689,7 @@ impl GameWorld {
         for (entity, distance) in entities_with_distances {
             self.world
                 .entity_mut(entity)
-                .insert(GrabContractionAnimation::new((distance * 0.04) as f64, 0.7));
+                .insert(GrabContractionAnimation::new((distance * 0.05) as f64, 0.4));
         }
     }
 
