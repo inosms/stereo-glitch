@@ -158,3 +158,45 @@ pub fn spawn_dust_on_moving_objects_system(
         }
     }
 }
+
+#[derive(Component)]
+pub struct GrabContractionAnimation {
+    start_time: f64,
+    duration: f64,
+}
+
+impl GrabContractionAnimation {
+    pub fn new(delay: f64, duration: f64) -> Self {
+        Self {
+            start_time: TimeKeeper::now() + delay,
+            duration,
+        }
+    }
+
+    pub fn is_finished(&self) -> bool {
+        TimeKeeper::now() > self.start_time + self.duration
+    }
+
+    pub fn get_scale(&self) -> f32 {
+        let t = ((TimeKeeper::now() - self.start_time) / self.duration).clamp(0.0, 1.0);
+        let t = t.powf(0.5);
+        let t = (t - 0.5).powi(2) * 4.0;
+        let t = 1.0 - t;
+        1.0 - t as f32 * 0.3
+    }
+}
+
+pub fn animate_grab_contraction_system(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Position, &GrabContractionAnimation)>,
+) {
+    for (entity, mut position, grab_animation) in &mut query {
+        if grab_animation.is_finished() {
+            // remove the animation
+            commands.entity(entity).remove::<GrabContractionAnimation>();
+        }
+
+        let scale = grab_animation.get_scale();
+        position.grabbed_scale_factor = scale;
+    }
+}

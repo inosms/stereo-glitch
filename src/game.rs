@@ -22,7 +22,10 @@ use crate::{
         goal::{check_goal_reached_system, Goal},
         input::Input,
         model_manager::ModelManager,
-        movable::{animate_moving_objects_system, move_movable_object_with_player_system, Movable, spawn_dust_on_moving_objects_system},
+        movable::{
+            animate_moving_objects_system, move_movable_object_with_player_system,
+            spawn_dust_on_moving_objects_system, Movable, GrabContractionAnimation, animate_grab_contraction_system,
+        },
         physics_body::PhysicsBody,
         player::{move_player_system, spawn_dust_on_move_player_system, Player},
         position::Position,
@@ -316,6 +319,7 @@ impl GameWorld {
         self.schedule.add_systems(door_system);
         self.schedule.add_systems(check_goal_reached_system);
         self.schedule.add_systems(set_checkpoint_system);
+        self.schedule.add_systems(animate_grab_contraction_system);
     }
 
     pub fn update(&mut self) {
@@ -664,6 +668,29 @@ impl GameWorld {
             .next()
             .unwrap();
         player.pulled_objects = query;
+
+        // for animation purposes find all Entities that are within [-PULL_AREA_EXTENT, PULL_AREA_EXTENT] of the player in x, y and z
+        // that are not grabbable
+        let entities_with_distances = self
+            .world
+            .query_filtered::<(&Position, Entity, &PhysicsBody), Without<Movable>>()
+            .iter(&self.world)
+            .filter(|(position, _, _)| {
+                (position.position.x - player_position.x).abs() < grab_area_extent
+                    && (position.position.y - player_position.y).abs() < grab_area_extent
+                    && (position.position.z - player_position.z).abs() < grab_area_extent
+            })
+            .map(|(position, entity, _)| {
+                (entity, (position.position - player_position).magnitude())
+            })
+            .collect::<Vec<_>>();
+
+        // for all entities add a GrabContractionAnimation
+        for (entity, distance) in entities_with_distances {
+            self.world
+                .entity_mut(entity)
+                .insert(GrabContractionAnimation::new((distance * 0.04) as f64, 0.7));
+        }
     }
 
     pub fn release_player_grab_action(&mut self) {
