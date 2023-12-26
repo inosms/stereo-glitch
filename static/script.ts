@@ -151,7 +151,7 @@ let parserWithMetadata = parser.configure({
         styleTags({
             Concat: t.operator,
             Glitch: t.invalid,
-            NormalFloor: t.atom,
+            NormalFloor: t.typeName,
             Wall: t.typeName,
             Enemy: t.typeName,
             Goal: t.typeName,
