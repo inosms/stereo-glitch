@@ -179,9 +179,10 @@ impl GrabContractionAnimation {
 
     pub fn get_scale(&self) -> f32 {
         let t = ((TimeKeeper::now() - self.start_time) / self.duration).clamp(0.0, 1.0);
+        let t = t.powf(0.8);
         let t = (t - 0.5).powi(2) * 4.0;
         let t = 1.0 - t;
-        1.0 - t as f32 * 0.15
+        1.0 - t as f32 * 0.2
     }
 }
 
