@@ -38,22 +38,25 @@ _N+Wx3	_N	_N	_N	_N	_N	_N	_N	_N	_N	_N	_N	_N+Wx3
 _N+Wx3	_N	_N	_N	_N	_N	_N	_N	_N	_N	_N	_N	_N+Wx3
 _N+Wx3	_N	_N	_N	_N	_N	_N	_N	_N	_N	_N	_N	_N+Wx3
 _N+Wx3	_N+Wx3	_N+Wx3	_N+Wx3	_N+Wx3	_N+Wx3	_N+Wx3	_N+Wx3	_N+Wx3	_N+Wx3	_N	_N	_N+Wx3
-N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+Wx3	N+C	N+C	N+Wx3
-N+Wx2	N+E1	N	N+E1	N	N	N+BRF	N+BRF	N+Wx3	N	N+C	N+C	N+Wx3
-N+Wx2	N	N+E1	N	N	N	N	N	N+Wx3	N	N	N	N+Wx3
-N+Wx2	N+Wx2	N+Wx2	N+D(#t3)x2	N+D(#t3)x2	N+Wx2	N+Wx2	N+Wx2	N+Wx2	N+W	N	N+W	N+Wx3
-N+W	N	N+T#g1	N	N	N	N+T#g2	N	N+E1	N+W	N	N+T#t4	N+Wx3
-N+W	N	N	N	N	N	N	N	N	N+W	N	N	N+Wx3
-N+W	N	N	N	N	N	N	N	N	N+W	N	N	N+Wx3
-N+W	N	N	N	N	N	N	N	N	N+W	N	N+BY	N+Wx3
-N+W	N+E2X	N	N	N	N	N	N	N	N+D(#t4)	N+T#t3	N	N+Wx3
-N+W	N	N	N	N	N	N	N	N	N+W	N	N	N+Wx3
-N+W	N+W	N+W	N+W	N+D(#g1)	N+W	N+W	N+W	N+W	N+W	N	N	N+Wx3
-N+W	N+W	N+W	N+W	N+D(#g2)	N+W	N+W	N+W	N+W	N+W	N	N	N+Wx3
-N+W	N	N	N	N	N	N	N	N	N+W	N+W	N+W	N+Wx3
-N+W	N	N	N	N	N	N	N	N	N+W
-N+W	N	N	N	N+G(END)	N	N	N	N	N+W
-N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W`;
+N+Wx2	N	N	N	N+Wx2	N	N	N	N	N	N	N	N+Wx4
+N+Wx2	N	N+G(END)	N	N+Wx2	N	N	N	N	N	N+C	N+S	N+Wx4
+N+Wx2	N	N	N	N+Wx2	N	N	N	N	N	N+C	N+C	N+Wx4
+N+Wx2	N+Wx2	N+D(#a)x2	N+Wx2	N+Wx2	N	N	N	N	N	N	N	N+Wx4
+N+W	N	N	N	N	N	N	N	N	N	N	N	N+Wx4
+N+W	N	N	N	N	N	N	N	N+W	N+W	N+W	N+W	N+Wx4
+N+W	N	N	N	N	N	N	N	N+W	N	N	N	N+Wx4
+N+W	N	N+T#a	N	N	N	N	N	N+D(#b)	N	N	N+BX	N+Wx4
+N+W	N	N	N	N	N	N	N	N+W	N	N	N	N+Wx4
+N+W	N	N	N	N	N	N	N	N+W	N+W	N+W	N+W	N+Wx4
+N+W	N	N	N	N	N	N	N	N+D(#c)	N	N+BX	N+T#b	N+Wx4
+N+W	N	N	N	N	N	N	N	N+W	N+W	N+W	N+W	N+Wx4
+N+W	N	N	N	N	N	N	N	N+W	N	N	N+T#c	N+Wx4
+N+W	N+T#d	N	N+BX	N	N	N	N+T#e	N+W	N	N	N	N+Wx4
+N+W	N+W	N+W	N+W	N+D(#d)	N+W	N+W	N+W	N+W	N+W	N+W	N+D(#e)	N+Wx4
+N+W	N	N	N	N	N	N	N	N	N	N	N	N+Wx4
+N+W	N	N	N	N	N	N	N	N	N	N	N+BY	N+Wx4
+N+W	N	N	N	N	N	N	N	N	N	N	N	N+Wx4
+N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+W	N+Wx4`;
 
 // split the level into blocks by whitespace
 function split_level(level: string): string[] {
