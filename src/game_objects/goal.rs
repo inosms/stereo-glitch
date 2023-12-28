@@ -60,7 +60,12 @@ fn line_to_level(input: &str) -> String {
         for (i, line) in lines.enumerate() {
             // remove newline character and add
             let trimmed_line = line.trim();
-            output_lines[i+1].push_str(" N+N ");
+            // with a one in 10 chance add a firework emitter
+            if rand::random::<f32>() < 0.1 {
+                output_lines[i+1].push_str(" N+N+F ");
+            } else {
+                output_lines[i+1].push_str(" N+N ");
+            }
             output_lines[i+1].push_str(trimmed_line);
             output_lines[i+1].push_str(" N+N ");
 

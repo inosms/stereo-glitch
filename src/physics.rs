@@ -118,6 +118,7 @@ impl PhysicsSystem {
             | Block::Charge
             | Block::StaticEnemy
             | Block::Checkpoint
+            | Block::FireworkEmitter
             | Block::Goal(_) => RigidBodyBuilder::fixed(),
             Block::Empty => unreachable!(),
             Block::Player => {
@@ -158,9 +159,12 @@ impl PhysicsSystem {
             Block::Player | Block::LinearEnemy(_) => {
                 Some(ColliderBuilder::capsule_z(z_extent / 2.0, x_extent).build())
             }
-            Block::Empty | Block::Charge | Block::Trigger | Block::Goal(_) | Block::Checkpoint => {
-                None
-            }
+            Block::Empty
+            | Block::Charge
+            | Block::Trigger
+            | Block::Goal(_)
+            | Block::Checkpoint
+            | Block::FireworkEmitter => None,
         };
         let collider_handle = collider.map(|collider| {
             self.collider_set

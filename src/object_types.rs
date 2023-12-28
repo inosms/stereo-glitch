@@ -62,6 +62,7 @@ pub enum Block {
     StaticEnemy,
     LinearEnemy(LinearEnemyDirection),
     Checkpoint,
+    FireworkEmitter,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
@@ -95,6 +96,7 @@ pub enum BlockType {
     Checkpoint,
     Ghost,
     Cube,
+    FireworkEmitter,
 }
 
 impl Block {
@@ -112,6 +114,7 @@ impl Block {
             Block::StaticEnemy => BlockType::StaticEnemy,
             Block::LinearEnemy(_) => BlockType::LinearEnemy,
             Block::Checkpoint => BlockType::Checkpoint,
+            Block::FireworkEmitter => BlockType::FireworkEmitter,
         }
     }
 
@@ -129,6 +132,7 @@ impl Block {
             Block::StaticEnemy => 1.0,
             Block::LinearEnemy(_) => 1.0,
             Block::Checkpoint => 1.0,
+            Block::FireworkEmitter => 0.0,
         }
     }
 }

@@ -249,6 +249,7 @@ fn parse_block(input: &str) -> IResult<&str, Vec<(Block, Option<Id>)>> {
         value(Block::LinearEnemy(LinearEnemyDirection::XAxis), tag("E2X")),
         value(Block::LinearEnemy(LinearEnemyDirection::YAxis), tag("E2Y")),
         value(Block::Checkpoint, tag("S")),
+        value(Block::FireworkEmitter, tag("F")),
     ))(input)?;
 
     let (rest, multiplicator) = opt(parse_multiplicator)(rest)?;

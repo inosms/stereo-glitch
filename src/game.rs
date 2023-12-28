@@ -552,6 +552,9 @@ impl GameWorld {
                             Checkpoint::new(id.clone().unwrap()),
                         ));
                     }
+                    Block::FireworkEmitter => {
+                        entity.insert(FireworkEmitter::new());
+                    }
                 }
                 // we need that later
                 let added_entity_id = entity.id();
