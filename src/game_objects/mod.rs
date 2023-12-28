@@ -14,3 +14,4 @@ pub mod game_system_commands;
 pub mod checkpoint;
 pub mod model_manager;
 pub mod dust;
+pub mod firework;

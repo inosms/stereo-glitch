@@ -17,14 +17,16 @@ use crate::{
         },
         constants::TICKS_PER_SECOND,
         dust::animate_dust_particle_system,
+        firework::{firework_emitter_system, firework_particle_system, FireworkEmitter},
         game_system_commands::{GameSystemCommand, GameSystemCommands},
         glitch_area::GlitchAreaVisibility,
         goal::{check_goal_reached_system, Goal},
         input::Input,
         model_manager::ModelManager,
         movable::{
-            animate_moving_objects_system, move_movable_object_with_player_system,
-            spawn_dust_on_moving_objects_system, Movable, GrabContractionAnimation, animate_grab_contraction_system,
+            animate_grab_contraction_system, animate_moving_objects_system,
+            move_movable_object_with_player_system, spawn_dust_on_moving_objects_system,
+            GrabContractionAnimation, Movable,
         },
         physics_body::PhysicsBody,
         player::{move_player_system, spawn_dust_on_move_player_system, Player},
@@ -311,6 +313,8 @@ impl GameWorld {
                 animate_dust_particle_system,
                 spawn_dust_on_move_player_system,
                 spawn_dust_on_moving_objects_system,
+                firework_particle_system,
+                firework_emitter_system,
             )
                 .chain(),
         );
@@ -689,7 +693,10 @@ impl GameWorld {
         for (entity, distance) in entities_with_distances {
             self.world
                 .entity_mut(entity)
-                .insert(GrabContractionAnimation::new(((distance - 2.0) * 0.25) as f64, 0.3));
+                .insert(GrabContractionAnimation::new(
+                    ((distance - 2.0) * 0.25) as f64,
+                    0.3,
+                ));
         }
     }
 
